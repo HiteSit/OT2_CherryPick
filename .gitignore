@@ -1,0 +1,10 @@
+# IDE
+.claude/
+.serena/*
+!.serena/memories
+.idea/
+.vscode/
+
+# Files / Dirs
+projects/
+**TMP
