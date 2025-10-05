@@ -1,0 +1,196 @@
+# =============================================================================
+# Unified Cherry-Pick Protocol Settings (CherryPick_OT)
+# =============================================================================
+# This configuration file contains physical liquid handling parameters that can
+# be combined to handle different liquid types without protocol-specific changes.
+
+# General Protocol Settings
+[settings.general]
+tip_reuse = "always"            # Options: "always", "never", "per_source"
+mode = "multi"                  # Options: "single_X1", "multi_X1", "multi"
+starting_tip_well = "H1"        # Starting well for multi_X1 mode (single tip from 8-channel)
+
+# Head Speed Configuration
+[settings.general.head_speed]
+speed = 400                     # Pipette movement speed (mm/min)
+
+# =============================================================================
+# LIQUID HANDLING PARAMETERS
+# =============================================================================
+# These physical parameters can be combined to handle different liquid types:
+# - Standard aqueous: contact only, no delays
+# - Viscous (DMSO-like): contact + delays + push-out
+# - Hydrophobic/slippery: contact + pre-wet volume
+# - High precision: contact + tip wick only
+
+[settings.liquid_handling]
+
+# Pre-Aspirate Liquid Contact
+# Combines touch_liquid and pre_wet functionality from original protocols
+[settings.liquid_handling.pre_aspirate_contact]
+enabled = false                 # Enable liquid contact before aspiration
+position_offset_percent = 20    # How much higher/safer from CSV position (%)
+                                # For "Source Height": adds 20% more height (safer)
+                                # For "Source Top": moves 20% closer to top (safer)
+aspirate_volume = 0             # µL to aspirate/dispense for tip conditioning
+                                # 0 = touch only (like standard/DMSO protocols)
+                                # >0 = pre-wet mode (like slippery protocol)
+
+# Post-Aspirate Tip Wicking
+# Removes residual droplets after aspiration (universal across all protocols)
+[settings.liquid_handling.post_aspirate_wick]
+enabled = true                  # Enable tip wicking after aspiration
+radius = 1                      # Touch tip radius
+v_offset_mm = -1.5              # Vertical offset from well top (mm)
+speed = 20                      # Touch tip speed
+
+# Timing Delays
+# For viscous liquids that need settling time
+[settings.liquid_handling.delays]
+post_aspirate = 0               # Seconds to wait after aspiration
+                                # 0 = no delay (standard/slippery)
+                                # 2.0 = DMSO-style delay for viscous liquids
+
+# Dispense Enhancements
+# For complete liquid ejection from viscous samples
+[settings.liquid_handling.push_out]
+enabled = true                   # Enable push-out during dispense
+volume_ul = 5                    # Fixed push-out volume in µL (recommended: 3-10µL)
+                                 # Only applies when no mixing follows
+
+# =============================================================================
+# PRESET CONFIGURATIONS
+# =============================================================================
+# Common combinations for different liquid handling scenarios.
+# Copy these values to the main sections above to apply presets.
+
+# Standard Aqueous Solutions (like original cherry_pick_protocol.py)
+# Light liquid contact for positioning confidence + tip wick
+[settings.liquid_handling.presets.standard]
+pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_volume = 0 }
+post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
+delays = { post_aspirate = 0 }
+push_out = { enabled = false }
+
+# Viscous Liquids (like original cherry_pick_protocol_DMSO.py)
+# Contact + delays for settling + push-out for complete ejection
+[settings.liquid_handling.presets.viscous]
+pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_volume = 0 }
+post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
+delays = { post_aspirate = 2.0 }
+push_out = { enabled = true, volume_ul = 5 }
+
+# Hydrophobic/Slippery Liquids (like original cherrypick_slipery.py)
+# Pre-wet tip conditioning + standard handling
+[settings.liquid_handling.presets.slippery]
+pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_volume = 5 }
+post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
+delays = { post_aspirate = 0 }
+push_out = { enabled = false }
+
+# High Precision Mode
+# Minimal interventions, maximum precision
+[settings.liquid_handling.presets.minimal]
+pre_aspirate_contact = { enabled = false }
+post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
+delays = { post_aspirate = 0 }
+push_out = { enabled = false }
+
+# Aggressive Handling
+# All features enabled for challenging liquids
+[settings.liquid_handling.presets.aggressive]
+pre_aspirate_contact = { enabled = true, position_offset_percent = 30, aspirate_volume = 10 }
+post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 15 }
+delays = { post_aspirate = 3.0 }
+push_out = { enabled = true, volume_ul = 5 }
+
+# =============================================================================
+# DECK LAYOUT CONFIGURATION
+# =============================================================================
+
+# Deck layout configuration - specify which labware goes in which slots
+# Labware calibration offsets are now defined in labware_dict.toml for each labware type
+
+# Example deck layout - modify as needed for your experiment
+[[settings.working_plate]]
+type = "source"
+labware_id = "tube_rack_96_1500ul"
+position_rack = "4"
+
+[[settings.working_plate]]
+type = "destination"
+labware_id = "384_ppv_55ul"
+position_rack = "2"
+
+[[settings.working_plate]]
+type = "tip"
+labware_id = "opentrons_96_tiprack_300ul"
+connection = "Pipette_8"
+position_rack = "5"
+
+# =============================================================================
+# CSV COLUMN DOCUMENTATION
+# =============================================================================
+# Complete reference for all available CSV columns in cherry-pick transfers
+
+# REQUIRED COLUMNS (must be present in every CSV):
+# - "Source Labware": Name of source labware (e.g., "iqb_96_tuberack_2000ul_4")
+# - "Source Well": Source well position (e.g., "A1", "H12")
+# - "Volume (ul)": Transfer volume in microliters (e.g., 50, 100.5)
+# - "Dest Labware": Name of destination labware (e.g., "pp_384_wellplate_150_ul_high_2")
+# - "Dest Well": Destination well position (e.g., "B1", "P24")
+
+# POSITIONING COLUMNS (choose ONE for source, ONE for destination):
+# Source positioning - specify EITHER Source Height OR Source Top (not both):
+# - "Source Height": Offset from well bottom in mm (e.g., 2, 1.5, 0.5)
+#                   Positive = higher from bottom, 0 = at bottom
+# - "Source Top": Offset from well top in mm (e.g., -5, -2.0, -10)
+#                Negative = down from top, 0 = at top surface
+#
+# Destination positioning - specify EITHER Dest Height OR Dest Top (not both):
+# - "Dest Height": Offset from well bottom in mm (e.g., 1, 2.5)
+# - "Dest Top": Offset from well top in mm (e.g., -3, -7.5)
+#
+# Mixing positioning (optional, only used if Mix Volume > 0):
+# - "Mix Height": Offset from well bottom for mixing (e.g., 2.0)
+#                Default: 2.0mm if not specified
+
+# LIQUID HANDLING COLUMNS (all optional, defaults applied if missing):
+# - "Mix Volume": Volume in µL for post-dispense mixing (e.g., 20, 50)
+#                0 = no mixing, >0 = mix 3 times with specified volume
+#                Default: 0 (no mixing)
+#
+# - "Flow Aspirate": Aspirate rate multiplier (e.g., 0.5, 1.0, 1.5)
+#                   1.0 = normal speed, <1.0 = slower, >1.0 = faster
+#                   Default: 1.0
+#
+# - "Flow Dispense": Dispense rate multiplier (e.g., 0.8, 1.2, 2.0)
+#                   1.0 = normal speed, <1.0 = slower, >1.0 = faster
+#                   Default: 1.0
+#
+# - "Air Gap": Air gap volume in µL (e.g., 5, 10, 20)
+#             0 = no air gap, >0 = aspirate air after liquid
+#             Prevents dripping during transport
+#             Default: 0
+#
+# - "Air Gap Rate": Air gap aspiration rate multiplier (e.g., 0.5, 1.0)
+#                  Only applies if Air Gap > 0
+#                  Default: 1.0
+
+# TIP MANAGEMENT COLUMN (optional):
+# - "Tip Action": Per-transfer tip behavior, overrides global tip_reuse setting
+#    - "new": Always get new tip (drop current if present, pick up fresh)
+#    - "keep": Keep current tip (pick up new only if none present)
+#    - "drop": Use tip for transfer then drop it immediately after
+#    - "auto": Use global tip_reuse setting from [settings.general]
+#    Default: "auto"
+
+# CSV EXAMPLES:
+# Basic CSV (minimal required columns):
+# Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top
+# tube_rack_1,A1,50,plate_2,B1,2,-5
+#
+# Advanced CSV (all features):
+# Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mix Volume,Flow Aspirate,Flow Dispense,Air Gap,Tip Action
+# tube_rack_1,A1,100,plate_2,B1,2,-5,20,0.5,1.2,10,new
+# tube_rack_1,A2,50,plate_2,B2,2,-5,0,0.8,1.0,0,keep

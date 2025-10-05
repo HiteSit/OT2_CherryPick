@@ -1,0 +1,5 @@
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top
+tube_rack_96_1500ul_4,A1,100,384_ppv_55ul_2,B1,2,-5
+tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,B2,2,-5
+tube_rack_96_1500ul_4,A3,75,384_ppv_55ul_2,B3,2,-5
+tube_rack_96_1500ul_4,A4,25,384_ppv_55ul_2,B4,2,-5

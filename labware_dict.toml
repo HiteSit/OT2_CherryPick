@@ -1,0 +1,121 @@
+# =============================================================================
+# Pipette definitions - using TOML table arrays for clear hierarchy
+# Each pipette is a complete table with integrated metadata
+# =============================================================================
+
+[[pipettes]]
+name = "Pipette_8"
+opentrons_id = "p300_multi_gen2"
+channels = 8
+volume_range = [30, 300]
+preferred_mount = "right"
+tip_connections = ["tip_rack_yellow_100ul"]
+
+[[pipettes]]
+name = "Pipette_1"
+opentrons_id = "p1000_single_gen2"
+channels = 1
+volume_range = [100, 1000]
+preferred_mount = "left"
+tip_connections = ["tip_rack_yellow_100ul"]
+
+# =============================================================================
+# Labware definitions - categorized by type using table arrays
+# Each labware item specifies its category, properties, and optional calibration offsets
+# =============================================================================
+
+# LABWARE CALIBRATION OFFSETS
+# Each labware type can have optional calibration offsets to compensate for
+# manufacturing tolerances and positioning variations. Offsets are applied to
+# ALL instances of that labware type, regardless of deck position.
+#
+# OFFSET FIELDS (all optional, units in millimeters):
+# - offset_x: X-axis offset (positive = move right, negative = move left)
+# - offset_y: Y-axis offset (positive = move toward back, negative = move toward front)
+# - offset_z: Z-axis offset (positive = move up, negative = move down)
+#
+# COORDINATE SYSTEM:
+# - X-axis: Left(-) ←→ Right(+)
+# - Y-axis: Front(-) ←→ Back(+)
+# - Z-axis: Down(-) ←→ Up(+)
+#
+# USE CASES:
+# - Compensate for slight labware manufacturing variations
+# - Account for different labware manufacturers' tolerances
+# - Fine-tune positioning for specific experimental setups
+# - Eliminate need for manual Labware Position Check in Opentrons App
+# - Ensure consistent positioning across multiple protocol runs
+#
+# ADVANTAGES OF LABWARE-BASED OFFSETS:
+# - Logical: Offsets are properties of labware types, not deck positions
+# - Reusable: Same labware type gets same calibration everywhere it's used
+# - Universal: Both settings-defined and CSV-referenced labware inherit offsets
+# - Maintainable: One place to define calibration for each labware type
+#
+# EXAMPLES:
+# [[labware]]
+# category = "tube_rack"
+# labware_id = "tube_rack_96_1500ul"
+# well_count = 96
+# well_volume = 1500
+# # This labware type needs slight positioning adjustment
+# offset_x = 0.15    # Move 0.15mm to the right
+# offset_y = -0.1    # Move 0.1mm toward front
+# offset_z = 0.05    # Move 0.05mm higher
+
+[[labware]]
+category = "tip_rack"
+labware_id = "tip_rack_yellow_100ul"
+well_count = 96
+well_volume = 100
+
+[[labware]]
+category = "tip_rack"
+labware_id = "opentrons_96_tiprack_300ul"
+well_count = 96
+well_volume = 300
+offset_x = 0.30
+offset_y = 0.10
+offset_z = -0.40
+
+[[labware]]
+category = "reservoir"
+labware_id = "reservoir_horizontal"
+well_count = 12
+well_volume = 15000
+
+[[labware]]
+category = "plate"
+labware_id = "384_pp_standard_100ul"
+well_count = 384
+well_volume = 100
+
+[[labware]]
+category = "plate"
+labware_id = "384_pp_high_150ul"
+well_count = 384
+well_volume = 150
+
+[[labware]]
+category = "plate"
+labware_id = "384_ppv_55ul"
+well_count = 384
+well_volume = 55
+offset_x = -0.50
+offset_y = 0.80
+offset_z = -0.30
+
+[[labware]]
+category = "tube_rack"
+labware_id = "tube_rack_96_2000ul"
+well_count = 96
+well_volume = 2000
+
+[[labware]]
+category = "tube_rack"
+labware_id = "tube_rack_96_1500ul"
+well_count = 96
+well_volume = 1500
+offset_x = -0.30
+offset_y = 0.90
+offset_z = 0.0
