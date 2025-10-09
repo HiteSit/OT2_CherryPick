@@ -40,6 +40,529 @@ TOML Configuration + CSV Transfers → JSON Compilation → Self-Contained Pytho
 
 ---
 
+## ⚠️ CRITICAL: TOML File Editing Requirement
+
+### The Source of Truth Problem
+
+**TOML files are the source of truth.** The current workflow is:
+
+```
+1. User manually edits TOML files (settings.toml, labware_dict.toml)
+2. helper_cherry_pick.py READS TOML files
+3. TOML data → compiled to JSON
+4. JSON → embedded in CherryPick_OT2.py
+```
+
+**Therefore, MCP tools MUST be able to:**
+1. **READ** TOML files (parse structure)
+2. **MODIFY** specific values programmatically
+3. **WRITE** back to disk while preserving:
+   - Comments
+   - Formatting
+   - Section order
+   - Human readability
+
+### TOML Editing Implementation Strategy
+
+#### Library Choice: `tomlkit` (Recommended)
+
+**Why `tomlkit` over standard `toml`?**
+
+| Feature | `toml` (stdlib) | `tomlkit` |
+|---------|-----------------|-----------|
+| Parse TOML | ✅ | ✅ |
+| Write TOML | ✅ | ✅ |
+| Preserve comments | ❌ | ✅ |
+| Preserve formatting | ❌ | ✅ |
+| Preserve whitespace | ❌ | ✅ |
+| Style-preserving edits | ❌ | ✅ |
+
+**Installation:**
+```bash
+pip install tomlkit
+```
+
+#### Core TOML Handler Implementation
+
+**File: `src/core/toml_handler.py`**
+
+```python
+"""
+TOML file handler with comment and formatting preservation.
+
+This module provides utilities to READ, MODIFY, and WRITE TOML files
+while preserving the original structure, comments, and formatting.
+"""
+
+import tomlkit
+from pathlib import Path
+from typing import Any, Dict, List
+import logging
+
+logger = logging.getLogger(__name__)
+
+class TOMLHandler:
+    """Handle TOML file operations with preservation of structure."""
+    
+    def __init__(self, filepath: str | Path):
+        self.filepath = Path(filepath)
+        self.doc = None
+        
+    def read(self) -> tomlkit.TOMLDocument:
+        """Read TOML file and return parsed document."""
+        if not self.filepath.exists():
+            raise FileNotFoundError(f"TOML file not found: {self.filepath}")
+            
+        with open(self.filepath, 'r', encoding='utf-8') as f:
+            self.doc = tomlkit.load(f)
+        return self.doc
+    
+    def write(self, doc: tomlkit.TOMLDocument = None) -> None:
+        """Write TOML document back to file, preserving formatting."""
+        if doc is None:
+            doc = self.doc
+            
+        if doc is None:
+            raise ValueError("No TOML document to write")
+            
+        # Create backup before writing
+        backup_path = self.filepath.with_suffix('.toml.backup')
+        if self.filepath.exists():
+            import shutil
+            shutil.copy2(self.filepath, backup_path)
+            logger.info(f"Created backup: {backup_path}")
+        
+        with open(self.filepath, 'w', encoding='utf-8') as f:
+            tomlkit.dump(doc, f)
+            
+        logger.info(f"Successfully wrote TOML file: {self.filepath}")
+    
+    def get_value(self, path: str) -> Any:
+        """
+        Get value at dot-notation path.
+        
+        Args:
+            path: Dot-separated path (e.g., "settings.general.tip_reuse")
+        
+        Returns:
+            Value at path
+        
+        Raises:
+            KeyError: If path doesn't exist
+        """
+        if self.doc is None:
+            self.read()
+            
+        parts = path.split('.')
+        current = self.doc
+        
+        for part in parts:
+            if part not in current:
+                raise KeyError(f"Path '{path}' not found in TOML")
+            current = current[part]
+            
+        return current
+    
+    def set_value(self, path: str, value: Any) -> Dict[str, Any]:
+        """
+        Set value at dot-notation path.
+        
+        Args:
+            path: Dot-separated path (e.g., "settings.general.tip_reuse")
+            value: New value to set
+        
+        Returns:
+            dict: {"old_value": ..., "new_value": ...}
+        """
+        if self.doc is None:
+            self.read()
+            
+        parts = path.split('.')
+        current = self.doc
+        
+        # Navigate to parent of target
+        for part in parts[:-1]:
+            if part not in current:
+                raise KeyError(f"Path '{'.'.join(parts[:-1])}' not found in TOML")
+            current = current[part]
+        
+        # Get old value and set new value
+        target_key = parts[-1]
+        if target_key not in current:
+            raise KeyError(f"Key '{target_key}' not found at path '{'.'.join(parts[:-1])}'")
+            
+        old_value = current[target_key]
+        current[target_key] = value
+        
+        logger.info(f"Updated {path}: {old_value} → {value}")
+        
+        return {"old_value": old_value, "new_value": value}
+    
+    def add_table(self, path: str, table: Dict[str, Any]) -> None:
+        """
+        Add a new table (section) to TOML.
+        
+        Args:
+            path: Dot-separated path for new table
+            table: Dictionary of values for the table
+        """
+        if self.doc is None:
+            self.read()
+            
+        parts = path.split('.')
+        current = self.doc
+        
+        # Navigate or create path to parent
+        for part in parts[:-1]:
+            if part not in current:
+                current[part] = tomlkit.table()
+            current = current[part]
+        
+        # Add new table
+        target_key = parts[-1]
+        current[target_key] = tomlkit.table()
+        current[target_key].update(table)
+        
+        logger.info(f"Added table at {path}")
+    
+    def append_array_item(self, path: str, item: Dict[str, Any]) -> None:
+        """
+        Append item to TOML array (e.g., [[labware]] or [[settings.working_plate]]).
+        
+        Args:
+            path: Dot-separated path to array
+            item: Dictionary item to append
+        """
+        if self.doc is None:
+            self.read()
+            
+        parts = path.split('.')
+        current = self.doc
+        
+        # Navigate to array
+        for part in parts:
+            if part not in current:
+                current[part] = tomlkit.aot()  # Array of tables
+            current = current[part]
+        
+        # Append item
+        current.append(item)
+        
+        logger.info(f"Appended item to array at {path}")
+
+
+def update_settings_value(
+    settings_file: str,
+    setting_path: str,
+    value: Any
+) -> Dict[str, Any]:
+    """
+    Update a specific setting in settings.toml.
+    
+    Args:
+        settings_file: Path to settings.toml
+        setting_path: Dot-notation path (e.g., "general.tip_reuse")
+        value: New value
+    
+    Returns:
+        dict: {"success": bool, "old_value": ..., "new_value": ..., "message": str}
+    """
+    try:
+        handler = TOMLHandler(settings_file)
+        handler.read()
+        
+        result = handler.set_value(setting_path, value)
+        handler.write()
+        
+        return {
+            "success": True,
+            "old_value": result["old_value"],
+            "new_value": result["new_value"],
+            "message": f"Successfully updated {setting_path}"
+        }
+    except Exception as e:
+        logger.error(f"Failed to update setting: {e}")
+        return {
+            "success": False,
+            "old_value": None,
+            "new_value": None,
+            "message": f"Error: {str(e)}"
+        }
+
+
+def apply_preset_to_settings(
+    settings_file: str,
+    preset_name: str
+) -> Dict[str, Any]:
+    """
+    Apply liquid handling preset from presets section to active config.
+    
+    Args:
+        settings_file: Path to settings.toml
+        preset_name: Name of preset (standard, viscous, slippery, minimal, aggressive)
+    
+    Returns:
+        dict: {"success": bool, "applied_preset": str, "changes": dict}
+    """
+    try:
+        handler = TOMLHandler(settings_file)
+        doc = handler.read()
+        
+        # Get preset configuration
+        preset_path = f"settings.liquid_handling.presets.{preset_name}"
+        if preset_path not in str(doc):
+            available = list(doc["settings"]["liquid_handling"]["presets"].keys())
+            raise ValueError(
+                f"Preset '{preset_name}' not found. "
+                f"Available presets: {available}"
+            )
+        
+        preset_config = doc["settings"]["liquid_handling"]["presets"][preset_name]
+        
+        # Apply each preset value to active liquid_handling section
+        changes = {}
+        for section, values in preset_config.items():
+            for key, value in values.items():
+                path = f"settings.liquid_handling.{section}.{key}"
+                old_value = handler.get_value(path)
+                handler.set_value(path, value)
+                changes[path] = {"old": old_value, "new": value}
+        
+        handler.write()
+        
+        return {
+            "success": True,
+            "applied_preset": preset_name,
+            "changes": changes
+        }
+    except Exception as e:
+        logger.error(f"Failed to apply preset: {e}")
+        return {
+            "success": False,
+            "applied_preset": None,
+            "changes": {},
+            "message": f"Error: {str(e)}"
+        }
+
+
+def add_labware_to_dict(
+    labware_file: str,
+    labware_id: str,
+    category: str,
+    well_count: int,
+    well_volume: int,
+    offset_x: float = 0.0,
+    offset_y: float = 0.0,
+    offset_z: float = 0.0
+) -> Dict[str, Any]:
+    """
+    Add new labware definition to labware_dict.toml.
+    
+    Args:
+        labware_file: Path to labware_dict.toml
+        labware_id: Unique identifier
+        category: Labware category (plate, tube_rack, tip_rack, reservoir)
+        well_count: Number of wells
+        well_volume: Well volume in µL
+        offset_x/y/z: Calibration offsets in mm
+    
+    Returns:
+        dict: {"success": bool, "labware_id": str, "message": str}
+    """
+    try:
+        handler = TOMLHandler(labware_file)
+        doc = handler.read()
+        
+        # Check if labware_id already exists
+        if "labware" in doc:
+            for item in doc["labware"]:
+                if item.get("labware_id") == labware_id:
+                    raise ValueError(f"Labware '{labware_id}' already exists")
+        
+        # Create labware definition
+        labware_def = {
+            "category": category,
+            "labware_id": labware_id,
+            "well_count": well_count,
+            "well_volume": well_volume
+        }
+        
+        # Add offsets only if non-zero
+        if offset_x != 0.0:
+            labware_def["offset_x"] = offset_x
+        if offset_y != 0.0:
+            labware_def["offset_y"] = offset_y
+        if offset_z != 0.0:
+            labware_def["offset_z"] = offset_z
+        
+        # Append to labware array
+        handler.append_array_item("labware", labware_def)
+        handler.write()
+        
+        return {
+            "success": True,
+            "labware_id": labware_id,
+            "message": f"Successfully added labware '{labware_id}'"
+        }
+    except Exception as e:
+        logger.error(f"Failed to add labware: {e}")
+        return {
+            "success": False,
+            "labware_id": None,
+            "message": f"Error: {str(e)}"
+        }
+```
+
+#### Example Usage in MCP Tools
+
+**File: `src/tools/config_tools.py`**
+
+```python
+from mcp.server.fastmcp import FastMCP
+from ..core.toml_handler import (
+    update_settings_value,
+    apply_preset_to_settings,
+    add_labware_to_dict
+)
+
+mcp = FastMCP("opentron-cherry-pick")
+
+@mcp.tool()
+async def update_settings(
+    setting_path: str,
+    value: str | int | float | bool,
+    settings_file: str = "settings.toml"
+) -> dict:
+    """
+    Update specific setting in settings.toml while preserving formatting.
+    
+    Args:
+        setting_path: Dot-notation path (e.g., "general.tip_reuse", "liquid_handling.push_out.enabled")
+        value: New value to set
+        settings_file: Path to settings file
+    
+    Returns:
+        dict: {
+            "success": bool,
+            "old_value": any,
+            "new_value": any,
+            "message": str
+        }
+    
+    Example:
+        update_settings("general.tip_reuse", "never")
+        update_settings("liquid_handling.push_out.volume_ul", 10)
+        update_settings("liquid_handling.pre_aspirate_contact.enabled", True)
+    """
+    return update_settings_value(settings_file, setting_path, value)
+
+
+@mcp.tool()
+async def apply_liquid_preset(
+    preset_name: str,
+    settings_file: str = "settings.toml"
+) -> dict:
+    """
+    Apply a liquid handling preset from settings.toml presets section.
+    
+    Copies preset configuration to active liquid_handling section.
+    
+    Args:
+        preset_name: Name of preset (standard/viscous/slippery/minimal/aggressive)
+        settings_file: Path to settings file
+    
+    Returns:
+        dict: {
+            "success": bool,
+            "applied_preset": str,
+            "changes": dict  # What changed
+        }
+    
+    Example:
+        apply_liquid_preset("viscous")  # For DMSO-like liquids
+        apply_liquid_preset("slippery")  # For hydrophobic liquids
+    """
+    return apply_preset_to_settings(settings_file, preset_name)
+
+
+@mcp.tool()
+async def add_labware_definition(
+    labware_id: str,
+    category: str,
+    well_count: int,
+    well_volume: int,
+    offset_x: float = 0.0,
+    offset_y: float = 0.0,
+    offset_z: float = 0.0,
+    labware_file: str = "labware_dict.toml"
+) -> dict:
+    """
+    Add new labware definition to labware dictionary.
+    
+    Args:
+        labware_id: Unique identifier for labware type
+        category: Labware category (plate, tube_rack, tip_rack, reservoir)
+        well_count: Number of wells
+        well_volume: Well volume in µL
+        offset_x/y/z: Calibration offsets in mm
+        labware_file: Path to labware dictionary
+    
+    Returns:
+        dict: {
+            "success": bool,
+            "labware_id": str,
+            "message": str
+        }
+    
+    Example:
+        add_labware_definition(
+            labware_id="custom_plate_96_200ul",
+            category="plate",
+            well_count=96,
+            well_volume=200,
+            offset_x=-0.2,
+            offset_y=0.3
+        )
+    """
+    return add_labware_to_dict(
+        labware_file, labware_id, category, well_count, well_volume,
+        offset_x, offset_y, offset_z
+    )
+```
+
+### Why This Matters
+
+**Data Flow with TOML Editing:**
+
+```
+1. LLM reads config://settings resource → understands current state
+2. LLM calls update_settings() → TOML file modified in place
+3. User (or LLM) runs generate_protocol() → helper reads updated TOML
+4. TOML → JSON → embedded in protocol
+5. Protocol ready for simulation/deployment
+```
+
+**Without TOML Editing:**
+- User must manually edit files (defeats purpose of MCP)
+- No programmatic configuration
+- Can't have automated workflows
+
+**With TOML Editing:**
+- ✅ LLM can configure experiments autonomously
+- ✅ Guided setup workflows work correctly
+- ✅ Settings preserved with comments/formatting
+- ✅ Full audit trail of changes
+
+### Critical Implementation Notes
+
+1. **Always create backups** before writing (`.toml.backup` files)
+2. **Validate inputs** before modifying TOML
+3. **Log all changes** for audit trail
+4. **Test with edge cases**: nested tables, arrays, inline tables
+5. **Handle concurrent access**: File locking if needed
+
+---
+
 ## MCP Server Architecture Fundamentals
 
 ### Core Primitives
@@ -206,96 +729,21 @@ async def validate_configuration(
 #### 4. `update_settings`
 **Purpose**: Programmatic modification of settings.toml
 
-```python
-@mcp.tool()
-async def update_settings(
-    setting_path: str,
-    value: str | int | float | bool,
-    settings_file: str = "settings.toml"
-) -> dict:
-    """
-    Update specific setting in settings.toml.
-    
-    Args:
-        setting_path: Dot-notation path (e.g., "general.tip_reuse", "liquid_handling.push_out.enabled")
-        value: New value to set
-        settings_file: Path to settings file
-    
-    Returns:
-        dict: {
-            "success": bool,
-            "old_value": any,
-            "new_value": any,
-            "message": str
-        }
-    """
-```
+See implementation in TOML Editing section above.
 
 ---
 
 #### 5. `apply_liquid_preset`
 **Purpose**: Apply predefined liquid handling presets
 
-```python
-@mcp.tool()
-async def apply_liquid_preset(
-    preset_name: str,  # "standard", "viscous", "slippery", "minimal", "aggressive"
-    settings_file: str = "settings.toml"
-) -> dict:
-    """
-    Apply a liquid handling preset from settings.toml presets section.
-    
-    Copies preset configuration to active liquid_handling section.
-    
-    Args:
-        preset_name: Name of preset (standard/viscous/slippery/minimal/aggressive)
-        settings_file: Path to settings file
-    
-    Returns:
-        dict: {
-            "success": bool,
-            "applied_preset": str,
-            "changes": dict  # What changed
-        }
-    """
-```
+See implementation in TOML Editing section above.
 
 ---
 
 #### 6. `add_labware_definition`
 **Purpose**: Add new labware type to labware_dict.toml
 
-```python
-@mcp.tool()
-async def add_labware_definition(
-    labware_id: str,
-    category: str,  # "plate", "tube_rack", "tip_rack", "reservoir"
-    well_count: int,
-    well_volume: int,
-    offset_x: float = 0.0,
-    offset_y: float = 0.0,
-    offset_z: float = 0.0,
-    labware_file: str = "labware_dict.toml"
-) -> dict:
-    """
-    Add new labware definition to labware dictionary.
-    
-    Args:
-        labware_id: Unique identifier for labware type
-        category: Labware category
-        well_count: Number of wells
-        well_volume: Well volume in µL
-        offset_x/y/z: Calibration offsets in mm
-        labware_file: Path to labware dictionary
-    
-    Returns:
-        dict: {
-            "success": bool,
-            "labware_id": str,
-            "message": str
-        }
-    """
-```
+See implementation in TOML Editing section above.
 
 ---
 
@@ -553,7 +1001,7 @@ opentron_cherry_pick_mcp/
 │   ├── core/
 │   │   ├── __init__.py
 │   │   ├── validation.py      # Configuration validation logic
-│   │   ├── toml_handler.py    # TOML read/write utilities
+│   │   ├── toml_handler.py    # TOML read/write utilities (tomlkit)
 │   │   └── simulation.py      # Simulation execution wrapper
 │   └── utils/
 │       ├── __init__.py
@@ -562,6 +1010,7 @@ opentron_cherry_pick_mcp/
 ├── tests/
 │   ├── test_tools.py
 │   ├── test_resources.py
+│   ├── test_toml_handler.py   # Critical: test TOML preservation
 │   └── test_integration.py
 ├── pyproject.toml
 ├── README.md
@@ -615,6 +1064,25 @@ if __name__ == "__main__":
     main()
 ```
 
+### Dependencies (pyproject.toml)
+
+```toml
+[project]
+name = "opentron-cherry-pick-mcp"
+version = "0.1.0"
+description = "MCP server for OpenTron OT-2 cherry-pick protocol generation"
+requires-python = ">=3.11"
+
+dependencies = [
+    "mcp>=1.2.0",
+    "tomlkit>=0.12.0",  # CRITICAL: For format-preserving TOML editing
+    "toml>=0.10.2",     # For compatibility with existing helper code
+]
+
+[project.scripts]
+opentron-mcp-server = "opentron_cherry_pick_mcp.server:main"
+```
+
 ### Claude Desktop Configuration
 
 Add to `claude_desktop_config.json`:
@@ -643,6 +1111,7 @@ Add to `claude_desktop_config.json`:
 ## Development Phases
 
 ### Phase 1: Core Protocol Tools (MVP)
+- ✅ TOML handler with `tomlkit` (CRITICAL FOUNDATION)
 - `generate_protocol`
 - `simulate_protocol`
 - `validate_configuration`
@@ -652,9 +1121,9 @@ Add to `claude_desktop_config.json`:
 **Goal**: Basic protocol generation and validation via MCP
 
 ### Phase 2: Configuration Management
-- `update_settings`
-- `apply_liquid_preset`
-- `add_labware_definition`
+- `update_settings` (uses TOML handler)
+- `apply_liquid_preset` (uses TOML handler)
+- `add_labware_definition` (uses TOML handler)
 - Additional resources: `status://deck-layout`, `status://liquid-handling-config`
 
 **Goal**: Programmatic configuration without manual TOML editing
@@ -731,7 +1200,7 @@ Validate early and often:
 - Set timeouts to prevent hanging
 
 ### 3. TOML/CSV Parsing
-- Use safe parsing libraries (toml, csv)
+- Use safe parsing libraries (tomlkit, toml, csv)
 - Catch and report malformed input gracefully
 - Limit file sizes
 
@@ -742,7 +1211,7 @@ Validate early and often:
 ### 5. Read-Only by Default
 - Most operations should be read-only or create new files
 - Require explicit confirmation for destructive operations
-- Backup configs before modification
+- **Always backup configs before modification** (`.toml.backup`)
 
 ---
 
@@ -750,6 +1219,7 @@ Validate early and often:
 
 ### Unit Tests
 - Individual tool functions
+- **TOML editing with format preservation** (CRITICAL)
 - TOML/CSV parsing and validation
 - Error handling and edge cases
 
@@ -757,6 +1227,7 @@ Validate early and often:
 - Full workflow execution
 - Resource retrieval
 - Prompt rendering
+- **TOML modify → generate protocol → simulate** (end-to-end)
 
 ### Simulation Tests
 - Generate and simulate various protocol configurations
@@ -767,6 +1238,28 @@ Validate early and often:
 - JSON-RPC message formatting
 - STDIO communication
 - Error propagation
+
+### TOML Preservation Tests (CRITICAL)
+```python
+def test_toml_comment_preservation():
+    """Ensure comments are preserved when updating values."""
+    original = """
+    # This is a comment
+    [settings.general]
+    tip_reuse = "always"  # inline comment
+    """
+    
+    handler = TOMLHandler("test.toml")
+    handler.read()
+    handler.set_value("settings.general.tip_reuse", "never")
+    handler.write()
+    
+    # Read back and verify comments still exist
+    with open("test.toml") as f:
+        content = f.read()
+        assert "# This is a comment" in content
+        assert "# inline comment" in content
+```
 
 ---
 
@@ -789,20 +1282,23 @@ Validate early and often:
 1. **Programmatic configuration** - No manual editing, fewer mistakes
 2. **Audit trail** - Log all MCP calls for experiment provenance
 3. **Consistent formatting** - AI generates valid TOML/CSV every time
+4. **Format preservation** - Human-readable configs maintained
 
 ---
 
 ## Next Steps
 
 1. **Proof of Concept** (1-2 days)
-   - Create basic FastMCP server with 3 core tools
+   - Install `tomlkit` and test TOML editing
+   - Create basic FastMCP server with TOML handler
+   - Implement 3 core tools (generate, simulate, validate)
    - Test with Claude Desktop
    - Validate STDIO communication
 
 2. **Core Implementation** (1 week)
    - Implement Phase 1 tools and resources
    - Add comprehensive error handling
-   - Write unit tests
+   - Write unit tests (especially TOML preservation)
 
 3. **User Testing** (ongoing)
    - Test with real experiment workflows
@@ -832,10 +1328,22 @@ Validate early and often:
 - DigitalOcean MCP Guide: https://www.digitalocean.com/community/tutorials/mcp-server-python
 - Production Best Practices: https://thenewstack.io/15-best-practices-for-building-mcp-servers-in-production/
 
+### TOML Libraries
+- tomlkit documentation: https://tomlkit.readthedocs.io/
+- tomlkit GitHub: https://github.com/sdispater/tomlkit
+
 ---
 
 ## Conclusion
 
-Integrating the OpenTron cherry-pick system with MCP will transform it from a script-based tool into an AI-native system where users can express experimental intent in natural language and receive validated, optimized protocols. The key is designing high-level, task-oriented tools that abstract away implementation details while providing the LLM with sufficient context through resources to make intelligent decisions.
+Integrating the OpenTron cherry-pick system with MCP will transform it from a script-based tool into an AI-native system where users can express experimental intent in natural language and receive validated, optimized protocols.
 
-The phased implementation approach ensures we deliver value quickly (Phase 1 MVP) while building toward a comprehensive, production-ready system (Phases 2-4).
+**The TOML editing capability is CRITICAL** - without it, the MCP server would just be a read-only wrapper. With `tomlkit`, we enable:
+- ✅ Programmatic configuration management
+- ✅ Preservation of human-readable formatting
+- ✅ Comment and structure retention
+- ✅ True automation of the entire workflow
+
+The key is designing high-level, task-oriented tools that abstract away implementation details while providing the LLM with sufficient context through resources to make intelligent decisions.
+
+The phased implementation approach ensures we deliver value quickly (Phase 1 MVP with TOML editing foundation) while building toward a comprehensive, production-ready system (Phases 2-4).
