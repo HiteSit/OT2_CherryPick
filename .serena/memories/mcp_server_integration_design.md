@@ -6,6 +6,35 @@ This document outlines the design and implementation strategy for integrating th
 
 ---
 
+## What is MCP (Model Context Protocol)?
+
+**Model Context Protocol (MCP)** is an open standard that enables seamless integration between AI applications and external data sources, tools, and services. It provides a universal protocol for connecting AI assistants to various systems through a standardized interface.
+
+### Core Concepts
+
+MCP defines three main primitives:
+- **Tools** - Functions that AI can execute to perform actions
+- **Resources** - URI-addressable data sources that AI can read
+- **Prompts** - Reusable templates for common workflows
+
+### Why MCP for OpenTron?
+
+MCP transforms the OpenTron system from a script-based tool into an AI-native system where:
+- Users describe experiments in natural language
+- AI configures settings programmatically
+- Complete workflows execute end-to-end automatically
+- Configuration remains human-readable and version-controlled
+
+### Key Resources
+
+- **Official Specification**: https://spec.modelcontextprotocol.io/
+- **Main Documentation**: https://modelcontextprotocol.io/
+- **Python SDK**: https://github.com/modelcontextprotocol/python-sdk
+- **FastMCP Framework**: https://github.com/jlowin/fastmcp (modern Python implementation)
+- **Server Examples**: https://github.com/modelcontextprotocol/servers
+
+---
+
 ## Current System Architecture Analysis
 
 ### Workflow Overview
@@ -202,13 +231,32 @@ MCP tools should expose these helper functions through clean interfaces:
 pip install mcp-use
 ```
 
+### Testing LLM Configuration
+
+**⚠️ IMPORTANT: Use Mistral for Testing**
+
+All mcp-use testing should be performed with **Mistral Large** (specifically `mistral-large-latest` model). This is the standardized testing LLM for this project.
+
+**Why Mistral only:**
+- Consistent behavior across all test runs
+- API key already configured in environment variables
+- Cost-effective for extensive testing
+- Reference implementation in `mcp-use_example.py`
+
+**Configuration:**
+```python
+from langchain_mistralai import ChatMistralAI
+
+llm = ChatMistralAI(model="mistral-large-latest")
+```
+
 ### Basic Testing Pattern
 
-The testing workflow involves creating an MCP client that connects to your server, pairing it with an LLM, and creating an agent that exercises the server's tools:
+The testing workflow involves creating an MCP client that connects to your server, pairing it with Mistral, and creating an agent that exercises the server's tools:
 
 **Key Components:**
 1. **MCPClient** - Connects to your MCP server via config
-2. **LLM** - Any LangChain-compatible model (OpenAI, Anthropic, Mistral, etc.)
+2. **Mistral LLM** - ChatMistralAI with mistral-large-latest
 3. **MCPAgent** - Orchestrates LLM calls with server tools
 
 ### Configuration for Testing
@@ -240,7 +288,7 @@ Create a test configuration file (e.g., `test_config.json`) that points to your 
 
 The test script should:
 - Load MCP server configuration
-- Initialize LLM client (Mistral, OpenAI, etc.)
+- Initialize Mistral LLM client
 - Create agent with access to server tools
 - Run test queries that exercise server functionality
 - Validate responses and tool execution
@@ -277,7 +325,7 @@ The test script should:
 Reference implementation at `mcp-use_example.py` shows the basic pattern:
 - Async execution via asyncio
 - MCPClient initialization from config
-- LLM setup (Mistral in this case, but any LangChain LLM works)
+- Mistral LLM setup
 - Agent creation with max_steps control
 - Natural language query execution
 
@@ -302,14 +350,9 @@ Reference implementation at `mcp-use_example.py` shows the basic pattern:
 3. **Regression Testing**
    - Maintain suite of test queries
    - Run after any server changes
-   - Compare outputs for consistency
+   - Compare outputs for consistency with Mistral
 
-4. **LLM Model Testing**
-   - Test with different LLMs (GPT-4, Claude, Mistral)
-   - Verify tool selection is consistent
-   - Validate response quality
-
-5. **Error Scenario Testing**
+4. **Error Scenario Testing**
    - Invalid TOML paths
    - Missing files
    - Malformed CSV data
@@ -319,7 +362,7 @@ Reference implementation at `mcp-use_example.py` shows the basic pattern:
 
 **Development Workflow:**
 1. Implement new MCP tool
-2. Write mcp-use test for tool functionality
+2. Write mcp-use test script using Mistral
 3. Run test with `python test_script.py`
 4. Iterate based on results
 5. Add test to regression suite
@@ -332,11 +375,11 @@ Reference implementation at `mcp-use_example.py` shows the basic pattern:
 
 ### Integration with CI/CD
 
-mcp-use enables automated testing in continuous integration:
+mcp-use with Mistral enables automated testing in continuous integration:
 - Run test suite on every commit
 - Validate server functionality before deployment
 - Catch breaking changes early
-- Ensure cross-LLM compatibility
+- Consistent testing with same LLM model
 
 ---
 
@@ -522,7 +565,7 @@ ot2_cherrypick_mcp/
 │   ├── test_tools.py
 │   ├── test_resources.py
 │   ├── test_toml_handler.py   # TOML preservation tests
-│   ├── test_mcp_use_integration.py  # mcp-use based tests
+│   ├── test_mcp_use_integration.py  # mcp-use based tests with Mistral
 │   └── test_integration.py
 ├── pyproject.toml
 ├── README.md
@@ -546,7 +589,8 @@ Minimal, focused dependencies:
 - `toml` - Compatibility with existing helper code
 
 Development dependencies:
-- `mcp-use` - For testing and validation
+- `mcp-use` - For testing and validation with Mistral
+- `langchain-mistralai` - Mistral LLM for testing
 - Standard testing frameworks
 
 ### Claude Desktop Integration
@@ -617,7 +661,7 @@ ot2_cherrypick_mcp/                # NEW: MCP server package
 └── tests/
     ├── test_tools.py              # NEW: Tool tests
     ├── test_toml_handler.py       # NEW: TOML preservation tests
-    ├── test_mcp_use_basic.py      # NEW: Basic mcp-use integration tests
+    ├── test_mcp_use_basic.py      # NEW: Basic mcp-use tests with Mistral
     └── test_validation.py         # NEW: Validation tests
 ```
 
@@ -640,12 +684,12 @@ Parallel operation: Original script-based workflow + new MCP interface
 - ✅ LLM can generate protocols programmatically
 - ✅ LLM can simulate and validate
 - ✅ TOML editing foundation established
-- ✅ Basic mcp-use testing framework in place
+- ✅ Basic mcp-use testing framework with Mistral in place
 
 **Testing Strategy:**
 - Unit tests for each tool
 - TOML preservation tests (comment/format retention)
-- mcp-use integration tests for basic queries
+- mcp-use integration tests with Mistral for basic queries
 
 ---
 
@@ -664,7 +708,7 @@ ot2_cherrypick_mcp/
 │       └── status_resources.py    # NEW: Status visualization
 └── tests/
     ├── test_config_tools.py       # NEW: Config tool tests
-    └── test_mcp_use_config.py     # NEW: Config management tests via mcp-use
+    └── test_mcp_use_config.py     # NEW: Config tests via mcp-use with Mistral
 ```
 
 #### Existing Files Enhanced
@@ -683,8 +727,8 @@ TOML files become programmatically modifiable with full preservation
 
 **Testing Strategy:**
 - TOML modification tests with format verification
-- mcp-use tests for preset application
-- mcp-use tests for configuration workflows
+- mcp-use tests with Mistral for preset application
+- mcp-use tests with Mistral for configuration workflows
 
 **Workflow Evolution:**
 - Before: "Edit settings.toml manually, then run script"
@@ -710,7 +754,7 @@ ot2_cherrypick_mcp/
 └── tests/
     ├── test_workflow_tools.py     # NEW: Workflow integration
     ├── test_prompts.py            # NEW: Prompt rendering
-    └── test_mcp_use_e2e.py        # NEW: End-to-end mcp-use tests
+    └── test_mcp_use_e2e.py        # NEW: End-to-end tests with Mistral
 ```
 
 #### Existing Files Modified
@@ -728,7 +772,7 @@ Full automation: natural language → validated protocol
 - ✅ Multi-step AI orchestration
 
 **Testing Strategy:**
-- Complete workflow tests via mcp-use
+- Complete workflow tests via mcp-use with Mistral
 - Multi-tool chaining validation
 - Error recovery testing
 
@@ -764,7 +808,7 @@ ot2_cherrypick_mcp/
 └── tests/
     ├── test_diagnostics.py        # NEW: Diagnostic tests
     ├── test_robot_integration.py  # NEW: Robot API tests
-    └── test_mcp_use_comprehensive.py  # NEW: Full test suite
+    └── test_mcp_use_comprehensive.py  # NEW: Full test suite with Mistral
 ```
 
 #### Files Potentially Archived
@@ -783,8 +827,8 @@ Production-ready MCP server with comprehensive capabilities
 - ✅ Complete audit trails
 
 **Testing Strategy:**
-- Comprehensive mcp-use regression suite
-- Cross-LLM compatibility testing
+- Comprehensive mcp-use regression suite with Mistral
+- Mistral-based consistency testing
 - Error scenario coverage
 - Performance benchmarking
 
@@ -801,23 +845,17 @@ Natural language → AI configuration → validation → simulation → deployme
 - Configuration validation
 - Error handling
 
-### mcp-use Integration Testing
-- Tool execution via agent
+### mcp-use Integration Testing with Mistral
+- Tool execution via Mistral agent
 - Resource access patterns
 - Multi-tool workflows
 - Error scenarios
+- All testing standardized on mistral-large-latest
 
 ### Regression Testing
 - Test query suite maintained across development
 - Run on every change
-- Validate consistency across LLMs
-
-### Cross-LLM Testing
-Test with multiple models via mcp-use:
-- OpenAI GPT-4
-- Anthropic Claude
-- Mistral Large
-- Verify tool selection and execution consistency
+- Validate consistency with Mistral responses
 
 ---
 
@@ -903,7 +941,7 @@ Validate early and often:
 2. **Reusable across clients** - Claude Desktop, VS Code, custom apps
 3. **Version controlled** - Server code alongside protocol code
 4. **Extensible** - Easy to add capabilities
-5. **Testable** - mcp-use enables automated testing
+5. **Testable** - mcp-use with Mistral enables automated testing
 
 ### For Reproducibility
 1. **Programmatic configuration** - Fewer manual errors
@@ -937,7 +975,7 @@ Validate early and often:
 
 #### Created (MCP Server)
 - ✨ `ot2_cherrypick_mcp/` - Entire MCP server package
-  - Phase 1: Core tools + TOML handler + mcp-use tests
+  - Phase 1: Core tools + TOML handler + mcp-use tests with Mistral
   - Phase 2: Configuration management
   - Phase 3: Workflow orchestration
   - Phase 4: Advanced diagnostics
@@ -947,7 +985,7 @@ Validate early and often:
 **Phase 1:** Dual-mode (script OR MCP)
 **Phase 2:** MCP preferred for config
 **Phase 3:** MCP handles full workflows
-**Phase 4:** Script-based workflow deprecated, mcp-use test suite complete
+**Phase 4:** Script-based workflow deprecated, mcp-use test suite with Mistral complete
 
 ---
 
@@ -958,18 +996,18 @@ Validate early and often:
    - Test TOML editing preservation
    - Create basic FastMCP server with TOML handler
    - Implement 3 core tools
-   - Write mcp-use test script
+   - Write mcp-use test script with Mistral
    - Validate STDIO communication
 
 2. **Core Implementation** (1 week)
    - Implement Phase 1 tools and resources
    - Comprehensive error handling
    - Unit tests + TOML preservation tests
-   - mcp-use integration test suite
+   - mcp-use integration test suite with Mistral
 
 3. **User Testing** (ongoing)
    - Real experiment workflows
-   - mcp-use automated regression tests
+   - mcp-use automated regression tests with Mistral
    - Feedback on tool design
    - Refine prompts and errors
 
@@ -977,29 +1015,30 @@ Validate early and often:
    - API documentation
    - Workflow examples
    - Troubleshooting guide
-   - mcp-use testing guide
+   - mcp-use testing guide with Mistral setup
 
 ---
 
 ## References
 
 ### MCP Documentation
-- Official MCP Docs: https://modelcontextprotocol.io/
-- Python SDK: https://github.com/modelcontextprotocol/python-sdk
-- FastMCP Framework: https://github.com/jlowin/fastmcp
+- **Official Specification**: https://spec.modelcontextprotocol.io/
+- **Main Documentation**: https://modelcontextprotocol.io/
+- **Python SDK**: https://github.com/modelcontextprotocol/python-sdk
+- **FastMCP Framework**: https://github.com/jlowin/fastmcp
 
 ### Testing Tools
-- mcp-use GitHub: https://github.com/mcp-use/mcp-use
-- mcp-use documentation for integration testing
+- **mcp-use GitHub**: https://github.com/mcp-use/mcp-use
+- **mcp-use documentation** for integration testing
 
 ### TOML Libraries
-- tomlkit documentation: https://tomlkit.readthedocs.io/
-- tomlkit GitHub: https://github.com/sdispater/tomlkit
+- **tomlkit documentation**: https://tomlkit.readthedocs.io/
+- **tomlkit GitHub**: https://github.com/sdispater/tomlkit
 
 ### Implementation Examples
-- Weather server: https://github.com/jalateras/weather
-- Filesystem server: https://github.com/punkpeye/mcp-filesystem-python
-- Official examples: https://github.com/modelcontextprotocol/servers
+- **Weather server**: https://github.com/jalateras/weather
+- **Filesystem server**: https://github.com/punkpeye/mcp-filesystem-python
+- **Official examples**: https://github.com/modelcontextprotocol/servers
 
 ---
 
@@ -1010,9 +1049,9 @@ Integrating the OpenTron cherry-pick system with MCP transforms it from a script
 **Critical Success Factors:**
 
 1. **TOML Editing with `tomlkit`** - Enables programmatic configuration while preserving human readability
-2. **Testing with `mcp-use`** - Ensures server quality through automated testing with real LLMs
+2. **Testing with `mcp-use` and Mistral** - Ensures server quality through automated testing with consistent LLM behavior
 3. **High-Level Tool Design** - Task-oriented abstractions rather than low-level operations
 4. **Phased Implementation** - Deliver value quickly (Phase 1) while building toward comprehensive system (Phases 2-4)
 5. **Backward Compatibility** - Original workflows remain functional throughout evolution
 
-The phased approach ensures continuous value delivery while maintaining system stability. Each phase is independently testable via mcp-use, enabling confident iteration toward the full production system.
+The phased approach ensures continuous value delivery while maintaining system stability. Each phase is independently testable via mcp-use with Mistral, enabling confident iteration toward the full production system.
