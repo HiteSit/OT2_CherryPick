@@ -4,6 +4,8 @@
 
 This document outlines the design and implementation strategy for integrating the OpenTron OT-2 cherry-pick protocol system into a Model Context Protocol (MCP) server, enabling Claude Desktop and other MCP clients to interact programmatically with the protocol generation workflow.
 
+**Key Architectural Decision:** The MCP server will be integrated directly into the existing OT2_CherryPick repository structure, not as a separate nested project. The repository root will become a UV-compatible Python package containing both the existing protocol generation system and the new MCP server code.
+
 ---
 
 ## What is MCP (Model Context Protocol)?
@@ -52,6 +54,31 @@ TOML Configuration + CSV Transfers → JSON Compilation → Self-Contained Pytho
 4. **helper_cherry_pick.py** - Compiler that generates JSON and embeds it into protocol
 5. **CherryPick_OT2.py** - Executable OT-2 protocol with embedded JSON in `get_values()`
 6. **simulate_protocol.sh** - Orchestration script (helper → simulation → clipboard → optional deployment)
+
+### Current Repository Structure (Pre-MCP)
+
+```
+OT2_CherryPick/
+├── .gitignore
+├── .serena/                       # Serena MCP metadata
+├── AGENTS.md
+├── CLAUDE.md                      # Project instructions
+├── CherryPick_OT2.py             # Auto-generated protocol
+├── CSVs/                          # Transfer definitions
+│   ├── example_advanced.csv
+│   ├── example_basic.csv
+│   └── example_multi_mode.csv
+├── copy_essentials.sh
+├── helper_cherry_pick.py         # Core compiler
+├── labware_dict.toml             # Hardware catalog
+├── mcp-use_example.py            # Testing example
+├── notebooks/                     # Analysis notebooks
+├── OT2_UserGuide/                # Documentation
+├── projects/                      # Experiment archives
+├── scripts_library/              # Utility scripts
+├── settings.toml                 # Protocol parameters
+└── simulate_protocol.sh          # Orchestration script
+```
 
 ### User Interaction Points
 
@@ -115,7 +142,7 @@ pip install tomlkit
 
 The TOML handler should provide a structured API for reading, modifying, and writing TOML files while preserving the original document structure. Key architectural components:
 
-**File: `src/core/toml_handler.py`**
+**File: `src/ot2_cherrypick_mcp/core/toml_handler.py`**
 
 The handler should encapsulate:
 - Document loading with encoding safety
@@ -228,7 +255,7 @@ MCP tools should expose these helper functions through clean interfaces:
 ### Installation and Setup
 
 ```bash
-pip install mcp-use
+pip install mcp-use langchain-mistralai
 ```
 
 ### Testing LLM Configuration
@@ -261,7 +288,7 @@ The testing workflow involves creating an MCP client that connects to your serve
 
 ### Configuration for Testing
 
-Create a test configuration file (e.g., `test_config.json`) that points to your MCP server:
+Create a test configuration file (e.g., `test_ot2_mcp.json`) that points to your MCP server:
 
 ```json
 {
@@ -270,17 +297,19 @@ Create a test configuration file (e.g., `test_config.json`) that points to your 
       "command": "uv",
       "args": [
         "--directory",
-        "/path/to/ot2_cherrypick_mcp",
+        "/mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick",
         "run",
         "ot2-mcp-server"
       ],
       "env": {
-        "LABWARE_PATH": "/path/to/labware/directory"
+        "LABWARE_PATH": "/mnt/c/Users/ricca/AppData/Roaming/Opentrons/labware"
       }
     }
   }
 }
 ```
+
+**Note:** The `--directory` points to the repository root (not a subdirectory), because the entire OT2_CherryPick repository becomes the UV project.
 
 ### Testing Architecture
 
@@ -533,46 +562,111 @@ Prompts guide users through multi-step workflows using natural language template
 
 ## Implementation Architecture
 
-### Directory Structure
+### Integrated Repository Structure
+
+**Key Architectural Principle:** The MCP server is integrated directly into the existing repository. The repository root becomes a UV-compatible Python package containing both the existing protocol system and the new MCP server.
+
+### Directory Structure After MCP Integration
 
 ```
-ot2_cherrypick_mcp/
-├── src/
-│   ├── __init__.py
-│   ├── server.py              # FastMCP server entry point
-│   ├── tools/
-│   │   ├── __init__.py
-│   │   ├── protocol_tools.py  # Protocol generation and simulation
-│   │   ├── config_tools.py    # Settings and configuration management
-│   │   └── labware_tools.py   # Labware and CSV operations
-│   ├── resources/
-│   │   ├── __init__.py
-│   │   ├── config_resources.py
-│   │   └── status_resources.py
-│   ├── prompts/
-│   │   ├── __init__.py
-│   │   └── workflow_prompts.py
-│   ├── core/
-│   │   ├── __init__.py
-│   │   ├── validation.py      # Configuration validation
-│   │   ├── toml_handler.py    # TOML read/write with preservation
-│   │   └── simulation.py      # Simulation execution wrapper
-│   └── utils/
+OT2_CherryPick/                    # Repository root (becomes UV project)
+├── .gitignore                     # EXISTING
+├── .serena/                       # EXISTING
+├── AGENTS.md                      # EXISTING
+├── CLAUDE.md                      # EXISTING (updated with MCP instructions)
+├── CherryPick_OT2.py             # EXISTING (auto-generated protocol)
+├── CSVs/                          # EXISTING (transfer definitions)
+│   ├── example_advanced.csv
+│   ├── example_basic.csv
+│   └── example_multi_mode.csv
+├── copy_essentials.sh            # EXISTING
+├── helper_cherry_pick.py         # EXISTING (refactored for import)
+├── labware_dict.toml             # EXISTING (hardware catalog)
+├── mcp-use_example.py            # EXISTING (testing reference)
+├── notebooks/                     # EXISTING
+├── OT2_UserGuide/                # EXISTING
+├── projects/                      # EXISTING
+├── scripts_library/              # EXISTING
+├── settings.toml                 # EXISTING (protocol parameters)
+├── simulate_protocol.sh          # EXISTING
+├── pyproject.toml                # NEW: Makes repo a UV project
+├── README.md                     # NEW: Project overview with MCP info
+├── src/                          # NEW: MCP server code
+│   └── ot2_cherrypick_mcp/
 │       ├── __init__.py
-│       ├── logging_config.py  # Stderr logging setup
-│       └── errors.py          # Custom exceptions
-├── tests/
-│   ├── test_tools.py
-│   ├── test_resources.py
-│   ├── test_toml_handler.py   # TOML preservation tests
-│   ├── test_mcp_use_integration.py  # mcp-use based tests with Mistral
-│   └── test_integration.py
-├── pyproject.toml
-├── README.md
-└── config.json                # MCP server configuration
+│       ├── server.py             # FastMCP server entry point
+│       ├── tools/
+│       │   ├── __init__.py
+│       │   ├── protocol_tools.py
+│       │   ├── config_tools.py
+│       │   └── labware_tools.py
+│       ├── resources/
+│       │   ├── __init__.py
+│       │   ├── config_resources.py
+│       │   └── status_resources.py
+│       ├── prompts/
+│       │   ├── __init__.py
+│       │   └── workflow_prompts.py
+│       ├── core/
+│       │   ├── __init__.py
+│       │   ├── validation.py
+│       │   ├── toml_handler.py   # CRITICAL: Format-preserving TOML editor
+│       │   └── simulation.py
+│       └── utils/
+│           ├── __init__.py
+│           ├── logging_config.py
+│           └── errors.py
+└── tests/                        # NEW: Test suite
+    ├── __init__.py
+    ├── test_tools.py
+    ├── test_resources.py
+    ├── test_toml_handler.py      # CRITICAL: TOML preservation tests
+    ├── test_mcp_use_integration.py  # mcp-use tests with Mistral
+    └── test_integration.py
+```
+
+### Key Architectural Benefits
+
+1. **Natural Imports** - MCP server can import `helper_cherry_pick` directly without path tricks
+2. **Single Package** - One `pyproject.toml`, one dependency tree
+3. **Logical Organization** - MCP code in `src/`, existing system at root
+4. **Minimal Disruption** - All existing files stay in place
+5. **Standard Structure** - Follows Python src-layout convention
+
+### pyproject.toml Configuration
+
+The root `pyproject.toml` should define:
+
+**Package Metadata:**
+- Project name, version, description
+- Python version requirement (>=3.11)
+- Authors and license
+
+**Dependencies:**
+- `mcp` - MCP protocol implementation
+- `tomlkit` - Format-preserving TOML editing (CRITICAL)
+- `toml` - Compatibility with existing helper code
+- Any other runtime dependencies
+
+**Development Dependencies:**
+- `mcp-use` - Testing framework
+- `langchain-mistralai` - Mistral LLM for testing
+- Testing frameworks (pytest, etc.)
+
+**Console Script Entry Point:**
+```toml
+[project.scripts]
+ot2-mcp-server = "ot2_cherrypick_mcp.server:main"
+```
+
+This allows running the server as:
+```bash
+uv run ot2-mcp-server
 ```
 
 ### Server Entry Point Design
+
+**File: `src/ot2_cherrypick_mcp/server.py`**
 
 The main server should:
 - Configure stderr-only logging
@@ -581,115 +675,123 @@ The main server should:
 - Import and register all tools, resources, and prompts
 - Run STDIO transport
 
-### Dependencies Philosophy
-
-Minimal, focused dependencies:
-- `mcp` - MCP protocol implementation
-- `tomlkit` - Format-preserving TOML editing (CRITICAL)
-- `toml` - Compatibility with existing helper code
-
-Development dependencies:
-- `mcp-use` - For testing and validation with Mistral
-- `langchain-mistralai` - Mistral LLM for testing
-- Standard testing frameworks
+**Key Implementation Detail:**
+The server's working directory should be the repository root so that all file paths work correctly:
+- `settings.toml` and `labware_dict.toml` at root
+- `CSVs/` directory accessible
+- `helper_cherry_pick.py` importable
 
 ### Claude Desktop Integration
 
-Configuration should specify:
-- Command to launch server (via `uv` or `python`)
-- Working directory (repository root)
-- Environment variables (labware paths, etc.)
+Configuration in `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "ot2-cherrypick": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick",
+        "run",
+        "ot2-mcp-server"
+      ],
+      "env": {
+        "LABWARE_PATH": "/mnt/c/Users/ricca/AppData/Roaming/Opentrons/labware"
+      }
+    }
+  }
+}
+```
+
+**Note:** `--directory` points to the repository root. UV will:
+1. Find `pyproject.toml` at root
+2. Create/use `.venv/` in repository root
+3. Install dependencies
+4. Execute the `ot2-mcp-server` console script
 
 ---
 
 ## Development Phases with Codebase Transformation
-
-### Current State (Pre-MCP)
-
-**Repository Structure:**
-```
-OT2_CherryPick/
-├── .gitignore
-├── .serena/                   # Serena MCP tool metadata
-├── AGENTS.md                  # Documentation
-├── CLAUDE.md                  # Project instructions
-├── CherryPick_OT2.py         # Executable protocol (auto-generated)
-├── CSVs/                      # Transfer definitions
-│   ├── example_advanced.csv
-│   ├── example_basic.csv
-│   └── example_multi_mode.csv
-├── copy_essentials.sh         # Utility script
-├── helper_cherry_pick.py      # Core compiler
-├── labware_dict.toml          # Hardware catalog
-├── notebooks/                 # Analysis notebooks
-├── OT2_UserGuide/            # Documentation
-├── scripts_library/           # Utility scripts
-├── settings.toml              # Protocol parameters
-└── simulate_protocol.sh       # Orchestration script
-```
-
-**User Workflow:**
-1. Manually edit `settings.toml` and `labware_dict.toml`
-2. Create/edit CSV files in `CSVs/`
-3. Run: `./simulate_protocol.sh CSVs/file.csv [--send-to-opentrons]`
-4. Script executes: helper → opentrons_simulate → clipboard/deploy
-
----
 
 ### Phase 1: Core Protocol Tools (MVP) - Foundation Build
 
 **Goal**: Establish MCP server with essential protocol generation and validation
 
 #### New Files Created
+
 ```
-ot2_cherrypick_mcp/                # NEW: MCP server package
-├── pyproject.toml                 # NEW: Package definition
-├── README.md                      # NEW: MCP server documentation
-├── src/
-│   ├── server.py                  # NEW: FastMCP server
-│   ├── core/
-│   │   ├── toml_handler.py        # NEW: CRITICAL - TOML editor
-│   │   ├── validation.py          # NEW: Config validation
-│   │   └── simulation.py          # NEW: Simulation wrapper
-│   ├── tools/
-│   │   └── protocol_tools.py      # NEW: Core protocol operations
-│   ├── resources/
-│   │   └── config_resources.py    # NEW: Config exposure
-│   └── utils/
-│       ├── logging_config.py      # NEW: Logging setup
-│       └── errors.py              # NEW: Error types
-└── tests/
-    ├── test_tools.py              # NEW: Tool tests
-    ├── test_toml_handler.py       # NEW: TOML preservation tests
-    ├── test_mcp_use_basic.py      # NEW: Basic mcp-use tests with Mistral
-    └── test_validation.py         # NEW: Validation tests
+OT2_CherryPick/
+├── pyproject.toml                # NEW: Makes repo a UV project
+├── README.md                     # NEW: Updated project overview
+├── src/                          # NEW: MCP server package
+│   └── ot2_cherrypick_mcp/
+│       ├── __init__.py
+│       ├── server.py
+│       ├── core/
+│       │   ├── __init__.py
+│       │   ├── toml_handler.py
+│       │   ├── validation.py
+│       │   └── simulation.py
+│       ├── tools/
+│       │   ├── __init__.py
+│       │   └── protocol_tools.py
+│       ├── resources/
+│       │   ├── __init__.py
+│       │   └── config_resources.py
+│       └── utils/
+│           ├── __init__.py
+│           ├── logging_config.py
+│           └── errors.py
+└── tests/                        # NEW: Test suite
+    ├── __init__.py
+    ├── test_tools.py
+    ├── test_toml_handler.py
+    ├── test_mcp_use_basic.py
+    └── test_validation.py
 ```
 
 #### Existing Files Modified
-- **helper_cherry_pick.py** - Refactored for MCP tool import
-- **CLAUDE.md** - Add MCP setup instructions
+
+- **helper_cherry_pick.py** - Refactored to make functions importable by MCP tools
+- **CLAUDE.md** - Add MCP server setup and usage instructions
 
 #### Files Preserved Unchanged
-- ✅ All core protocol system files
-- ✅ Configuration files (settings.toml, labware_dict.toml)
-- ✅ CSV examples
-- ✅ Simulation script
-- ✅ Documentation
+
+- ✅ **CherryPick_OT2.py** - Auto-generated protocol (unchanged)
+- ✅ **settings.toml** - Configuration source of truth (unchanged)
+- ✅ **labware_dict.toml** - Hardware catalog (unchanged)
+- ✅ **CSVs/** - Transfer definition examples (unchanged)
+- ✅ **simulate_protocol.sh** - Orchestration script (still functional)
+- ✅ **All documentation** - AGENTS.md, OT2_UserGuide/ (unchanged)
 
 #### Phase 1 End State
-Parallel operation: Original script-based workflow + new MCP interface
+
+**Coexistence:** Original script-based workflow + new MCP interface work side-by-side
+
+```
+OT2_CherryPick/
+├── [All existing files at root - unchanged]
+├── pyproject.toml                # NEW
+├── src/ot2_cherrypick_mcp/      # NEW
+└── tests/                        # NEW
+```
 
 **Key Capabilities Unlocked:**
-- ✅ LLM can read TOML configurations
+- ✅ LLM can read TOML configurations via resources
 - ✅ LLM can generate protocols programmatically
-- ✅ LLM can simulate and validate
+- ✅ LLM can simulate and validate protocols
 - ✅ TOML editing foundation established
-- ✅ Basic mcp-use testing framework with Mistral in place
+- ✅ Basic mcp-use testing framework with Mistral
 
 **Testing Strategy:**
 - Unit tests for each tool
 - TOML preservation tests (comment/format retention)
 - mcp-use integration tests with Mistral for basic queries
+
+**User Workflow Options:**
+- **Option A (Traditional):** Continue using `./simulate_protocol.sh`
+- **Option B (MCP):** Ask Claude to generate/simulate via MCP tools
 
 ---
 
@@ -698,28 +800,51 @@ Parallel operation: Original script-based workflow + new MCP interface
 **Goal**: Enable AI-driven configuration without manual TOML editing
 
 #### New Files Created
+
 ```
-ot2_cherrypick_mcp/
+OT2_CherryPick/
 ├── src/
-│   ├── tools/
-│   │   ├── config_tools.py        # NEW: Settings management
-│   │   └── labware_tools.py       # NEW: Labware operations
-│   └── resources/
-│       └── status_resources.py    # NEW: Status visualization
+│   └── ot2_cherrypick_mcp/
+│       ├── tools/
+│       │   ├── config_tools.py   # NEW: Settings management
+│       │   └── labware_tools.py  # NEW: Labware operations
+│       └── resources/
+│           └── status_resources.py  # NEW: Status visualization
 └── tests/
-    ├── test_config_tools.py       # NEW: Config tool tests
-    └── test_mcp_use_config.py     # NEW: Config tests via mcp-use with Mistral
+    ├── test_config_tools.py      # NEW: Config tool tests
+    └── test_mcp_use_config.py    # NEW: Config tests via mcp-use
 ```
 
 #### Existing Files Enhanced
-- **settings.toml** - Automatic `.toml.backup` creation
-- **labware_dict.toml** - Automatic backup mechanism
+
+- **settings.toml** - Automatic `.toml.backup` creation before edits
+- **labware_dict.toml** - Automatic `.toml.backup` creation before edits
+
+#### Files Preserved Unchanged
+
+- ✅ **CherryPick_OT2.py**
+- ✅ **helper_cherry_pick.py**
+- ✅ **CSVs/**
+- ✅ **simulate_protocol.sh**
 
 #### Phase 2 End State
-TOML files become programmatically modifiable with full preservation
+
+TOML files become programmatically modifiable with full preservation:
+
+```
+OT2_CherryPick/
+├── settings.toml
+├── settings.toml.backup          # NEW: Created on first edit
+├── labware_dict.toml
+├── labware_dict.toml.backup      # NEW: Created on first edit
+├── [All other existing files]
+├── pyproject.toml
+├── src/ot2_cherrypick_mcp/      # Expanded functionality
+└── tests/                        # Expanded test suite
+```
 
 **Key Capabilities Unlocked:**
-- ✅ LLM can modify settings programmatically
+- ✅ LLM can modify settings.toml programmatically
 - ✅ LLM can apply liquid handling presets
 - ✅ LLM can add labware definitions
 - ✅ Backup/rollback capability
@@ -731,8 +856,8 @@ TOML files become programmatically modifiable with full preservation
 - mcp-use tests with Mistral for configuration workflows
 
 **Workflow Evolution:**
-- Before: "Edit settings.toml manually, then run script"
-- Now: "Claude, set tip reuse to 'never' and apply viscous preset"
+- **Before:** "Edit settings.toml manually, then run script"
+- **Now:** "Claude, set tip reuse to 'never' and apply viscous preset"
 
 ---
 
@@ -741,28 +866,55 @@ TOML files become programmatically modifiable with full preservation
 **Goal**: Complete workflows guided by AI with minimal user input
 
 #### New Files Created
+
 ```
-ot2_cherrypick_mcp/
+OT2_CherryPick/
 ├── src/
-│   ├── tools/
-│   │   ├── workflow_tools.py      # NEW: full_workflow, deploy
-│   │   └── csv_tools.py           # NEW: CSV generation
-│   ├── prompts/
-│   │   └── workflow_prompts.py    # NEW: Guided workflows
-│   └── resources/
-│       └── file_resources.py      # NEW: File listing
+│   └── ot2_cherrypick_mcp/
+│       ├── tools/
+│       │   ├── workflow_tools.py  # NEW: full_workflow, deploy
+│       │   └── csv_tools.py       # NEW: CSV generation
+│       ├── prompts/
+│       │   ├── __init__.py
+│       │   └── workflow_prompts.py  # NEW: Guided workflows
+│       └── resources/
+│           └── file_resources.py  # NEW: File listing
 └── tests/
-    ├── test_workflow_tools.py     # NEW: Workflow integration
-    ├── test_prompts.py            # NEW: Prompt rendering
-    └── test_mcp_use_e2e.py        # NEW: End-to-end tests with Mistral
+    ├── test_workflow_tools.py    # NEW: Workflow integration
+    ├── test_prompts.py           # NEW: Prompt rendering
+    └── test_mcp_use_e2e.py       # NEW: End-to-end tests
 ```
 
 #### Existing Files Modified
+
 - **simulate_protocol.sh** - Logic extraction for deployment tool
-- **CLAUDE.md** - Workflow examples
+- **CLAUDE.md** - Add workflow examples
+
+#### Files Preserved Unchanged
+
+- ✅ **CherryPick_OT2.py**
+- ✅ **helper_cherry_pick.py**
+- ✅ **settings.toml** / **labware_dict.toml**
+- ✅ **CSVs/**
 
 #### Phase 3 End State
+
 Full automation: natural language → validated protocol
+
+```
+OT2_CherryPick/
+├── CSVs/
+│   ├── example_basic.csv
+│   ├── example_advanced.csv
+│   ├── example_multi_mode.csv
+│   └── experiment_2025_01_15.csv  # NEW: AI-generated CSV
+├── settings.toml.backup
+├── labware_dict.toml.backup
+├── [All existing files]
+├── pyproject.toml
+├── src/ot2_cherrypick_mcp/       # Full functionality
+└── tests/                         # Comprehensive suite
+```
 
 **Key Capabilities Unlocked:**
 - ✅ End-to-end workflows (validate → generate → simulate → deploy)
@@ -777,9 +929,9 @@ Full automation: natural language → validated protocol
 - Error recovery testing
 
 **Workflow Revolution:**
-- Before: Multi-step manual process
-- Now: "Claude, set up cherry-pick with viscous liquid, 384-well dest"
-- Result: Full configuration + CSV + validated protocol
+- **Before:** Multi-step manual process (edit files → run script → copy to Opentrons)
+- **Now:** "Claude, set up cherry-pick with viscous liquid, 384-well dest, 50µL transfers"
+- **Result:** Configuration updated, CSV generated, protocol validated and deployed
 
 ---
 
@@ -788,35 +940,51 @@ Full automation: natural language → validated protocol
 **Goal**: Comprehensive diagnostics, troubleshooting, and robot integration
 
 #### New Files Created
+
 ```
-ot2_cherrypick_mcp/
+OT2_CherryPick/
 ├── src/
-│   ├── tools/
-│   │   ├── diagnostic_tools.py    # NEW: Linting and analysis
-│   │   └── robot_tools.py         # NEW: HTTP API integration
-│   ├── prompts/
-│   │   └── troubleshooting_prompts.py  # NEW: Error diagnosis
-│   ├── resources/
-│   │   └── log_resources.py       # NEW: Log access
-│   └── core/
-│       ├── csv_validator.py       # NEW: CSV validation
-│       └── robot_client.py        # NEW: OT-2 HTTP client
-├── docs/
-│   ├── API.md                     # NEW: API documentation
-│   ├── WORKFLOWS.md               # NEW: Example workflows
-│   └── TROUBLESHOOTING.md         # NEW: Common issues
+│   └── ot2_cherrypick_mcp/
+│       ├── tools/
+│       │   ├── diagnostic_tools.py  # NEW: Linting and analysis
+│       │   └── robot_tools.py       # NEW: HTTP API integration
+│       ├── prompts/
+│       │   └── troubleshooting_prompts.py  # NEW: Error diagnosis
+│       ├── resources/
+│       │   └── log_resources.py     # NEW: Log access
+│       └── core/
+│           ├── csv_validator.py     # NEW: CSV validation
+│           └── robot_client.py      # NEW: OT-2 HTTP client
+├── docs/                            # NEW: Documentation
+│   ├── API.md
+│   ├── WORKFLOWS.md
+│   └── TROUBLESHOOTING.md
 └── tests/
-    ├── test_diagnostics.py        # NEW: Diagnostic tests
-    ├── test_robot_integration.py  # NEW: Robot API tests
-    └── test_mcp_use_comprehensive.py  # NEW: Full test suite with Mistral
+    ├── test_diagnostics.py         # NEW
+    ├── test_robot_integration.py   # NEW
+    └── test_mcp_use_comprehensive.py  # NEW: Full suite
 ```
 
 #### Files Potentially Archived
-- `simulate_protocol.sh` → `archived_scripts/`
-- `copy_essentials.sh` → `archived_scripts/`
+
+- **simulate_protocol.sh** → `archived_scripts/simulate_protocol.sh`
+- **copy_essentials.sh** → `archived_scripts/copy_essentials.sh`
 
 #### Phase 4 End State
+
 Production-ready MCP server with comprehensive capabilities
+
+```
+OT2_CherryPick/
+├── [Core protocol files at root]
+├── archived_scripts/             # NEW: Deprecated scripts
+│   ├── simulate_protocol.sh
+│   └── copy_essentials.sh
+├── pyproject.toml
+├── src/ot2_cherrypick_mcp/      # Production-ready
+├── tests/                        # Comprehensive suite
+└── docs/                         # NEW: API documentation
+```
 
 **Key Capabilities Unlocked:**
 - ✅ CSV linting with specific errors
@@ -840,39 +1008,53 @@ Natural language → AI configuration → validation → simulation → deployme
 ## Testing Strategy Evolution
 
 ### Unit Testing
+
 - Individual tool functions
-- TOML editing with format preservation (CRITICAL)
+- **TOML editing with format preservation (CRITICAL)**
 - Configuration validation
 - Error handling
+- Helper function imports
 
 ### mcp-use Integration Testing with Mistral
+
 - Tool execution via Mistral agent
 - Resource access patterns
 - Multi-tool workflows
 - Error scenarios
-- All testing standardized on mistral-large-latest
+- All testing standardized on `mistral-large-latest`
 
 ### Regression Testing
+
 - Test query suite maintained across development
 - Run on every change
 - Validate consistency with Mistral responses
+
+### Import Testing
+
+Verify that MCP server can import existing code:
+- `from helper_cherry_pick import ...`
+- Imports work correctly from `src/ot2_cherrypick_mcp/` modules
+- No circular dependencies
 
 ---
 
 ## Key Design Principles
 
 ### 1. High-Level Abstractions
+
 Tools represent **tasks**, not operations:
 - ✅ `full_workflow(csv_file)` - Complete process
 - ❌ `read_toml()`, `write_json()` - Too granular
 
 ### 2. Stateless Operations
+
 Each tool call is independent and idempotent:
 - Generate with same inputs → same output
 - Simulate multiple times → consistent results
 - Safe to retry on failure
 
 ### 3. Agent-Friendly Errors
+
 Provide actionable guidance, not just failure messages:
 
 **Bad**: `"Error: Labware not found"`
@@ -880,47 +1062,63 @@ Provide actionable guidance, not just failure messages:
 **Good**: `"Labware 'tube_rack_96_1500ul_4' not found. Available labware: ['tube_rack_96_1500ul', ...]. Did you forget slot number (e.g., _4)?"`
 
 ### 4. Configuration as Resources
+
 Expose configs as resources for LLM context:
 - LLM reads `config://settings` to understand state
 - Then calls `update_settings()` with informed changes
 
 ### 5. Prompts for Complexity
+
 Chain operations and guide multi-step workflows:
 - New experiment setup
 - Troubleshooting
 - Optimization
 
 ### 6. Robust Validation
+
 Validate early and often:
 - Pre-flight checks before generation
 - Schema validation
 - Simulation before deployment
+
+### 7. Integration Not Separation
+
+MCP server is **part of** the OpenTron system:
+- Shares the same repository
+- Imports existing code directly
+- Operates on files in place
+- No duplication or separation
 
 ---
 
 ## Security and Safety Considerations
 
 ### Path Validation
+
 - Restrict operations to repository root
 - Prevent path traversal attacks
 - Validate file extensions
 
 ### Subprocess Safety
+
 - Use `subprocess.run()` with `shell=False`
 - Validate arguments
 - Set timeouts
 
 ### TOML/CSV Parsing
+
 - Safe parsing libraries
 - Graceful error handling
 - File size limits
 
 ### Data Protection
+
 - No logging of sensitive data
 - Redact paths in errors
 - Secure backup handling
 
 ### Read-Only by Default
+
 - Most operations read-only or create new files
 - Explicit confirmation for destructive operations
 - **Always backup configs before modification**
@@ -930,6 +1128,7 @@ Validate early and often:
 ## Benefits of MCP Integration
 
 ### For Users
+
 1. **Natural language interface** - Describe experiment, get protocol
 2. **Guided workflows** - Step-by-step with intelligent defaults
 3. **Automated validation** - Catch errors pre-hardware
@@ -937,13 +1136,16 @@ Validate early and often:
 5. **AI troubleshooting** - Analyze errors, suggest fixes
 
 ### For Development
+
 1. **Standardized interface** - MCP protocol for AI interactions
 2. **Reusable across clients** - Claude Desktop, VS Code, custom apps
 3. **Version controlled** - Server code alongside protocol code
 4. **Extensible** - Easy to add capabilities
 5. **Testable** - mcp-use with Mistral enables automated testing
+6. **Integrated** - Direct access to existing code and files
 
 ### For Reproducibility
+
 1. **Programmatic configuration** - Fewer manual errors
 2. **Audit trail** - Log all MCP operations
 3. **Consistent formatting** - AI generates valid configs
@@ -956,86 +1158,139 @@ Validate early and often:
 ### File Lifecycle Across Phases
 
 #### Preserved Throughout (Core Protocol System)
-- ✅ `CherryPick_OT2.py` - Always auto-generated
-- ✅ `helper_cherry_pick.py` - Refactored but not removed
-- ✅ `settings.toml` - Enhanced with backup mechanism
-- ✅ `labware_dict.toml` - Enhanced with backup mechanism
-- ✅ `CSVs/` - Continues to accumulate
-- ✅ `CLAUDE.md` - Updated with MCP instructions
-- ✅ `OT2_UserGuide/` - Reference documentation
 
-#### Evolved/Enhanced
-- 🔄 `helper_cherry_pick.py` - Functions extracted for MCP (Phase 1)
-- 🔄 `settings.toml` - Backup files created (Phase 2)
-- 🔄 `labware_dict.toml` - Backup files created (Phase 2)
+All existing files remain at repository root:
+- ✅ **CherryPick_OT2.py** - Always auto-generated
+- ✅ **helper_cherry_pick.py** - Refactored (Phase 1) but stays at root
+- ✅ **settings.toml** - Enhanced with backup mechanism (Phase 2)
+- ✅ **labware_dict.toml** - Enhanced with backup mechanism (Phase 2)
+- ✅ **CSVs/** - Continues to accumulate experiment files
+- ✅ **CLAUDE.md** - Updated with MCP instructions (Phase 1)
+- ✅ **OT2_UserGuide/** - Reference documentation
+- ✅ **notebooks/** - Analysis notebooks
+- ✅ **projects/** - Experiment archives
+
+#### New Top-Level Items
+
+- ✨ **pyproject.toml** - Makes repository a UV project (Phase 1)
+- ✨ **README.md** - Updated project overview (Phase 1)
+- ✨ **src/** - MCP server code (Phase 1+)
+- ✨ **tests/** - Test suite (Phase 1+)
+- ✨ **docs/** - API documentation (Phase 4)
+- ✨ **.venv/** - UV virtual environment (auto-created)
 
 #### Deprecated/Archived (Phase 4)
-- ⚠️ `simulate_protocol.sh` → `archived_scripts/`
-- ⚠️ `copy_essentials.sh` → `archived_scripts/`
 
-#### Created (MCP Server)
-- ✨ `ot2_cherrypick_mcp/` - Entire MCP server package
-  - Phase 1: Core tools + TOML handler + mcp-use tests with Mistral
-  - Phase 2: Configuration management
-  - Phase 3: Workflow orchestration
-  - Phase 4: Advanced diagnostics
+- ⚠️ **simulate_protocol.sh** → `archived_scripts/`
+- ⚠️ **copy_essentials.sh** → `archived_scripts/`
 
 ### Migration Path for Users
 
-**Phase 1:** Dual-mode (script OR MCP)
-**Phase 2:** MCP preferred for config
-**Phase 3:** MCP handles full workflows
-**Phase 4:** Script-based workflow deprecated, mcp-use test suite with Mistral complete
+**Phase 1:** Dual-mode (script OR MCP) - Both workflows fully functional
+**Phase 2:** MCP preferred for configuration - Programmatic TOML editing available
+**Phase 3:** MCP handles full workflows - End-to-end automation ready
+**Phase 4:** Script-based workflow deprecated - MCP is primary interface
+
+### What Stays vs. What's New
+
+**Stays at Root (Unchanged Location):**
+```
+OT2_CherryPick/
+├── settings.toml
+├── labware_dict.toml
+├── helper_cherry_pick.py
+├── CherryPick_OT2.py
+├── CSVs/
+├── notebooks/
+├── OT2_UserGuide/
+└── ... (all existing files)
+```
+
+**New Additions:**
+```
+OT2_CherryPick/
+├── pyproject.toml               # NEW
+├── src/ot2_cherrypick_mcp/     # NEW
+├── tests/                       # NEW
+└── docs/                        # NEW (Phase 4)
+```
 
 ---
 
 ## Next Steps
 
-1. **Proof of Concept** (1-2 days)
-   - Install `tomlkit` and `mcp-use`
-   - Test TOML editing preservation
-   - Create basic FastMCP server with TOML handler
-   - Implement 3 core tools
-   - Write mcp-use test script with Mistral
-   - Validate STDIO communication
+### 1. Proof of Concept (1-2 days)
 
-2. **Core Implementation** (1 week)
-   - Implement Phase 1 tools and resources
-   - Comprehensive error handling
-   - Unit tests + TOML preservation tests
-   - mcp-use integration test suite with Mistral
+**Setup:**
+- Install `tomlkit` and `mcp-use` and `langchain-mistralai`
+- Test TOML editing preservation locally
 
-3. **User Testing** (ongoing)
-   - Real experiment workflows
-   - mcp-use automated regression tests with Mistral
-   - Feedback on tool design
-   - Refine prompts and errors
+**Create Minimal MCP Server:**
+- Add `pyproject.toml` at repository root
+- Create `src/ot2_cherrypick_mcp/server.py` with FastMCP
+- Implement basic TOML handler in `src/ot2_cherrypick_mcp/core/toml_handler.py`
+- Implement 2-3 core tools (read config, generate protocol, simulate)
+- Configure console script entry point
 
-4. **Documentation** (parallel)
-   - API documentation
-   - Workflow examples
-   - Troubleshooting guide
-   - mcp-use testing guide with Mistral setup
+**Test:**
+- Write mcp-use test script with Mistral
+- Validate STDIO communication
+- Verify imports from `helper_cherry_pick` work correctly
+
+### 2. Core Implementation (1 week)
+
+**Implement Phase 1:**
+- Complete all protocol tools
+- Complete all resources
+- Comprehensive error handling
+- Unit tests + TOML preservation tests
+- mcp-use integration test suite with Mistral
+
+**Refactor:**
+- Extract functions from `helper_cherry_pick.py` for import
+- Ensure working directory logic is correct
+
+**Document:**
+- Update CLAUDE.md with MCP setup
+- Create basic API documentation
+
+### 3. User Testing (ongoing)
+
+- Real experiment workflows
+- mcp-use automated regression tests with Mistral
+- Feedback on tool design
+- Refine prompts and error messages
+
+### 4. Documentation (parallel)
+
+- API documentation for all tools/resources
+- Workflow examples
+- Troubleshooting guide
+- mcp-use testing guide with Mistral setup
 
 ---
 
 ## References
 
 ### MCP Documentation
+
 - **Official Specification**: https://spec.modelcontextprotocol.io/
 - **Main Documentation**: https://modelcontextprotocol.io/
 - **Python SDK**: https://github.com/modelcontextprotocol/python-sdk
 - **FastMCP Framework**: https://github.com/jlowin/fastmcp
 
 ### Testing Tools
+
 - **mcp-use GitHub**: https://github.com/mcp-use/mcp-use
 - **mcp-use documentation** for integration testing
 
 ### TOML Libraries
+
 - **tomlkit documentation**: https://tomlkit.readthedocs.io/
 - **tomlkit GitHub**: https://github.com/sdispater/tomlkit
 
 ### Implementation Examples
+
 - **Weather server**: https://github.com/jalateras/weather
 - **Filesystem server**: https://github.com/punkpeye/mcp-filesystem-python
 - **Official examples**: https://github.com/modelcontextprotocol/servers
@@ -1050,8 +1305,18 @@ Integrating the OpenTron cherry-pick system with MCP transforms it from a script
 
 1. **TOML Editing with `tomlkit`** - Enables programmatic configuration while preserving human readability
 2. **Testing with `mcp-use` and Mistral** - Ensures server quality through automated testing with consistent LLM behavior
-3. **High-Level Tool Design** - Task-oriented abstractions rather than low-level operations
-4. **Phased Implementation** - Deliver value quickly (Phase 1) while building toward comprehensive system (Phases 2-4)
-5. **Backward Compatibility** - Original workflows remain functional throughout evolution
+3. **Integrated Architecture** - MCP server is part of the repository, not a separate project
+4. **High-Level Tool Design** - Task-oriented abstractions rather than low-level operations
+5. **Phased Implementation** - Deliver value quickly (Phase 1) while building toward comprehensive system (Phases 2-4)
+6. **Backward Compatibility** - Original workflows remain functional throughout evolution
+
+**The Key Architectural Decision:**
+
+By making the repository root a UV project and placing MCP server code in `src/ot2_cherrypick_mcp/`, we achieve:
+- ✅ Natural code reuse (direct imports)
+- ✅ Single package management
+- ✅ Minimal disruption to existing structure
+- ✅ Standard Python project layout
+- ✅ Unified development workflow
 
 The phased approach ensures continuous value delivery while maintaining system stability. Each phase is independently testable via mcp-use with Mistral, enabling confident iteration toward the full production system.
