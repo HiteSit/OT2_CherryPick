@@ -1108,41 +1108,313 @@ Add to `claude_desktop_config.json`:
 
 ---
 
-## Development Phases
+## Development Phases with Codebase Transformation
 
-### Phase 1: Core Protocol Tools (MVP)
-- ✅ TOML handler with `tomlkit` (CRITICAL FOUNDATION)
-- `generate_protocol`
-- `simulate_protocol`
-- `validate_configuration`
-- Basic resources: `config://settings`, `config://labware`
-- Simple logging and error handling
+### Current State (Pre-MCP)
 
-**Goal**: Basic protocol generation and validation via MCP
+**Repository Structure:**
+```
+OT2_CherryPick/
+├── .gitignore
+├── .serena/                   # Serena MCP tool metadata
+├── AGENTS.md                  # Documentation
+├── CLAUDE.md                  # Project instructions
+├── CherryPick_OT2.py         # Executable protocol (auto-generated)
+├── CSVs/                      # Transfer definitions
+│   ├── example_advanced.csv
+│   ├── example_basic.csv
+│   └── example_multi_mode.csv
+├── copy_essentials.sh         # Utility script
+├── helper_cherry_pick.py      # Core compiler
+├── labware_dict.toml          # Hardware catalog
+├── notebooks/                 # Analysis notebooks
+│   └── HTTP_API.ipynb
+├── OT2_UserGuide/            # Documentation
+│   ├── APPENDIX.md
+│   ├── convert_md_to_html.py
+│   ├── EXAMPLES.md
+│   └── USER_TUTORIAL.md
+├── scripts_library/           # Utility scripts
+├── settings.toml              # Protocol parameters
+└── simulate_protocol.sh       # Orchestration script
+```
 
-### Phase 2: Configuration Management
-- `update_settings` (uses TOML handler)
-- `apply_liquid_preset` (uses TOML handler)
-- `add_labware_definition` (uses TOML handler)
-- Additional resources: `status://deck-layout`, `status://liquid-handling-config`
+**User Workflow:**
+1. Manually edit `settings.toml` and `labware_dict.toml`
+2. Create/edit CSV files in `CSVs/`
+3. Run: `./simulate_protocol.sh CSVs/file.csv [--send-to-opentrons]`
+4. Script executes: helper → opentrons_simulate → clipboard/deploy
 
-**Goal**: Programmatic configuration without manual TOML editing
+---
 
-### Phase 3: Workflow Orchestration
-- `full_workflow`
-- `deploy_to_opentrons`
-- `create_csv_template`
-- Workflow prompts: `setup_new_experiment`
+### Phase 1: Core Protocol Tools (MVP) - Foundation Build
 
-**Goal**: End-to-end automation with guided workflows
+**Goal**: Establish MCP server with essential protocol generation and validation
 
-### Phase 4: Advanced Features
-- CSV validation and linting
-- Troubleshooting prompts
-- Simulation log analysis
-- Integration with Opentrons API for robot status
+#### New Files Created
+```
+opentron_cherry_pick_mcp/          # NEW: MCP server package
+├── pyproject.toml                 # NEW: Package definition
+├── README.md                      # NEW: MCP server documentation
+├── src/
+│   ├── __init__.py
+│   ├── server.py                  # NEW: FastMCP server entry point
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── toml_handler.py        # NEW: CRITICAL - Format-preserving TOML editor
+│   │   ├── validation.py          # NEW: Configuration validation logic
+│   │   └── simulation.py          # NEW: Wrapper for opentrons_simulate
+│   ├── tools/
+│   │   ├── __init__.py
+│   │   └── protocol_tools.py      # NEW: generate_protocol, simulate_protocol, validate_configuration
+│   ├── resources/
+│   │   ├── __init__.py
+│   │   └── config_resources.py    # NEW: config://settings, config://labware
+│   └── utils/
+│       ├── __init__.py
+│       ├── logging_config.py      # NEW: Stderr logging configuration
+│       └── errors.py              # NEW: Custom exceptions
+└── tests/
+    ├── test_tools.py              # NEW: Protocol tool tests
+    ├── test_toml_handler.py       # NEW: CRITICAL - TOML preservation tests
+    └── test_validation.py         # NEW: Validation logic tests
+```
 
-**Goal**: Production-ready system with comprehensive diagnostics
+#### Existing Files Modified
+- **helper_cherry_pick.py** - Refactored to be importable by MCP tools (extract functions)
+- **CLAUDE.md** - Add MCP server setup instructions
+
+#### Files Preserved Unchanged
+- ✅ `CherryPick_OT2.py` - Still auto-generated, untouched
+- ✅ `settings.toml` - Now readable/writable by MCP
+- ✅ `labware_dict.toml` - Now readable/writable by MCP
+- ✅ `CSVs/` - Example files preserved
+- ✅ `simulate_protocol.sh` - Still functional for manual use
+- ✅ All documentation and notebooks
+
+#### Phase 1 End State
+```
+OT2_CherryPick/
+├── [All original files preserved]
+└── opentron_cherry_pick_mcp/      # NEW: Parallel MCP server
+    └── [MCP server structure]
+```
+
+**Key Capabilities Unlocked:**
+- ✅ LLM can read TOML configurations via resources
+- ✅ LLM can generate protocols programmatically
+- ✅ LLM can simulate protocols and parse results
+- ✅ LLM can validate configurations pre-flight
+- ✅ TOML editing foundation established (will be used in Phase 2)
+
+**User Workflow Options:**
+- **Option A (Traditional):** Continue using `./simulate_protocol.sh`
+- **Option B (MCP):** Ask Claude to generate/simulate protocols via MCP tools
+
+---
+
+### Phase 2: Configuration Management - Programmatic Control
+
+**Goal**: Enable AI-driven configuration without manual TOML editing
+
+#### New Files Created
+```
+opentron_cherry_pick_mcp/
+├── src/
+│   ├── tools/
+│   │   ├── config_tools.py        # NEW: update_settings, apply_liquid_preset
+│   │   └── labware_tools.py       # NEW: add_labware_definition
+│   └── resources/
+│       └── status_resources.py    # NEW: status://deck-layout, status://liquid-handling-config
+└── tests/
+    └── test_config_tools.py       # NEW: Configuration tool tests
+```
+
+#### Existing Files Modified
+- **settings.toml** - Now has `.toml.backup` files created automatically before edits
+- **labware_dict.toml** - Same backup strategy
+
+#### Files Preserved Unchanged
+- ✅ `CherryPick_OT2.py`
+- ✅ `helper_cherry_pick.py`
+- ✅ `CSVs/` examples
+- ✅ `simulate_protocol.sh`
+- ✅ Documentation
+
+#### Phase 2 End State
+```
+OT2_CherryPick/
+├── settings.toml
+├── settings.toml.backup           # NEW: Auto-created before edits
+├── labware_dict.toml
+├── labware_dict.toml.backup       # NEW: Auto-created before edits
+├── [All other original files]
+└── opentron_cherry_pick_mcp/
+    └── [Expanded MCP server]
+```
+
+**Key Capabilities Unlocked:**
+- ✅ LLM can modify settings.toml programmatically
+- ✅ LLM can apply liquid handling presets
+- ✅ LLM can add new labware definitions
+- ✅ LLM can visualize deck layout without manual parsing
+- ✅ TOML edits preserve comments and formatting
+
+**User Workflow Evolution:**
+- **Before:** "Edit settings.toml, then run script"
+- **Now:** "Claude, set tip reuse to 'never' and use viscous liquid preset"
+
+---
+
+### Phase 3: Workflow Orchestration - End-to-End Automation
+
+**Goal**: Complete workflows guided by AI with minimal user input
+
+#### New Files Created
+```
+opentron_cherry_pick_mcp/
+├── src/
+│   ├── tools/
+│   │   ├── workflow_tools.py      # NEW: full_workflow, deploy_to_opentrons
+│   │   └── csv_tools.py           # NEW: create_csv_template
+│   ├── prompts/
+│   │   ├── __init__.py
+│   │   └── workflow_prompts.py    # NEW: setup_new_experiment, add_new_labware_type
+│   └── resources/
+│       └── file_resources.py      # NEW: files://csvs
+└── tests/
+    ├── test_workflow_tools.py     # NEW: Workflow integration tests
+    └── test_prompts.py            # NEW: Prompt rendering tests
+```
+
+#### Existing Files Modified
+- **simulate_protocol.sh** - Parsing logic extracted for use by `deploy_to_opentrons` tool
+- **CLAUDE.md** - Add workflow examples using MCP prompts
+
+#### Files Preserved Unchanged
+- ✅ `CherryPick_OT2.py`
+- ✅ `helper_cherry_pick.py`
+- ✅ `settings.toml` / `labware_dict.toml`
+- ✅ `CSVs/` examples
+
+#### Potential Deprecations
+- ⚠️ `simulate_protocol.sh` - Still works but may become redundant (kept for backward compatibility)
+
+#### Phase 3 End State
+```
+OT2_CherryPick/
+├── CSVs/
+│   ├── example_basic.csv
+│   ├── example_advanced.csv
+│   ├── example_multi_mode.csv
+│   └── experiment_2024_10_11.csv  # NEW: AI-generated CSV
+├── settings.toml.backup
+├── labware_dict.toml.backup
+├── [All original files]
+└── opentron_cherry_pick_mcp/
+    └── [Full-featured MCP server]
+```
+
+**Key Capabilities Unlocked:**
+- ✅ End-to-end workflow: validate → generate → simulate → deploy (single command)
+- ✅ CSV template generation for specific labware configurations
+- ✅ Guided experiment setup via prompts
+- ✅ Automatic deployment to Opentrons App directory
+- ✅ Multi-step workflows orchestrated by AI
+
+**User Workflow Revolution:**
+- **Before:** Multi-step manual process (edit files → run script → copy to Opentrons)
+- **Now:** "Claude, set up a cherry-pick from tube rack to 384 plate, 50µL per well, viscous liquid"
+- **Result:** Configuration updated, CSV generated, protocol validated and deployed
+
+---
+
+### Phase 4: Advanced Features - Production Polish
+
+**Goal**: Comprehensive diagnostics, troubleshooting, and robot integration
+
+#### New Files Created
+```
+opentron_cherry_pick_mcp/
+├── src/
+│   ├── tools/
+│   │   ├── diagnostic_tools.py    # NEW: CSV linting, simulation log analysis
+│   │   └── robot_tools.py         # NEW: Opentrons HTTP API integration (status, run info)
+│   ├── prompts/
+│   │   └── troubleshooting_prompts.py  # NEW: troubleshoot_simulation_error, optimize_liquid_handling
+│   ├── resources/
+│   │   └── log_resources.py       # NEW: logs://last-simulation, logs://last-run
+│   └── core/
+│       ├── csv_validator.py       # NEW: Advanced CSV validation
+│       └── robot_client.py        # NEW: HTTP API client for OT-2
+├── docs/
+│   ├── API.md                     # NEW: Complete MCP API documentation
+│   ├── WORKFLOWS.md               # NEW: Example workflows
+│   └── TROUBLESHOOTING.md         # NEW: Common issues and solutions
+└── tests/
+    ├── test_diagnostics.py        # NEW: Diagnostic tool tests
+    └── test_robot_integration.py  # NEW: Robot API tests (mocked)
+```
+
+#### Existing Files Modified
+- **CherryPick_OT2.py** - Potentially enhanced with additional metadata for diagnostics
+- **notebooks/** - New analysis notebooks demonstrating MCP usage
+
+#### Files Potentially Deprecated
+- ⚠️ `simulate_protocol.sh` - Fully replaced by MCP workflows (archived for reference)
+- ⚠️ `copy_essentials.sh` - Replaced by `deploy_to_opentrons` tool
+
+#### Phase 4 End State
+```
+OT2_CherryPick/
+├── CSVs/                          # User-generated CSVs accumulate here
+├── settings.toml
+├── labware_dict.toml
+├── CherryPick_OT2.py
+├── helper_cherry_pick.py
+├── CLAUDE.md
+├── AGENTS.md
+├── notebooks/
+│   ├── HTTP_API.ipynb
+│   └── MCP_Workflow_Demo.ipynb    # NEW: Demonstration notebook
+├── OT2_UserGuide/                 # Original documentation
+├── archived_scripts/              # NEW: Deprecated scripts moved here
+│   ├── simulate_protocol.sh
+│   └── copy_essentials.sh
+└── opentron_cherry_pick_mcp/      # Production MCP server
+    ├── src/
+    ├── tests/
+    ├── docs/
+    └── pyproject.toml
+```
+
+**Key Capabilities Unlocked:**
+- ✅ CSV linting with specific error messages
+- ✅ Simulation log analysis with AI suggestions
+- ✅ Robot status monitoring via HTTP API
+- ✅ Intelligent troubleshooting guides
+- ✅ Performance optimization recommendations
+- ✅ Complete audit trail of protocol runs
+
+**Production Workflow:**
+```
+User: "Set up cherry-pick from slot 4 tube rack to slot 2 plate, 384 wells, DMSO liquid"
+
+Claude (via MCP):
+1. [Reads current config via resources]
+2. [Validates deck slots available]
+3. [Applies viscous liquid preset]
+4. [Generates CSV template]
+5. [Validates configuration]
+6. [Generates protocol]
+7. [Simulates protocol]
+8. [Analyzes simulation output]
+9. [Deploys to Opentrons App]
+10. [Returns success with protocol summary]
+
+User: "Run it"
+Claude: [Monitors robot status via HTTP API, reports progress]
+```
 
 ---
 
@@ -1286,6 +1558,44 @@ def test_toml_comment_preservation():
 
 ---
 
+## Codebase Transformation Summary
+
+### File Lifecycle Across Phases
+
+#### Preserved Throughout (Core Protocol System)
+- ✅ `CherryPick_OT2.py` - Always auto-generated
+- ✅ `helper_cherry_pick.py` - Refactored but never removed
+- ✅ `settings.toml` - Enhanced with backup mechanism
+- ✅ `labware_dict.toml` - Enhanced with backup mechanism
+- ✅ `CSVs/` - Continues to accumulate experiments
+- ✅ `CLAUDE.md` - Updated with MCP instructions
+- ✅ `OT2_UserGuide/` - Reference documentation
+
+#### Evolved/Enhanced
+- 🔄 `helper_cherry_pick.py` - Functions extracted for MCP import (Phase 1)
+- 🔄 `settings.toml` - Backup files created (Phase 2)
+- 🔄 `labware_dict.toml` - Backup files created (Phase 2)
+
+#### Deprecated/Archived (Phase 4)
+- ⚠️ `simulate_protocol.sh` → `archived_scripts/`
+- ⚠️ `copy_essentials.sh` → `archived_scripts/`
+
+#### Created (MCP Server)
+- ✨ `opentron_cherry_pick_mcp/` - Entire MCP server package
+  - Phase 1: Core tools + TOML handler
+  - Phase 2: Configuration management
+  - Phase 3: Workflow orchestration
+  - Phase 4: Advanced diagnostics
+
+### Migration Path for Users
+
+**Phase 1:** Dual-mode operation (script OR MCP)
+**Phase 2:** MCP preferred for config changes
+**Phase 3:** MCP handles full workflows
+**Phase 4:** Script-based workflow deprecated
+
+---
+
 ## Next Steps
 
 1. **Proof of Concept** (1-2 days)
@@ -1346,4 +1656,4 @@ Integrating the OpenTron cherry-pick system with MCP will transform it from a sc
 
 The key is designing high-level, task-oriented tools that abstract away implementation details while providing the LLM with sufficient context through resources to make intelligent decisions.
 
-The phased implementation approach ensures we deliver value quickly (Phase 1 MVP with TOML editing foundation) while building toward a comprehensive, production-ready system (Phases 2-4).
+The phased implementation approach ensures we deliver value quickly (Phase 1 MVP with TOML editing foundation) while building toward a comprehensive, production-ready system (Phases 2-4). Each phase maintains backward compatibility while progressively reducing reliance on manual script execution.
