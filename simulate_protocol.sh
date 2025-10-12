@@ -14,15 +14,11 @@ setup_environment() {
             # Configure Windows paths - will be auto-converted to WSL format
             LABWARE_PATH_WIN="C:\Users\ricca\AppData\Roaming\Opentrons\labware"
             TARGET_PROTOCOL_SRC_WIN="C:\Users\ricca\AppData\Roaming\Opentrons\protocols\ea8382af-2299-4bc5-b556-81524aa7d0b6\src"
-            export ENV_EXE="/home/hitesit/mambaforge/bin/conda"
-            export ENV_NAME="cheminf_3_11"
             ;;
         "remote")
             # Configure Windows paths - will be auto-converted to WSL format
             LABWARE_PATH_WIN="C:\Users\opentrons_PC\AppData\Roaming\Opentrons\labware"
             TARGET_PROTOCOL_SRC_WIN="C:\Users\opentrons_PC\AppData\Roaming\Opentrons\protocols\some-uuid\src"
-            export ENV_EXE="/home/ot2/miniforge3/condabin/mamba"
-            export ENV_NAME="ot2"
             ;;
         *)
             echo "Unknown machine configuration: $MACHINE_CONFIG"
@@ -130,11 +126,11 @@ fi
 echo "=== Using $MACHINE_CONFIG configuration ==="
 
 echo "=== Step 1: Updating protocol with helper ==="
-$ENV_EXE run -n $ENV_NAME python helper_cherry_pick.py -l labware_dict.toml -s settings.toml -c "$CSV_FILE" -p CherryPick_OT2.py
+pixi run python helper_cherry_pick.py -l labware_dict.toml -s settings.toml -c "$CSV_FILE" -p CherryPick_OT2.py
 
 echo ""
 echo "=== Step 2: Running protocol simulation ==="
-$ENV_EXE run -n $ENV_NAME opentrons_simulate --custom-labware $LABWARE_PATH CherryPick_OT2.py
+pixi run opentrons_simulate --custom-labware $LABWARE_PATH CherryPick_OT2.py
 
 # Check if simulation succeeded and copy to clipboard if it did
 if [ $? -eq 0 ]; then
