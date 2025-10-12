@@ -49,6 +49,17 @@ The system follows a three-stage compilation pipeline:
 TOML Configuration + CSV Transfers → JSON Compilation → Self-Contained Python Protocol
 ```
 
+**⚠️ CRITICAL: The Final Output**
+
+**`CherryPick_OT2.py` is the FINAL PRODUCT:**
+- **Self-contained executable protocol** with ALL configuration embedded as JSON in `get_values()`
+- **This file MUST be transferred to the OT-2 machine** to run the protocol
+- **No external files needed** - TOML/CSV data is compiled into the protocol
+- **Two deployment methods:**
+  1. **Manual:** Copy to clipboard → Paste into Opentrons App (default simulation behavior)
+  2. **Automatic:** `--send-to-opentrons` flag overwrites protocol in Opentrons App directory
+- **MCP doesn't change this** - The protocol file still needs to reach the OT-2, MCP just automates generation and optionally deployment
+
 **Key Components:**
 1. **labware_dict.toml** - Hardware catalog (pipettes, labware, calibration offsets)
 2. **settings.toml** - Protocol parameters (deck layout, liquid handling, tip management)
@@ -57,7 +68,7 @@ TOML Configuration + CSV Transfers → JSON Compilation → Self-Contained Pytho
    - ✅ **Refactored for MCP compatibility** (exception-based errors, verbose control)
    - Functions: `read_toml_file()`, `read_csv_file()`, `create_json_config()`, `update_protocol_file()`
    - New: `generate_protocol()` - High-level orchestration function for MCP import
-5. **CherryPick_OT2.py** - Executable OT-2 protocol with embedded JSON in `get_values()`
+5. **CherryPick_OT2.py** - Executable OT-2 protocol with embedded JSON in `get_values()` ← **THIS IS WHAT RUNS ON THE ROBOT**
 6. **simulate_protocol.sh** - Orchestration script (helper → simulation → clipboard → optional deployment)
 
 ### Current Repository Structure (Pre-MCP)
@@ -522,6 +533,7 @@ Tools should represent **complete tasks** rather than low-level operations. Desi
 - Input: Protocol path, machine configuration
 - Output: Deployment confirmation
 - Implementation: Reads config from simulate_protocol.sh settings
+- **Important:** This automates the manual step of getting CherryPick_OT2.py to the OT-2 machine. The protocol file MUST reach the Opentrons App somehow (either manual clipboard paste or this automatic deployment). MCP doesn't eliminate this requirement - it just automates it.
 
 ---
 
