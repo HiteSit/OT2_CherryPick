@@ -4,7 +4,10 @@
 !.serena/memories
 .idea/
 .vscode/
+.pixi/
 
 # Files / Dirs
 projects/
-**TMP.csv
+**TMP.csv# pixi environments
+.pixi/*
+!.pixi/config.toml
