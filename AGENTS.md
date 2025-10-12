@@ -332,12 +332,43 @@ These tiny misalignments cause:
 
 ### Environment Setup
 
-Using pixi global environment. Run commands directly with `python`:
+This project uses **pixi** for package management with a **local per-project environment**. Pixi is already installed and configured - the `.pixi/` directory in the repository root contains all project dependencies.
+
+**All Python commands must be run with `pixi run`:**
 
 ```bash
-python helper_cherry_pick.py -l labware_dict.toml -s settings.toml -c CSVs/example_basic.csv -p CherryPick_OT2.py
-opentrons_simulate --custom-labware $LABWARE_PATH CherryPick_OT2.py
+# Run helper script
+pixi run python helper_cherry_pick.py -l labware_dict.toml -s settings.toml -c CSVs/example_basic.csv -p CherryPick_OT2.py
+
+# Run simulation
+pixi run opentrons_simulate --custom-labware $LABWARE_PATH CherryPick_OT2.py
+
+# Run any Python script
+pixi run python your_script.py
+
+# Run tests
+pixi run pytest tests/
 ```
+
+**Why `pixi run`?**
+- Automatically activates the local `.pixi/` environment
+- Ensures consistent dependencies across all runs
+- No need to manually activate/deactivate environments
+- Pixi automatically updates the lockfile and installs the environment if needed
+
+**Adding Missing Packages (Only if Needed):**
+
+If you encounter an error indicating a package is missing:
+
+```bash
+# For conda-forge packages (preferred):
+pixi add package-name
+
+# For PyPI-only packages:
+pixi add package-name --pypi
+```
+
+**Note:** Conda-forge packages are preferred when available as they include non-Python dependencies and integrate better with the conda ecosystem. Use `--pypi` only for packages that are exclusively available on PyPI.
 
 ### Standard Workflow
 
@@ -379,15 +410,7 @@ TARGET_PROTOCOL_SRC_WIN="C:\Users\ricca\AppData\Roaming\Opentrons\protocols\ea83
 
 **Why Windows paths?** Convenience - copy-paste directly from Windows File Explorer. Script handles conversion automatically using `wslpath`.
 
-#### 3. ENV_EXE (Conda/mamba executable path)
-```bash
-export ENV_EXE="/home/hitesit/mambaforge/bin/conda"
-```
-
-#### 4. ENV_NAME (Conda environment name)
-```bash
-export ENV_NAME="cheminf_3_11"
-```
+**Note:** With the pixi-based workflow, the ENV_EXE and ENV_NAME variables are no longer needed since pixi automatically manages the local `.pixi/` environment based on the `pyproject.toml` configuration.
 
 ### Using --send-to-opentrons
 
