@@ -84,6 +84,13 @@ When you run `./simulate_protocol.sh CSVs/your_file.csv`:
 - Height columns: `Source Height` OR `Source Top` (pick one), `Dest Height` OR `Dest Top` (pick one)
 - Optional: `Mix Volume`, `Mix Height`, `Flow Aspirate`, `Flow Dispense`, `Air Gap`, `Air Gap Rate`, `Tip Action`
 
+**pyproject.toml** - Python package manifest and environment configuration
+- `[project]` - Package metadata, dependencies, console script entry points
+- `[tool.pixi.workspace]` - Pixi workspace configuration (channels, platforms)
+- `[tool.pixi.dependencies]` - Conda-forge package dependencies
+- `[tool.pixi.pypi-dependencies]` - PyPI package dependencies
+- `[tool.pixi.tasks]` - Task definitions for pixi run commands
+
 ## Key Configuration Settings
 
 ### Pipette Modes (settings.toml)
@@ -332,7 +339,7 @@ These tiny misalignments cause:
 
 ### Environment Setup
 
-This project uses **pixi** for package management with a **local per-project environment**. Pixi is already installed and configured - the `.pixi/` directory in the repository root contains all project dependencies.
+This project uses **pixi** for package management with a **local per-project environment**. The environment is configured via `pyproject.toml` with `[tool.pixi]` sections, and the `.pixi/` directory in the repository root contains all project dependencies.
 
 **All Python commands must be run with `pixi run`:**
 
@@ -443,7 +450,7 @@ This automatically:
 
 ### Coding Standards
 
-- **Python 3.11** with four-space indentation
+- **Python 3.12** with four-space indentation
 - **Module-level docstrings**: Summarize deck layout, consumables, safety notes
 - **Naming**: `snake_case` for functions/files/CSV columns; `PascalCase` for classes only
 - **Helper functions**: Keep pure and side-effect free; pass configuration explicitly
