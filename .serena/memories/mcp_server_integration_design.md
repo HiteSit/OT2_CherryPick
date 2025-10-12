@@ -54,6 +54,9 @@ TOML Configuration + CSV Transfers → JSON Compilation → Self-Contained Pytho
 2. **settings.toml** - Protocol parameters (deck layout, liquid handling, tip management)
 3. **CSV files** - Transfer definitions (source/dest wells, volumes, heights)
 4. **helper_cherry_pick.py** - Compiler that generates JSON and embeds it into protocol
+   - ✅ **Refactored for MCP compatibility** (exception-based errors, verbose control)
+   - Functions: `read_toml_file()`, `read_csv_file()`, `create_json_config()`, `update_protocol_file()`
+   - New: `generate_protocol()` - High-level orchestration function for MCP import
 5. **CherryPick_OT2.py** - Executable OT-2 protocol with embedded JSON in `get_values()`
 6. **simulate_protocol.sh** - Orchestration script (helper → simulation → clipboard → optional deployment)
 
@@ -62,24 +65,27 @@ TOML Configuration + CSV Transfers → JSON Compilation → Self-Contained Pytho
 ```
 OT2_CherryPick/
 ├── .gitignore
-├── .serena/                       # Serena MCP metadata
+├── .pixi/                        # Pixi environment (auto-created)
+├── .serena/                      # Serena MCP metadata
 ├── AGENTS.md
-├── CLAUDE.md                      # Project instructions
+├── CLAUDE.md                     # Project instructions
 ├── CherryPick_OT2.py             # Auto-generated protocol
-├── CSVs/                          # Transfer definitions
+├── CSVs/                         # Transfer definitions
 │   ├── example_advanced.csv
 │   ├── example_basic.csv
 │   └── example_multi_mode.csv
-├── copy_essentials.sh
-├── helper_cherry_pick.py         # Core compiler
+├── helper_cherry_pick.py         # Core compiler (refactored for MCP)
 ├── labware_dict.toml             # Hardware catalog
-├── mcp-use_example.py            # Testing example
-├── notebooks/                     # Analysis notebooks
+├── notebooks/                    # Analysis notebooks
 ├── OT2_UserGuide/                # Documentation
-├── projects/                      # Experiment archives
-├── scripts_library/              # Utility scripts
+├── pixi.lock                     # Pixi lock file
+├── projects/                     # Experiment archives
+├── pyproject.toml                # Python package + pixi config
 ├── settings.toml                 # Protocol parameters
-└── simulate_protocol.sh          # Orchestration script
+├── simulate_protocol.sh          # Orchestration script
+└── utils/                        # Utility scripts
+    ├── copy_essentials.sh
+    └── mcp-use_example.py        # MCP testing example
 ```
 
 ### User Interaction Points
@@ -263,7 +269,7 @@ All mcp-use testing should be performed with **Mistral Large** (specifically `mi
 - Consistent behavior across all test runs
 - API key already configured in environment variables
 - Cost-effective for extensive testing
-- Reference implementation in `mcp-use_example.py`
+- Reference implementation in `utils/mcp-use_example.py`
 
 **Configuration:**
 ```python
@@ -349,7 +355,7 @@ The test script should:
 
 ### Test Execution Example
 
-Reference implementation at `mcp-use_example.py` shows the basic pattern:
+Reference implementation at `utils/mcp-use_example.py` shows the basic pattern:
 - Async execution via asyncio
 - MCPClient initialization from config
 - Mistral LLM setup
@@ -459,7 +465,10 @@ Tools should represent **complete tasks** rather than low-level operations. Desi
 - Purpose: Compile TOML + CSV into executable protocol
 - Input: Paths to configuration files
 - Output: Success status, protocol path, embedded JSON size
-- Implementation: Wraps helper_cherry_pick.py compilation logic
+- Implementation: ✅ **Ready to import** - Uses `helper_cherry_pick.generate_protocol()` function
+  - Exception-based error handling
+  - Verbose control for library usage
+  - Returns structured dict with protocol info
 
 **simulate_protocol**
 - Purpose: Validate protocol through OT-2 simulation
@@ -578,17 +587,18 @@ OT2_CherryPick/                    # Repository root (pixi project)
 │   ├── example_advanced.csv
 │   ├── example_basic.csv
 │   └── example_multi_mode.csv
-├── copy_essentials.sh            # EXISTING
 ├── helper_cherry_pick.py         # EXISTING (refactored for import)
 ├── labware_dict.toml             # EXISTING (hardware catalog)
-├── mcp-use_example.py            # EXISTING (testing reference)
 ├── notebooks/                     # EXISTING
 ├── OT2_UserGuide/                # EXISTING
+├── pixi.lock                     # EXISTING: Pixi lock file
 ├── projects/                      # EXISTING
-├── scripts_library/              # EXISTING
+├── pyproject.toml                # EXISTING: Python package manifest with pixi config
 ├── settings.toml                 # EXISTING (protocol parameters)
 ├── simulate_protocol.sh          # EXISTING
-├── pyproject.toml                # NEW: Python package manifest with pixi config
+├── utils/                        # EXISTING: Utility scripts
+│   ├── copy_essentials.sh
+│   └── mcp-use_example.py        # MCP testing reference
 ├── README.md                     # NEW: Project overview with MCP info
 ├── src/                          # NEW: MCP server code
 │   └── ot2_cherrypick_mcp/
@@ -663,6 +673,11 @@ numpy = ">=1.20.0,<2"
 pandas = ">=2.3.3,<3"
 rdkit = ">=2025.9.1,<2026"
 seaborn = ">=0.13.2,<0.14"
+pixi-pycharm = ">=0.0.9,<0.0.10"
+datamol = ">=0.12.5,<0.13"
+toml = ">=0.10.2,<0.11"
+tomli = ">=2.3.0,<3"
+tomlkit = ">=0.13.3,<0.14"
 
 [tool.pixi.pypi-dependencies]
 ot2_cherrypick = { path = ".", editable = true }
@@ -761,7 +776,11 @@ OT2_CherryPick/
 
 #### Existing Files Modified
 
-- **helper_cherry_pick.py** - Refactored to make functions importable by MCP tools
+- **helper_cherry_pick.py** - ✅ **Refactoring Complete** - Made importable for MCP tools
+  - Exception-based error handling (all functions raise exceptions instead of `sys.exit()`)
+  - Verbose parameter support (`verbose=True` for CLI, `verbose=False` for library usage)
+  - New `generate_protocol()` orchestration function for MCP import
+  - CLI behavior fully preserved with try/except in `main()`
 - **CLAUDE.md** - Update to reflect local pixi environment and `pixi run` commands
 
 #### Files Preserved Unchanged
@@ -1320,6 +1339,39 @@ All required packages (tomlkit, mcp, langchain-mistralai, mcp-use) are already a
 - **Weather server**: https://github.com/jalateras/weather
 - **Filesystem server**: https://github.com/punkpeye/mcp-filesystem-python
 - **Official examples**: https://github.com/modelcontextprotocol/servers
+
+---
+
+## Current Implementation Status
+
+### ✅ Completed Preparatory Work
+
+**helper_cherry_pick.py Refactoring (Phase 1 Prep)**
+- ✅ All functions now raise exceptions instead of `sys.exit()`
+- ✅ Verbose parameter added to all functions (`verbose=True` for CLI, `verbose=False` for library)
+- ✅ New `generate_protocol()` orchestration function created for MCP import
+- ✅ CLI behavior fully preserved with exception handling in `main()`
+- ✅ Tested and verified with existing workflow (`./simulate_protocol.sh CSVs/TMP.csv`)
+
+**Repository Organization**
+- ✅ `pyproject.toml` created with `[tool.pixi]` configuration
+- ✅ TOML libraries installed (`toml`, `tomli`, `tomlkit`)
+- ✅ Utility files organized in `utils/` directory
+  - `utils/copy_essentials.sh`
+  - `utils/mcp-use_example.py`
+- ✅ `.pixi/` environment active and functional
+- ✅ All dependencies installed and ready
+
+### 🚧 Ready for MCP Implementation
+
+The codebase is now **fully prepared** for Phase 1 MCP implementation:
+- ✅ Importable functions available for MCP tools
+- ✅ Exception-based error handling throughout
+- ✅ Environment configured with all required packages
+- ✅ Testing framework (mcp-use + Mistral) ready to use
+- ✅ Development workflow established (`pixi run` commands)
+
+**Next Step:** Create `src/ot2_cherrypick_mcp/` and begin implementing MCP server as outlined in Phase 1.
 
 ---
 
