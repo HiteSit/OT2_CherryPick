@@ -4,7 +4,9 @@
 
 This document outlines the design and implementation strategy for integrating the OpenTron OT-2 cherry-pick protocol system into a Model Context Protocol (MCP) server, enabling Claude Desktop and other MCP clients to interact programmatically with the protocol generation workflow.
 
-**Key Architectural Decision:** The MCP server will be integrated directly into the existing OT2_CherryPick repository structure, not as a separate nested project. The repository root will become a UV-compatible Python package containing both the existing protocol generation system and the new MCP server code.
+**Key Architectural Decision:** The MCP server will be integrated directly into the existing OT2_CherryPick repository structure, not as a separate nested project. The repository root will become a pixi-managed Python package containing both the existing protocol generation system and the new MCP server code.
+
+**Environment Status:** The project uses pixi for package management. All required dependencies are already installed in the local `.pixi/` environment. No package installation is needed unless a missing dependency error occurs.
 
 ---
 
@@ -133,10 +135,7 @@ OT2_CherryPick/
 | Preserve whitespace | ❌ | ✅ |
 | Style-preserving edits | ❌ | ✅ |
 
-**Installation:**
-```bash
-pip install tomlkit
-```
+**Note:** `tomlkit` is already available in the pixi environment.
 
 #### Core TOML Handler Design Pattern
 
@@ -252,11 +251,7 @@ MCP tools should expose these helper functions through clean interfaces:
 - Verify resource access patterns
 - Debug server behavior in isolation
 
-### Installation and Setup
-
-```bash
-pip install mcp-use langchain-mistralai
-```
+**Note:** `mcp-use` and `langchain-mistralai` are already available in the pixi environment.
 
 ### Testing LLM Configuration
 
@@ -294,11 +289,11 @@ Create a test configuration file (e.g., `test_ot2_mcp.json`) that points to your
 {
   "mcpServers": {
     "ot2-cherrypick": {
-      "command": "uv",
+      "command": "pixi",
       "args": [
-        "--directory",
-        "/mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick",
         "run",
+        "--manifest-path",
+        "/mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick/pyproject.toml",
         "ot2-mcp-server"
       ],
       "env": {
@@ -309,7 +304,10 @@ Create a test configuration file (e.g., `test_ot2_mcp.json`) that points to your
 }
 ```
 
-**Note:** The `--directory` points to the repository root (not a subdirectory), because the entire OT2_CherryPick repository becomes the UV project.
+**Note:** The `--manifest-path` points to the pyproject.toml at repository root. Pixi will:
+1. Find `pyproject.toml` and read configuration
+2. Use the `.pixi/` environment in the project directory
+3. Execute the `ot2-mcp-server` console script defined in `[project.scripts]`
 
 ### Testing Architecture
 
@@ -392,7 +390,7 @@ Reference implementation at `mcp-use_example.py` shows the basic pattern:
 **Development Workflow:**
 1. Implement new MCP tool
 2. Write mcp-use test script using Mistral
-3. Run test with `python test_script.py`
+3. Run test with `pixi run python test_script.py`
 4. Iterate based on results
 5. Add test to regression suite
 
@@ -564,16 +562,17 @@ Prompts guide users through multi-step workflows using natural language template
 
 ### Integrated Repository Structure
 
-**Key Architectural Principle:** The MCP server is integrated directly into the existing repository. The repository root becomes a UV-compatible Python package containing both the existing protocol system and the new MCP server.
+**Key Architectural Principle:** The MCP server is integrated directly into the existing repository. The repository root becomes a pixi-managed Python package containing both the existing protocol system and the new MCP server.
 
 ### Directory Structure After MCP Integration
 
 ```
-OT2_CherryPick/                    # Repository root (becomes UV project)
+OT2_CherryPick/                    # Repository root (pixi project)
+├── .pixi/                         # NEW: Pixi environment (auto-created)
 ├── .gitignore                     # EXISTING
 ├── .serena/                       # EXISTING
 ├── AGENTS.md                      # EXISTING
-├── CLAUDE.md                      # EXISTING (updated with MCP instructions)
+├── CLAUDE.md                      # EXISTING (updated with MCP + pixi instructions)
 ├── CherryPick_OT2.py             # EXISTING (auto-generated protocol)
 ├── CSVs/                          # EXISTING (transfer definitions)
 │   ├── example_advanced.csv
@@ -589,7 +588,8 @@ OT2_CherryPick/                    # Repository root (becomes UV project)
 ├── scripts_library/              # EXISTING
 ├── settings.toml                 # EXISTING (protocol parameters)
 ├── simulate_protocol.sh          # EXISTING
-├── pyproject.toml                # NEW: Makes repo a UV project
+├── pixi.toml                     # NEW: Pixi manifest OR use pyproject.toml
+├── pyproject.toml                # NEW: Makes repo a Python package
 ├── README.md                     # NEW: Project overview with MCP info
 ├── src/                          # NEW: MCP server code
 │   └── ot2_cherrypick_mcp/
@@ -628,40 +628,61 @@ OT2_CherryPick/                    # Repository root (becomes UV project)
 ### Key Architectural Benefits
 
 1. **Natural Imports** - MCP server can import `helper_cherry_pick` directly without path tricks
-2. **Single Package** - One `pyproject.toml`, one dependency tree
+2. **Single Package** - One pixi project, one dependency tree
 3. **Logical Organization** - MCP code in `src/`, existing system at root
 4. **Minimal Disruption** - All existing files stay in place
 5. **Standard Structure** - Follows Python src-layout convention
+6. **Local Environment** - `.pixi/` directory contains project-specific environment
 
-### pyproject.toml Configuration
+### Pixi Configuration
 
-The root `pyproject.toml` should define:
-
-**Package Metadata:**
-- Project name, version, description
-- Python version requirement (>=3.11)
-- Authors and license
-
-**Dependencies:**
-- `mcp` - MCP protocol implementation
-- `tomlkit` - Format-preserving TOML editing (CRITICAL)
-- `toml` - Compatibility with existing helper code
-- Any other runtime dependencies
-
-**Development Dependencies:**
-- `mcp-use` - Testing framework
-- `langchain-mistralai` - Mistral LLM for testing
-- Testing frameworks (pytest, etc.)
-
-**Console Script Entry Point:**
+**Option 1: Use pyproject.toml with [tool.pixi] section**
 ```toml
+[project]
+name = "ot2-cherrypick"
+version = "0.1.0"
+description = "OpenTron OT-2 Cherry-Pick Protocol System with MCP server"
+requires-python = ">=3.11"
+
+dependencies = [
+    "mcp>=1.2.0",
+    "tomlkit>=0.12.0",
+    "toml>=0.10.2",
+]
+
 [project.scripts]
 ot2-mcp-server = "ot2_cherrypick_mcp.server:main"
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64", "win-64"]
+
+[tool.pixi.pypi-dependencies]
+ot2-cherrypick = { path = ".", editable = true }
+
+[tool.pixi.dependencies]
+python = "3.11.*"
+
+[tool.pixi.tasks]
+mcp-server = "ot2-mcp-server"
 ```
 
-This allows running the server as:
-```bash
-uv run ot2-mcp-server
+**Option 2: Separate pixi.toml file** (if preferred)
+```toml
+[project]
+name = "ot2-cherrypick"
+version = "0.1.0"
+channels = ["conda-forge"]
+platforms = ["linux-64", "win-64"]
+
+[dependencies]
+python = "3.11.*"
+
+[pypi-dependencies]
+ot2-cherrypick = { path = ".", editable = true }
+
+[tasks]
+mcp-server = "ot2-mcp-server"
 ```
 
 ### Server Entry Point Design
@@ -689,11 +710,11 @@ Configuration in `claude_desktop_config.json`:
 {
   "mcpServers": {
     "ot2-cherrypick": {
-      "command": "uv",
+      "command": "pixi",
       "args": [
-        "--directory",
-        "/mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick",
         "run",
+        "--manifest-path",
+        "/mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick/pyproject.toml",
         "ot2-mcp-server"
       ],
       "env": {
@@ -704,11 +725,11 @@ Configuration in `claude_desktop_config.json`:
 }
 ```
 
-**Note:** `--directory` points to the repository root. UV will:
-1. Find `pyproject.toml` at root
-2. Create/use `.venv/` in repository root
-3. Install dependencies
-4. Execute the `ot2-mcp-server` console script
+**How it works:**
+1. `pixi run` activates the local `.pixi/` environment
+2. `--manifest-path` points to the pyproject.toml (or pixi.toml)
+3. `ot2-mcp-server` is the console script defined in `[project.scripts]`
+4. Pixi automatically handles dependencies and environment activation
 
 ---
 
@@ -722,7 +743,8 @@ Configuration in `claude_desktop_config.json`:
 
 ```
 OT2_CherryPick/
-├── pyproject.toml                # NEW: Makes repo a UV project
+├── .pixi/                        # NEW: Auto-created by pixi
+├── pyproject.toml                # NEW: Python package + pixi config
 ├── README.md                     # NEW: Updated project overview
 ├── src/                          # NEW: MCP server package
 │   └── ot2_cherrypick_mcp/
@@ -754,7 +776,7 @@ OT2_CherryPick/
 #### Existing Files Modified
 
 - **helper_cherry_pick.py** - Refactored to make functions importable by MCP tools
-- **CLAUDE.md** - Add MCP server setup and usage instructions
+- **CLAUDE.md** - Update to reflect local pixi environment and `pixi run` commands
 
 #### Files Preserved Unchanged
 
@@ -772,6 +794,7 @@ OT2_CherryPick/
 ```
 OT2_CherryPick/
 ├── [All existing files at root - unchanged]
+├── .pixi/                        # NEW: Pixi environment
 ├── pyproject.toml                # NEW
 ├── src/ot2_cherrypick_mcp/      # NEW
 └── tests/                        # NEW
@@ -792,6 +815,7 @@ OT2_CherryPick/
 **User Workflow Options:**
 - **Option A (Traditional):** Continue using `./simulate_protocol.sh`
 - **Option B (MCP):** Ask Claude to generate/simulate via MCP tools
+- **Development:** Use `pixi run python script.py` for all Python execution
 
 ---
 
@@ -838,6 +862,7 @@ OT2_CherryPick/
 ├── labware_dict.toml
 ├── labware_dict.toml.backup      # NEW: Created on first edit
 ├── [All other existing files]
+├── .pixi/
 ├── pyproject.toml
 ├── src/ot2_cherrypick_mcp/      # Expanded functionality
 └── tests/                        # Expanded test suite
@@ -911,6 +936,7 @@ OT2_CherryPick/
 ├── settings.toml.backup
 ├── labware_dict.toml.backup
 ├── [All existing files]
+├── .pixi/
 ├── pyproject.toml
 ├── src/ot2_cherrypick_mcp/       # Full functionality
 └── tests/                         # Comprehensive suite
@@ -980,6 +1006,7 @@ OT2_CherryPick/
 ├── archived_scripts/             # NEW: Deprecated scripts
 │   ├── simulate_protocol.sh
 │   └── copy_essentials.sh
+├── .pixi/
 ├── pyproject.toml
 ├── src/ot2_cherrypick_mcp/      # Production-ready
 ├── tests/                        # Comprehensive suite
@@ -1014,6 +1041,7 @@ Natural language → AI configuration → validation → simulation → deployme
 - Configuration validation
 - Error handling
 - Helper function imports
+- Run with: `pixi run pytest tests/`
 
 ### mcp-use Integration Testing with Mistral
 
@@ -1022,12 +1050,14 @@ Natural language → AI configuration → validation → simulation → deployme
 - Multi-tool workflows
 - Error scenarios
 - All testing standardized on `mistral-large-latest`
+- Run with: `pixi run python test_mcp_integration.py`
 
 ### Regression Testing
 
 - Test query suite maintained across development
 - Run on every change
 - Validate consistency with Mistral responses
+- Run with: `pixi run pytest tests/test_mcp_use_*.py`
 
 ### Import Testing
 
@@ -1165,19 +1195,19 @@ All existing files remain at repository root:
 - ✅ **settings.toml** - Enhanced with backup mechanism (Phase 2)
 - ✅ **labware_dict.toml** - Enhanced with backup mechanism (Phase 2)
 - ✅ **CSVs/** - Continues to accumulate experiment files
-- ✅ **CLAUDE.md** - Updated with MCP instructions (Phase 1)
+- ✅ **CLAUDE.md** - Updated with MCP + pixi instructions (Phase 1)
 - ✅ **OT2_UserGuide/** - Reference documentation
 - ✅ **notebooks/** - Analysis notebooks
 - ✅ **projects/** - Experiment archives
 
 #### New Top-Level Items
 
-- ✨ **pyproject.toml** - Makes repository a UV project (Phase 1)
+- ✨ **.pixi/** - Pixi local environment (auto-created by pixi)
+- ✨ **pyproject.toml** - Makes repository a Python package with pixi config (Phase 1)
 - ✨ **README.md** - Updated project overview (Phase 1)
 - ✨ **src/** - MCP server code (Phase 1+)
 - ✨ **tests/** - Test suite (Phase 1+)
 - ✨ **docs/** - API documentation (Phase 4)
-- ✨ **.venv/** - UV virtual environment (auto-created)
 
 #### Deprecated/Archived (Phase 4)
 
@@ -1209,6 +1239,7 @@ OT2_CherryPick/
 **New Additions:**
 ```
 OT2_CherryPick/
+├── .pixi/                       # NEW: Pixi environment
 ├── pyproject.toml               # NEW
 ├── src/ot2_cherrypick_mcp/     # NEW
 ├── tests/                       # NEW
@@ -1221,12 +1252,8 @@ OT2_CherryPick/
 
 ### 1. Proof of Concept (1-2 days)
 
-**Setup:**
-- Install `tomlkit` and `mcp-use` and `langchain-mistralai`
-- Test TOML editing preservation locally
-
 **Create Minimal MCP Server:**
-- Add `pyproject.toml` at repository root
+- Add `pyproject.toml` at repository root with `[project.scripts]`
 - Create `src/ot2_cherrypick_mcp/server.py` with FastMCP
 - Implement basic TOML handler in `src/ot2_cherrypick_mcp/core/toml_handler.py`
 - Implement 2-3 core tools (read config, generate protocol, simulate)
@@ -1234,8 +1261,14 @@ OT2_CherryPick/
 
 **Test:**
 - Write mcp-use test script with Mistral
+- Run with `pixi run python test_mcp_basic.py`
 - Validate STDIO communication
 - Verify imports from `helper_cherry_pick` work correctly
+
+**Note on Dependencies:**
+All required packages (tomlkit, mcp, langchain-mistralai, mcp-use) are already available in the pixi environment. If a package is missing, add it with:
+- `pixi add package-name` (for conda-forge packages)
+- `pixi add package-name --pypi` (for PyPI-only packages)
 
 ### 2. Core Implementation (1 week)
 
@@ -1251,7 +1284,7 @@ OT2_CherryPick/
 - Ensure working directory logic is correct
 
 **Document:**
-- Update CLAUDE.md with MCP setup
+- Update CLAUDE.md with MCP setup and pixi usage
 - Create basic API documentation
 
 ### 3. User Testing (ongoing)
@@ -1279,6 +1312,12 @@ OT2_CherryPick/
 - **Python SDK**: https://github.com/modelcontextprotocol/python-sdk
 - **FastMCP Framework**: https://github.com/jlowin/fastmcp
 
+### Package Management
+
+- **Pixi Documentation**: https://pixi.sh/
+- **Pixi GitHub**: https://github.com/prefix-dev/pixi
+- **Using Python Projects With Pixi**: https://prefix.dev/blog/using_python_projects_with_pixi
+
 ### Testing Tools
 
 - **mcp-use GitHub**: https://github.com/mcp-use/mcp-use
@@ -1305,18 +1344,20 @@ Integrating the OpenTron cherry-pick system with MCP transforms it from a script
 
 1. **TOML Editing with `tomlkit`** - Enables programmatic configuration while preserving human readability
 2. **Testing with `mcp-use` and Mistral** - Ensures server quality through automated testing with consistent LLM behavior
-3. **Integrated Architecture** - MCP server is part of the repository, not a separate project
-4. **High-Level Tool Design** - Task-oriented abstractions rather than low-level operations
-5. **Phased Implementation** - Deliver value quickly (Phase 1) while building toward comprehensive system (Phases 2-4)
-6. **Backward Compatibility** - Original workflows remain functional throughout evolution
+3. **Pixi Package Management** - Local per-project environment with `.pixi/` directory, consistent dependency management
+4. **Integrated Architecture** - MCP server is part of the repository, not a separate project
+5. **High-Level Tool Design** - Task-oriented abstractions rather than low-level operations
+6. **Phased Implementation** - Deliver value quickly (Phase 1) while building toward comprehensive system (Phases 2-4)
+7. **Backward Compatibility** - Original workflows remain functional throughout evolution
 
 **The Key Architectural Decision:**
 
-By making the repository root a UV project and placing MCP server code in `src/ot2_cherrypick_mcp/`, we achieve:
+By making the repository root a pixi-managed Python package and placing MCP server code in `src/ot2_cherrypick_mcp/`, we achieve:
 - ✅ Natural code reuse (direct imports)
-- ✅ Single package management
+- ✅ Single package management with pixi
 - ✅ Minimal disruption to existing structure
 - ✅ Standard Python project layout
 - ✅ Unified development workflow
+- ✅ Local, isolated environment per project
 
 The phased approach ensures continuous value delivery while maintaining system stability. Each phase is independently testable via mcp-use with Mistral, enabling confident iteration toward the full production system.
