@@ -1,1 +1,0 @@
-Phase 3 complete: deployment helper/tool, status resources, prompts, CSV tooling, and workflow orchestration all integrated and covered by tests. Added mcp-use integration suite (utils/mcp_use_config.json, tests/test_mcp_integration.py) that spins up the server via pixi and runs LangChain+Mistral agent queries end-to-end. All unit/integration tests pass (`pixi run pytest`).

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import helper_cherry_pick
 import pytest
 
 from ot2_cherrypick_mcp.tools.protocol_tools import run_generate_protocol
@@ -29,9 +30,14 @@ def test_run_generate_protocol_updates_protocol_file(tmp_path: Path) -> None:
     assert result["json_size"] > 0
     assert "Protocol generated successfully" in result["message"]
 
+    expected_json = helper_cherry_pick.create_json_config(
+        str(repo_root / "labware_dict.toml"),
+        str(repo_root / "settings.toml"),
+        str(repo_root / "CSVs" / "example_basic.csv"),
+        verbose=False,
+    )
     updated_content = protocol_copy.read_text(encoding="utf-8")
-    original_content = protocol_source.read_text(encoding="utf-8")
-    assert updated_content != original_content
+    assert expected_json in updated_content
     assert "_all_values = json.loads" in updated_content
 
 
