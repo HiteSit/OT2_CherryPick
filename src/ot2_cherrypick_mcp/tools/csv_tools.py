@@ -22,7 +22,12 @@ CSV_HEADERS = [
 
 DEFAULT_CSV_DIR = Path("CSVs")
 
-__all__ = ["register_csv_tools", "generate_csv_template", "list_csv_files"]
+__all__ = [
+    "register_csv_tools",
+    "generate_csv_template",
+    "list_csv_files",
+    "save_csv_content",
+]
 
 
 def generate_csv_template(
@@ -84,6 +89,34 @@ def list_csv_files(directory: str | Path = DEFAULT_CSV_DIR) -> List[str]:
     return sorted(str(path) for path in csv_dir.glob("*.csv"))
 
 
+def save_csv_content(
+    *,
+    csv_content: str,
+    filename: str,
+    output_dir: str | Path = DEFAULT_CSV_DIR,
+) -> Dict[str, object]:
+    """Persist CSV content to a file for downstream workflow usage."""
+
+    content = csv_content.strip()
+    if not content:
+        raise ConfigurationError("csv_content must not be empty")
+
+    header = content.splitlines()[0]
+    missing = [column for column in CSV_HEADERS if column not in header]
+    if missing:
+        raise ConfigurationError(
+            "csv_content is missing expected columns: " + ", ".join(missing)
+        )
+
+    output_directory = resolve_repo_path(output_dir)
+    output_directory.mkdir(parents=True, exist_ok=True)
+
+    target_path = output_directory / filename
+    target_path.write_text(content + ("\n" if not content.endswith("\n") else ""), encoding="utf-8")
+
+    return {"csv_file": str(target_path)}
+
+
 def register_csv_tools(mcp: FastMCP) -> None:
     """Register CSV-related tools with FastMCP."""
 
@@ -110,6 +143,21 @@ def register_csv_tools(mcp: FastMCP) -> None:
             dest_top=dest_top,
         )
 
+    @mcp.tool(
+        name="upload_csv_content",
+        description="Save provided CSV content to disk for later workflow steps.",
+    )
+    def upload_csv_content_tool(  # pragma: no cover - intent tested via helper
+        csv_content: str,
+        filename: str,
+        output_dir: Optional[str] = None,
+    ) -> Dict[str, object]:
+        return save_csv_content(
+            csv_content=csv_content,
+            filename=filename,
+            output_dir=output_dir or DEFAULT_CSV_DIR,
+        )
+
 
 def _build_rows(
     *,
@@ -132,4 +180,3 @@ def _build_rows(
             "" if source_height is None else str(source_height),
             "" if dest_top is None else str(dest_top),
         ]
-

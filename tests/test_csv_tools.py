@@ -6,7 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from ot2_cherrypick_mcp.tools.csv_tools import generate_csv_template, list_csv_files
+from ot2_cherrypick_mcp.tools.csv_tools import (
+    generate_csv_template,
+    list_csv_files,
+    save_csv_content,
+)
 from ot2_cherrypick_mcp.utils.errors import ConfigurationError
 
 
@@ -56,3 +60,24 @@ def test_list_csv_files_returns_sorted(tmp_path: Path) -> None:
     (tmp_path / "a.csv").write_text("", encoding="utf-8")
     files = list_csv_files(tmp_path)
     assert files == [str(tmp_path / "a.csv"), str(tmp_path / "b.csv")]
+
+
+def test_save_csv_content_writes_file(tmp_path: Path) -> None:
+    content = "Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top\n"
+    result = save_csv_content(
+        csv_content=content,
+        filename="uploaded.csv",
+        output_dir=tmp_path,
+    )
+    path = Path(result["csv_file"])
+    assert path.exists()
+    assert path.read_text(encoding="utf-8").startswith("Source Labware")
+
+
+def test_save_csv_content_missing_columns_raises(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationError):
+        save_csv_content(
+            csv_content="foo,bar\n1,2",
+            filename="bad.csv",
+            output_dir=tmp_path,
+        )

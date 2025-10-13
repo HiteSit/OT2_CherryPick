@@ -163,6 +163,26 @@ generate_csv_template(
 )
 ```
 
+#### `upload_csv_content`
+
+Writes provided CSV text to disk so subsequent tools can operate on it.
+
+**Parameters:**
+- `csv_content` (str, required) – Raw CSV string including the header row.
+- `filename` (str, required) – Desired output filename (e.g., `tmp_uploaded.csv`).
+- `output_dir` (str, default: `CSVs/`) – Directory where the file will be saved.
+
+**Returns:** Dict with:
+- `csv_file` (str) – Path to the saved CSV file.
+
+**Example Use:**
+```python
+upload_csv_content(
+    csv_content="Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top\n",
+    filename="tmp_uploaded.csv",
+)
+```
+
 ---
 
 ### 4. Labware Catalog Management

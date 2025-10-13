@@ -12,7 +12,7 @@ The OpenTron cherry-picking workflow can now be orchestrated through the Model C
 - `full_workflow` – chain validation → generation → optional simulation/deployment
 - Configuration helpers: `update_settings`, `apply_liquid_preset`
 - Labware utilities: `add_labware_definition`
-- CSV utilities: `generate_csv_template`
+- CSV utilities: `generate_csv_template`, `upload_csv_content`
 
 ### Resources
 - `config://settings`, `config://labware` – raw TOML
@@ -82,6 +82,7 @@ if __name__ == "__main__":
 - "Apply the viscous preset and report the updated liquid-handling configuration."
 - "Troubleshoot the latest simulation error and provide recommended fixes."
 - "Run full_workflow on /path/to/example_basic.csv with deployment enabled; save the protocol to /tmp/CherryPick_OT2.py and copy it to the clipboard."
+- "Given this CSV text <paste>, use upload_csv_content to save it and then run full_workflow on the saved file."
 
 ## Logs & Status Resources
 
