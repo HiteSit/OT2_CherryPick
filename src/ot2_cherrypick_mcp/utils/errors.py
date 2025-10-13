@@ -19,3 +19,7 @@ class ProtocolGenerationError(MCPServerError):
 
 class SimulationError(MCPServerError):
     """Raised when OT-2 protocol simulation fails."""
+
+
+class DeploymentError(MCPServerError):
+    """Raised when protocol deployment fails."""

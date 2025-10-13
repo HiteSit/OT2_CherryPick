@@ -6,6 +6,7 @@ and simulation helpers.
 """
 
 __all__ = [
+    "deployment",
     "simulation",
     "toml_handler",
     "validation",

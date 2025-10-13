@@ -17,5 +17,6 @@ def test_generate_protocol_tool_is_registered() -> None:
     assert "add_labware_definition" in tools
     assert "simulate_protocol" in tools
     assert "generate_csv_template" in tools
+    assert "deploy_to_opentrons" in tools
     assert "validate_configuration" in tools
     assert "full_workflow" in tools

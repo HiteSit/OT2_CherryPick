@@ -7,11 +7,13 @@ from typing import Dict, Optional
 
 from fastmcp import FastMCP
 
+from .deployment_tools import run_deployment
 from .protocol_tools import run_generate_protocol
 from .simulation_tools import run_simulation
 from .validation_tools import run_validation
 from ..utils.errors import (
     ConfigurationError,
+    DeploymentError,
     ProtocolGenerationError,
     SimulationError,
 )
@@ -31,6 +33,10 @@ def run_full_workflow(
     protocol_path: str | Path = DEFAULT_PROTOCOL_PATH,
     simulate: bool = True,
     labware_env_path: Optional[str | Path] = None,
+    deploy: bool = False,
+    deployment_target: Optional[str | Path] = None,
+    copy_to_clipboard: bool = False,
+    clipboard_command: Optional[str] = None,
 ) -> Dict[str, object]:
     """Execute validation, generation, and optional simulation in sequence."""
 
@@ -67,23 +73,47 @@ def run_full_workflow(
 
     response["generation"] = generation
 
-    if not simulate:
-        response.update({"status": "ok", "simulation": None})
+    if simulate:
+        try:
+            simulation = run_simulation(
+                protocol_path=protocol_path,
+                labware_path=labware_env_path,
+            )
+        except SimulationError as exc:
+            response.update({
+                "status": "error",
+                "simulation": {"error": str(exc)},
+                "deployment": None,
+            })
+            return response
+
+        response["simulation"] = simulation
+    else:
+        response["simulation"] = None
+
+    if not deploy:
+        response["status"] = "ok"
+        response["deployment"] = None
         return response
 
+    deployment_kwargs = {
+        "protocol_path": protocol_path,
+        "target_path": deployment_target,
+        "copy_to_clipboard": copy_to_clipboard,
+    }
+    if clipboard_command is not None:
+        deployment_kwargs["clipboard_command"] = [clipboard_command]
+
     try:
-        simulation = run_simulation(
-            protocol_path=protocol_path,
-            labware_path=labware_env_path,
-        )
-    except SimulationError as exc:
+        deployment = run_deployment(**deployment_kwargs)
+    except (ConfigurationError, DeploymentError) as exc:
         response.update({
             "status": "error",
-            "simulation": {"error": str(exc)},
+            "deployment": {"error": str(exc)},
         })
         return response
 
-    response["simulation"] = simulation
+    response["deployment"] = deployment
     response["status"] = "ok"
     return response
 
@@ -102,6 +132,10 @@ def register_workflow_tools(mcp: FastMCP) -> None:
         protocol_path: str = str(DEFAULT_PROTOCOL_PATH),
         simulate: bool = True,
         labware_env_path: Optional[str] = None,
+        deploy: bool = False,
+        deployment_target: Optional[str] = None,
+        copy_to_clipboard: bool = False,
+        clipboard_command: Optional[str] = None,
     ) -> Dict[str, object]:
         return run_full_workflow(
             csv_path=csv_path,
@@ -110,4 +144,8 @@ def register_workflow_tools(mcp: FastMCP) -> None:
             protocol_path=protocol_path,
             simulate=simulate,
             labware_env_path=labware_env_path,
+            deploy=deploy,
+            deployment_target=deployment_target,
+            copy_to_clipboard=copy_to_clipboard,
+            clipboard_command=clipboard_command,
         )

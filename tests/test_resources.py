@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ot2_cherrypick_mcp.server import create_mcp_app
 from ot2_cherrypick_mcp.core.simulation import DEFAULT_LOG_FILE
+from ot2_cherrypick_mcp.utils.toml import TomlHandler as RealTomlHandler
 
 
 def test_settings_resource_registered_and_readable() -> None:
@@ -66,3 +67,34 @@ def test_last_simulation_resource(tmp_path: Path, monkeypatch) -> None:
     resources = asyncio.run(app.get_resources())
     content = resources["logs://last-simulation"].fn()
     assert "\"status\"" in content
+
+
+def test_status_resources(tmp_path: Path, monkeypatch) -> None:
+    settings_copy = tmp_path / "settings.toml"
+    settings_copy.write_text(
+        """
+[settings]
+  [[settings.working_plate]]
+  type = "source"
+  labware_id = "plate_a"
+  position_rack = "1"
+
+  [settings.liquid_handling]
+  mode = "test"
+""",
+        encoding="utf-8",
+    )
+
+    class FakeTomlHandler(RealTomlHandler):
+        def __init__(self, path):  # type: ignore[super-init-not-called]
+            super().__init__(settings_copy)
+
+    monkeypatch.setattr("ot2_cherrypick_mcp.resources.status_resources.TomlHandler", FakeTomlHandler)
+
+    app = create_mcp_app()
+    resources = asyncio.run(app.get_resources())
+    deck = resources["status://deck-layout"].fn()
+    liquid = resources["status://liquid-handling-config"].fn()
+
+    assert "plate_a" in deck
+    assert "Liquid Handling Configuration" in liquid

@@ -46,6 +46,7 @@ def test_full_workflow_runs_validation_and_generation(monkeypatch, tmp_path: Pat
     assert result["validation"]["status"] == "ok"
     assert result["generation"]["protocol_file"] == str(protocol_copy)
     assert result["simulation"]["stdout"] == "ok"
+    assert result["deployment"] is None
 
 
 def test_full_workflow_halts_on_validation_error(monkeypatch, tmp_path: Path) -> None:
@@ -75,4 +76,37 @@ def test_full_workflow_halts_on_validation_error(monkeypatch, tmp_path: Path) ->
     assert result["status"] == "error"
     assert result["generation"] is None
     assert result["simulation"] is None
+    assert result.get("deployment") is None
     assert simulated_called is False
+
+
+def test_full_workflow_with_deployment(monkeypatch, tmp_path: Path) -> None:
+    settings_copy, labware_copy, csv_copy, protocol_copy = _prepare_inputs(tmp_path)
+
+    def fake_simulation(**kwargs):
+        return {"command": ["opentrons_simulate"], "stdout": "ok", "stderr": "", "returncode": 0}
+
+    monkeypatch.setattr(
+        "ot2_cherrypick_mcp.tools.workflow_tools.run_simulation",
+        lambda **kwargs: fake_simulation(**kwargs),
+    )
+
+    def fake_deployment(**kwargs):
+        return {"protocol_file": kwargs["protocol_path"], "copies": ["target.py"], "clipboard": None}
+
+    monkeypatch.setattr(
+        "ot2_cherrypick_mcp.tools.workflow_tools.run_deployment",
+        lambda **kwargs: fake_deployment(**kwargs),
+    )
+
+    result = run_full_workflow(
+        csv_path=str(csv_copy),
+        settings_path=str(settings_copy),
+        labware_path=str(labware_copy),
+        protocol_path=str(protocol_copy),
+        deploy=True,
+        deployment_target=str(tmp_path / "out" / "CherryPick_OT2.py"),
+    )
+
+    assert result["status"] == "ok"
+    assert result["deployment"]["copies"] == ["target.py"]
