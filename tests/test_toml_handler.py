@@ -1,0 +1,67 @@
+"""Tests for TOML handler utilities."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from ot2_cherrypick_mcp.utils.errors import ConfigurationError
+from ot2_cherrypick_mcp.utils.toml import TomlHandler
+
+
+def _copy_settings(tmp_path: Path) -> Path:
+    repo_root = Path(__file__).resolve().parents[1]
+    source = repo_root / "settings.toml"
+    destination = tmp_path / "settings.toml"
+    destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    return destination
+
+
+def test_toml_handler_gets_scalar_value() -> None:
+    """Expect dotted-path lookup to return scalar values."""
+    handler = TomlHandler("settings.toml")
+    assert handler.get_value("settings.general.tip_reuse") == "always"
+
+
+def test_toml_handler_handles_array_indices() -> None:
+    """Array notation should resolve to nested values."""
+    handler = TomlHandler("settings.toml")
+    assert handler.get_value("settings.working_plate[0].type") == "source"
+
+
+def test_toml_handler_invalid_path_raises() -> None:
+    """Invalid paths raise configuration errors."""
+    handler = TomlHandler("settings.toml")
+    with pytest.raises(ConfigurationError):
+        handler.get_value("settings.missing.section")
+
+
+def test_toml_handler_set_value_updates_file(tmp_path: Path) -> None:
+    """Setting a value writes the file and produces a backup."""
+
+    settings_copy = _copy_settings(tmp_path)
+    handler = TomlHandler(settings_copy)
+
+    old_value, new_value = handler.set_value("settings.general.tip_reuse", "never")
+
+    assert old_value == "always"
+    assert new_value == "never"
+
+    content = settings_copy.read_text(encoding="utf-8")
+    assert "tip_reuse = \"never\"" in content
+
+    backup = settings_copy.with_suffix(settings_copy.suffix + ".backup")
+    assert backup.exists()
+    backup_content = backup.read_text(encoding="utf-8")
+    assert "tip_reuse = \"always\"" in backup_content
+
+
+def test_toml_handler_set_value_missing_path_raises(tmp_path: Path) -> None:
+    """Setting a non-existent path surfaces configuration errors."""
+
+    settings_copy = _copy_settings(tmp_path)
+    handler = TomlHandler(settings_copy)
+
+    with pytest.raises(ConfigurationError):
+        handler.set_value("settings.general.does_not_exist", "value")
