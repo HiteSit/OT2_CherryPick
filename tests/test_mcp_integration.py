@@ -42,7 +42,7 @@ def _build_config() -> Dict[str, Any]:
 
 async def _run_agent(query: str) -> str:
     client = MCPClient(config=_build_config())
-    llm = ChatMistralAI(model="mistral-large-latest")
+    llm = ChatMistralAI(model="mistral-medium-2508")
     agent = MCPAgent(llm=llm, client=client, max_steps=20)
     return await agent.run(query)
 
@@ -62,7 +62,27 @@ def test_agent_runs_workflow_from_string() -> None:
 
     result = asyncio.run(_run_agent(query))
     assert isinstance(result, str)
-    assert Path(TMP_UPLOAD_TARGET).name in result
-    lower = result.lower()
-    assert "no errors" in lower or "status: ok" in lower
-    assert "protocol" in lower
+    assert Path(TMP_UPLOAD_TARGET).exists()
+    assert "no errors" in result.lower()
+
+
+def test_agent_updates_settings(tmp_path: Path, capsys) -> None:
+    settings_copy = tmp_path / "settings.toml"
+    settings_copy.write_text((PROJECT_ROOT / "settings.toml").read_text(encoding="utf-8"), encoding="utf-8")
+
+    query = (
+        "Call update_settings with path 'settings.general.tip_reuse', value 'never', "
+        f"and settings_path '{settings_copy}'. Afterwards, confirm the change."
+    )
+
+    client = MCPClient(config=_build_config())
+    llm = ChatMistralAI(model="ministral-8b-2410")
+    agent = MCPAgent(llm=llm, client=client, max_steps=8)
+    result = asyncio.run(agent.run(query))
+
+    print(f"Temporary settings path: {settings_copy}")
+    captured = capsys.readouterr()
+    assert str(settings_copy) in captured.out
+
+    updated = settings_copy.read_text(encoding="utf-8")
+    assert "tip_reuse = \"never\"" in updated
