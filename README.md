@@ -66,7 +66,7 @@ CONFIG = {
 
 async def main():
     client = MCPClient(config=CONFIG)
-    llm = ChatMistralAI(model="mistral-large-latest")
+    llm = ChatMistralAI(model="mistral-medium-2508")
     agent = MCPAgent(llm=llm, client=client, max_steps=20)
     response = await agent.run(
         "Use full_workflow on CSVs/example_basic.csv and summarize the results."

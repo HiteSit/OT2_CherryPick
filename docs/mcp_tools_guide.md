@@ -801,7 +801,7 @@ from mcp_use.agents import MCPAgent
 
 # Initialize client and LLM
 client = MCPClient.from_config("test_config.json")
-llm = ChatMistralAI(model="mistral-large-latest")
+llm = ChatMistralAI(model="mistral-medium-2508")
 
 # Create agent with access to MCP tools
 agent = MCPAgent(llm=llm, client=client, max_steps=10)

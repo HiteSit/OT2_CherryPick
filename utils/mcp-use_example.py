@@ -20,7 +20,7 @@ async def main():
     }
     )
     # Create LLM
-    llm = ChatMistralAI(model="mistral-large-latest")
+    llm = ChatMistralAI(model="mistral-medium-2508")
     # Create agent with tools
     agent = MCPAgent(llm=llm, client=client, max_steps=30)
     # Run the query
