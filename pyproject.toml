@@ -2,7 +2,7 @@
 authors = [{name = "Riccardo_Linux", email = "riccardofusco99@gmail.com"}]
 dependencies = [
     "mcp-use>=1.3.7,<2",
-    "langchain-mistralai>=0.2.12,<0.3",
+    "langchain-mistralai>=0.2.12,<0.3"
 ]
 name = "OT2_CherryPick"
 requires-python = ">= 3.12"
@@ -35,4 +35,5 @@ toml = ">=0.10.2,<0.11"
 tomli = ">=2.3.0,<3"
 tomlkit = ">=0.13.3,<0.14"
 pytest = ">=8.4.2,<9"
-fastmcp = ">=2.12.4,<3"
+fastmcp = ">=2.3.0"
+mcp = ">=1.8.0"
