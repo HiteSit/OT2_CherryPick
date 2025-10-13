@@ -6,6 +6,8 @@ from .config_tools import register_config_tools
 from .labware_tools import register_labware_tools
 from .protocol_tools import register_protocol_tools
 from .simulation_tools import register_simulation_tools
+from .validation_tools import register_validation_tools
+from .workflow_tools import register_workflow_tools
 
 __all__ = [
     "register_tools",
@@ -13,6 +15,8 @@ __all__ = [
     "register_config_tools",
     "register_labware_tools",
     "register_simulation_tools",
+    "register_validation_tools",
+    "register_workflow_tools",
 ]
 
 
@@ -23,3 +27,5 @@ def register_tools(mcp: FastMCP) -> None:
     register_config_tools(mcp)
     register_labware_tools(mcp)
     register_simulation_tools(mcp)
+    register_validation_tools(mcp)
+    register_workflow_tools(mcp)

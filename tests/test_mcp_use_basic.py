@@ -16,3 +16,5 @@ def test_generate_protocol_tool_is_registered() -> None:
     assert "apply_liquid_preset" in tools
     assert "add_labware_definition" in tools
     assert "simulate_protocol" in tools
+    assert "validate_configuration" in tools
+    assert "full_workflow" in tools

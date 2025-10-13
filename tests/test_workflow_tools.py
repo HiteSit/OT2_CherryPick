@@ -1,0 +1,78 @@
+"""Tests for workflow orchestration tools."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from ot2_cherrypick_mcp.tools.workflow_tools import run_full_workflow
+
+
+def _copy_repo_file(source: Path, destination: Path) -> Path:
+    destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    return destination
+
+
+def _prepare_inputs(tmp_path: Path):
+    repo_root = Path(__file__).resolve().parents[1]
+    settings_copy = _copy_repo_file(repo_root / "settings.toml", tmp_path / "settings.toml")
+    labware_copy = _copy_repo_file(repo_root / "labware_dict.toml", tmp_path / "labware_dict.toml")
+    csv_copy = _copy_repo_file(repo_root / "CSVs" / "example_basic.csv", tmp_path / "example_basic.csv")
+    protocol_copy = _copy_repo_file(repo_root / "CherryPick_OT2.py", tmp_path / "CherryPick_OT2.py")
+    return settings_copy, labware_copy, csv_copy, protocol_copy
+
+
+def test_full_workflow_runs_validation_and_generation(monkeypatch, tmp_path: Path) -> None:
+    settings_copy, labware_copy, csv_copy, protocol_copy = _prepare_inputs(tmp_path)
+
+    def fake_simulation(**kwargs):
+        return {"command": ["opentrons_simulate"], "stdout": "ok", "stderr": "", "returncode": 0}
+
+    monkeypatch.setattr(
+        "ot2_cherrypick_mcp.tools.workflow_tools.run_simulation",
+        lambda **kwargs: fake_simulation(**kwargs),
+    )
+
+    result = run_full_workflow(
+        csv_path=str(csv_copy),
+        settings_path=str(settings_copy),
+        labware_path=str(labware_copy),
+        protocol_path=str(protocol_copy),
+        labware_env_path=None,
+    )
+
+    assert result["status"] == "ok"
+    assert result["validation"]["status"] == "ok"
+    assert result["generation"]["protocol_file"] == str(protocol_copy)
+    assert result["simulation"]["stdout"] == "ok"
+
+
+def test_full_workflow_halts_on_validation_error(monkeypatch, tmp_path: Path) -> None:
+    settings_copy, labware_copy, csv_copy, protocol_copy = _prepare_inputs(tmp_path)
+
+    csv_copy.write_text("Source Labware,Dest Labware\nfoo,bar\n", encoding="utf-8")
+
+    simulated_called = False
+
+    def fake_simulation(**kwargs):  # pragma: no cover - ensure not called
+        nonlocal simulated_called
+        simulated_called = True
+        return {}
+
+    monkeypatch.setattr(
+        "ot2_cherrypick_mcp.tools.workflow_tools.run_simulation",
+        lambda **kwargs: fake_simulation(**kwargs),
+    )
+
+    result = run_full_workflow(
+        csv_path=str(csv_copy),
+        settings_path=str(settings_copy),
+        labware_path=str(labware_copy),
+        protocol_path=str(protocol_copy),
+    )
+
+    assert result["status"] == "error"
+    assert result["generation"] is None
+    assert result["simulation"] is None
+    assert simulated_called is False
