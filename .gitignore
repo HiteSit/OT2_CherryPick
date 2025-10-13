@@ -5,12 +5,8 @@
 .idea/
 .vscode/
 .pixi/
+.aim/
 
 # Files / Dirs
 projects/
-**TMP.csv# pixi environments
-.pixi/*
-!.pixi/config.toml
-# pixi environments
-.pixi/*
-!.pixi/config.toml
+**TMP.csv
