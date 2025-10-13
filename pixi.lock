@@ -2207,7 +2207,7 @@ packages:
 - pypi: ./
   name: ot2-cherrypick
   version: 0.1.0
-  sha256: 11cdead515a0fccd128a5cb207a6a5cd6c919090e1b37f8da0121e1a069b0420
+  sha256: bfc93b8a0e44cb03f6d1826f6db9377997abf6879e85c60b85ce72331efc279c
   requires_dist:
   - mcp-use>=1.3.7,<2
   - langchain-mistralai>=0.2.12,<0.3

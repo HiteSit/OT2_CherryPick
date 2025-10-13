@@ -18,6 +18,9 @@ packages = ["src/ot2_cherrypick_mcp"]
 [tool.pixi.pypi-dependencies]
 ot2_cherrypick = { path = ".", editable = true }
 
+[project.scripts]
+ot2-mcp-server = "ot2_cherrypick_mcp.server:main"
+
 [tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
