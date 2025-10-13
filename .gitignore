@@ -8,5 +8,6 @@
 .aim/
 
 # Files / Dirs
+**__pycache__
 projects/
 **TMP.csv
