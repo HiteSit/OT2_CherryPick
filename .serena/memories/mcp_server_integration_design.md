@@ -6,7 +6,7 @@ This document outlines the design and implementation strategy for integrating th
 
 **Key Architectural Decision:** The MCP server will be integrated directly into the existing OT2_CherryPick repository structure, not as a separate nested project. The repository root will become a pixi-managed Python package containing both the existing protocol generation system and the new MCP server code.
 
-**Environment Status:** The project uses pixi for package management. All required dependencies are already installed in the local `.pixi/` environment. No package installation is needed unless a missing dependency error occurs.
+**Environment Status:** The project uses pixi for package management. All required dependencies are managed in `pyproject.toml`. Always check the actual `pyproject.toml` file in the codebase for current dependency versions and configuration.
 
 ---
 
@@ -152,7 +152,7 @@ OT2_CherryPick/
 | Preserve whitespace | ❌ | ✅ |
 | Style-preserving edits | ❌ | ✅ |
 
-**Note:** `tomlkit` is already available in the pixi environment.
+**Note:** `tomlkit` is available in the pixi environment (check `pyproject.toml` for current version).
 
 #### Core TOML Handler Design Pattern
 
@@ -268,7 +268,7 @@ MCP tools should expose these helper functions through clean interfaces:
 - Verify resource access patterns
 - Debug server behavior in isolation
 
-**Note:** `mcp-use` and `langchain-mistralai` are already available in the pixi environment.
+**Note:** `mcp-use` and `langchain-mistralai` are available in the pixi environment (check `pyproject.toml` for current versions).
 
 ### Testing LLM Configuration
 
@@ -654,59 +654,32 @@ OT2_CherryPick/                    # Repository root (pixi project)
 5. **Standard Structure** - Follows Python src-layout convention
 6. **Local Environment** - `.pixi/` directory contains project-specific environment
 
-### Current Pixi Configuration (Actual State)
+### Current Pixi Configuration
 
-The project's `pyproject.toml` currently contains:
+**⚠️ ALWAYS refer to the actual `pyproject.toml` file in the codebase for current configuration.**
 
-```toml
-[project]
-name = "OT2_CherryPick"
-version = "0.1.0"
-authors = [{name = "Riccardo_Linux", email = "riccardofusco99@gmail.com"}]
-requires-python = ">= 3.12"
-dependencies = [
-    "opentrons>=8.7.0,<9",
-    "mcp-use>=1.3.7,<2",
-    "langchain-mistralai>=0.2.12,<0.3",
-    "fastmcp>=2.9.2,<3",
-    "mcp>=1.9.4,<2"
-]
+The `pyproject.toml` file contains:
 
-[build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling"]
+**Key Sections:**
+- `[project]` - Package metadata, Python version requirement (>= 3.12), PyPI dependencies
+- `[build-system]` - Uses `hatchling` as build backend
+- `[tool.hatch.build.targets.wheel]` - Package configuration pointing to `src/ot2_cherrypick_mcp`
+- `[tool.pixi.workspace]` - Pixi workspace configuration (channels, platforms)
+- `[tool.pixi.dependencies]` - Conda-forge packages (numpy, pandas, rdkit, pytest, tomlkit, fastmcp, mcp, etc.)
+- `[tool.pixi.pypi-dependencies]` - PyPI packages in editable mode
+- `[tool.pixi.tasks]` - Task definitions (empty until Phase 1 implementation)
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/ot2_cherrypick_mcp"]
+**Key Dependencies to Note:**
+- MCP-related: `mcp`, `fastmcp`, `mcp-use`, `langchain-mistralai`
+- TOML handling: `toml`, `tomli`, `tomlkit`
+- Testing: `pytest`
+- Opentrons: Check `[project]` dependencies for version
+- Scientific computing: `numpy`, `pandas`, `rdkit`, `datamol`, `seaborn`
 
-[tool.pixi.pypi-dependencies]
-ot2_cherrypick = { path = ".", editable = true }
-
-[tool.pixi.workspace]
-channels = ["conda-forge"]
-platforms = ["linux-64"]
-
-[tool.pixi.tasks]
-# Empty - console scripts will be added during Phase 1 implementation
-
-[tool.pixi.dependencies]
-numpy = ">=1.20.0,<2"
-pandas = ">=2.3.3,<3"
-rdkit = ">=2025.9.1,<2026"
-seaborn = ">=0.13.2,<0.14"
-pixi-pycharm = ">=0.0.9,<0.0.10"
-datamol = ">=0.12.5,<0.13"
-toml = ">=0.10.2,<0.11"
-tomli = ">=2.3.0,<3"
-tomlkit = ">=0.13.3,<0.14"
-pytest = ">=8.4.2,<9"
-```
-
-**Key notes:**
-- Python version is NOT explicitly specified in `[tool.pixi.dependencies]` - pixi manages Python automatically
-- The `[build-system]` and `[tool.hatch.build.targets.wheel]` sections are configured for building the package
-- All MCP-related dependencies (`mcp`, `fastmcp`, `mcp-use`, `langchain-mistralai`) are present
-- `[tool.pixi.tasks]` is empty - will be populated when console scripts are implemented
+**Environment Management:**
+- Python version is NOT explicitly specified in `[tool.pixi.dependencies]` - pixi manages Python automatically based on `requires-python` in `[project]`
+- All commands should be run with `pixi run` to use the local `.pixi/` environment
+- The `.pixi/` directory contains the isolated project environment
 
 ### Future Console Script Configuration
 
@@ -1248,7 +1221,7 @@ All existing files remain at repository root:
 #### New Top-Level Items
 
 - ✨ **.pixi/** - Pixi local environment (already exists, auto-created by pixi)
-- ✨ **pyproject.toml** - Makes repository a Python package with pixi config (already exists, will be enhanced)
+- ✨ **pyproject.toml** - Makes repository a Python package with pixi config (already exists, check file for current config)
 - ✨ **README.md** - Updated project overview (Phase 1)
 - ✨ **src/** - MCP server code (Phase 1+)
 - ✨ **tests/** - Test suite (Phase 1+)
@@ -1285,7 +1258,7 @@ OT2_CherryPick/
 ```
 OT2_CherryPick/
 ├── .pixi/                       # Already exists
-├── pyproject.toml               # Already exists - will be enhanced
+├── pyproject.toml               # Already exists - check file for current config
 ├── src/ot2_cherrypick_mcp/     # NEW
 ├── tests/                       # NEW
 └── docs/                        # NEW (Phase 4)
@@ -1297,7 +1270,7 @@ OT2_CherryPick/
 
 ### 1. Proof of Concept (1-2 days)
 
-**Environment Status:** ✅ `pyproject.toml` configured with all required dependencies installed
+**Environment Status:** ✅ All dependencies configured in `pyproject.toml` (check file for current versions)
 
 **Create Minimal MCP Server:**
 - Create `src/ot2_cherrypick_mcp/server.py` with FastMCP
@@ -1312,7 +1285,7 @@ OT2_CherryPick/
 - Verify imports from `helper_cherry_pick` work correctly
 
 **Note on Dependencies:**
-All required packages are already available in the pixi environment. If a package is missing, add it with:
+Check `pyproject.toml` for current dependency configuration. If a package is missing, add it with:
 - `pixi add package-name` (for conda-forge packages, preferred)
 - `pixi add package-name --pypi` (for PyPI-only packages)
 
@@ -1394,23 +1367,23 @@ All required packages are already available in the pixi environment. If a packag
 - ✅ Tested and verified with existing workflow (`./simulate_protocol.sh CSVs/TMP.csv`)
 
 **Repository Organization**
-- ✅ `pyproject.toml` created with complete `[tool.pixi]` configuration
-- ✅ All required MCP dependencies installed (`mcp`, `fastmcp`, `mcp-use`, `langchain-mistralai`)
-- ✅ TOML libraries installed (`toml`, `tomli`, `tomlkit`)
-- ✅ Testing framework installed (`pytest`)
+- ✅ `pyproject.toml` created with pixi configuration (check file for current state)
+- ✅ All required MCP dependencies configured
+- ✅ TOML libraries configured
+- ✅ Testing framework configured (`pytest`)
 - ✅ Build system configured (`hatchling` with proper package paths)
 - ✅ Utility files organized in `utils/` directory
   - `utils/copy_essentials.sh`
   - `utils/mcp-use_example.py`
 - ✅ `.pixi/` environment active and functional
-- ✅ All dependencies installed and ready
+- ✅ Dependencies ready (check `pyproject.toml` for versions)
 
 ### 🚧 Ready for MCP Implementation
 
 The codebase is now **fully prepared** for Phase 1 MCP implementation:
 - ✅ Importable functions available for MCP tools
 - ✅ Exception-based error handling throughout
-- ✅ Environment configured with all required packages
+- ✅ Environment configured (see `pyproject.toml`)
 - ✅ Testing framework (mcp-use + Mistral) ready to use
 - ✅ Development workflow established (`pixi run` commands)
 - ✅ Build system properly configured for src-layout package
