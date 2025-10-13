@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Mapping, MutableMapping, Sequence
 
@@ -27,6 +29,9 @@ def _default_runner(
     )
 
 
+DEFAULT_LOG_FILE = Path("logs") / "last_simulation.json"
+
+
 def simulate_protocol(
     protocol_path: str | Path,
     *,
@@ -34,6 +39,7 @@ def simulate_protocol(
     extra_env: Mapping[str, str] | None = None,
     timeout: int = 120,
     runner: Callable[..., subprocess.CompletedProcess[str]] | None = None,
+    log_file: str | Path | None = DEFAULT_LOG_FILE,
 ) -> dict[str, object]:
     """Run `opentrons_simulate` for the given protocol file.
 
@@ -89,7 +95,12 @@ def simulate_protocol(
         "stdout": completed.stdout,
         "stderr": completed.stderr,
         "returncode": completed.returncode,
+        "protocol_path": str(protocol_file),
+        "labware_path": str(labware_dir) if labware_dir is not None else None,
     }
+
+    if log_file is not None:
+        _write_simulation_log(log_file, result)
 
     if completed.returncode != 0:
         raise SimulationError(
@@ -99,4 +110,17 @@ def simulate_protocol(
     return result
 
 
-__all__ = ["simulate_protocol"]
+def _write_simulation_log(log_file: str | Path, payload: Mapping[str, object]) -> None:
+    """Persist simulation details for consumption via resources."""
+
+    log_path = resolve_repo_path(log_file)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    entry = dict(payload)
+    entry["timestamp"] = datetime.now(timezone.utc).isoformat()
+
+    with log_path.open("w", encoding="utf-8") as handle:
+        json.dump(entry, handle, indent=2)
+
+
+__all__ = ["simulate_protocol", "DEFAULT_LOG_FILE"]

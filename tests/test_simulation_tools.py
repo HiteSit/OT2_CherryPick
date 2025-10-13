@@ -28,9 +28,11 @@ def test_simulate_protocol_success(tmp_path: Path) -> None:
     def runner(command):
         return CompletedProcess(command, 0, stdout="ok", stderr="")
 
-    result = simulate_protocol(protocol_copy, runner=runner)
+    log_path = tmp_path / "log.json"
+    result = simulate_protocol(protocol_copy, runner=runner, log_file=log_path)
     assert result["returncode"] == 0
     assert result["stdout"] == "ok"
+    assert log_path.exists()
 
 
 def test_simulate_protocol_with_labware(tmp_path: Path) -> None:
@@ -46,7 +48,7 @@ def test_simulate_protocol_with_labware(tmp_path: Path) -> None:
         recorded["command"] = command
         return CompletedProcess(command, 0, stdout="", stderr="")
 
-    simulate_protocol(protocol_copy, labware_path=labware_dir, runner=runner)
+    simulate_protocol(protocol_copy, labware_path=labware_dir, runner=runner, log_file=None)
     assert "--custom-labware" in recorded["command"]
     assert str(labware_dir) in recorded["command"]
 
@@ -77,9 +79,17 @@ def test_run_simulation_uses_core(monkeypatch, tmp_path: Path) -> None:
 
     def fake_simulate(**kwargs):
         assert Path(kwargs["protocol_path"]) == protocol_copy
-        return {"command": ["opentrons_simulate"], "stdout": "ok", "stderr": "", "returncode": 0}
+        assert kwargs["log_file"] == tmp_path / "custom_log.json"
+        return {
+            "command": ["opentrons_simulate"],
+            "stdout": "ok",
+            "stderr": "",
+            "returncode": 0,
+            "protocol_path": str(protocol_copy),
+            "labware_path": None,
+        }
 
     monkeypatch.setattr("ot2_cherrypick_mcp.tools.simulation_tools.simulate_protocol", fake_simulate)
-
-    result = run_simulation(protocol_path=str(protocol_copy))
+    result = run_simulation(protocol_path=str(protocol_copy), log_file=tmp_path / "custom_log.json")
     assert result["returncode"] == 0
+    assert result["log_file"].endswith("custom_log.json")

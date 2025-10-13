@@ -8,7 +8,7 @@ import os
 
 from fastmcp import FastMCP
 
-from .resources import register_config_resources
+from .resources import register_config_resources, register_file_resources, register_log_resources
 from .tools import register_tools
 from .utils.logging_config import configure_logging
 from .utils.paths import get_repo_root
@@ -27,6 +27,8 @@ def create_mcp_app() -> FastMCP:
     app = FastMCP(name=APP_NAME, instructions=APP_INSTRUCTIONS)
     register_tools(app)
     register_config_resources(app)
+    register_file_resources(app)
+    register_log_resources(app)
     return app
 
 

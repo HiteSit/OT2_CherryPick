@@ -7,7 +7,7 @@ from typing import Dict, Optional
 
 from fastmcp import FastMCP
 
-from ..core.simulation import simulate_protocol
+from ..core.simulation import DEFAULT_LOG_FILE, simulate_protocol
 from ..utils.errors import ConfigurationError, SimulationError
 
 DEFAULT_PROTOCOL_PATH = Path("CherryPick_OT2.py")
@@ -20,6 +20,7 @@ def run_simulation(
     protocol_path: str | Path = DEFAULT_PROTOCOL_PATH,
     labware_path: Optional[str | Path] = None,
     timeout: int = 180,
+    log_file: str | Path | None = DEFAULT_LOG_FILE,
 ) -> Dict[str, object]:
     """Execute an OT-2 simulation and return captured output."""
 
@@ -27,6 +28,7 @@ def run_simulation(
         protocol_path=protocol_path,
         labware_path=labware_path,
         timeout=timeout,
+        log_file=log_file,
     )
 
     return {
@@ -34,6 +36,7 @@ def run_simulation(
         "stdout": result["stdout"],
         "stderr": result["stderr"],
         "returncode": result["returncode"],
+        "log_file": str(log_file) if log_file is not None else None,
     }
 
 
@@ -48,8 +51,14 @@ def register_simulation_tools(mcp: FastMCP) -> None:
         protocol_path: str = str(DEFAULT_PROTOCOL_PATH),
         labware_path: Optional[str] = None,
         timeout: int = 180,
+        log_file: Optional[str] = str(DEFAULT_LOG_FILE),
     ) -> Dict[str, object]:
         try:
-            return run_simulation(protocol_path=protocol_path, labware_path=labware_path, timeout=timeout)
+            return run_simulation(
+                protocol_path=protocol_path,
+                labware_path=labware_path,
+                timeout=timeout,
+                log_file=log_file,
+            )
         except (ConfigurationError, SimulationError) as exc:
             raise SimulationError(f"Simulation failed: {exc}") from exc
