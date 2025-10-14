@@ -19,7 +19,56 @@ The MCP server is organized into four main categories:
 
 Tools are registered via `@mcp.tool()` decorators and provide high-level task-oriented operations.
 
-### 1. Protocol Generation
+### 1. Project Management
+
+**File:** `src/ot2_cherrypick_mcp/tools/project_tools.py`
+
+#### `initialize_project`
+
+Initializes a new OT2 project directory with template configuration files and directory structure.
+
+**Parameters:**
+- None (reads from `OT2_PROJECT_DIR` environment variable)
+
+**Returns:** Dict with:
+- `project_directory` (str) - Path to initialized project
+- `created_files` (list) - List of template files copied
+- `created_directories` (list) - List of directories created
+- `status` (str) - Initialization status
+- `message` (str) - Summary message
+
+**Creates:**
+- `settings.toml` - Protocol execution parameters template
+- `labware_dict.toml` - Hardware definitions template
+- `CherryPick_OT2.py` - Protocol template file
+- `CSVs/` - Directory with example transfer CSV files
+- `logs/` - Directory for simulation logs
+
+**Behavior:**
+- Reads project path from `OT2_PROJECT_DIR` environment variable (must be set in MCP config)
+- Creates project directory if it doesn't exist
+- Copies template files from codebase installation to project directory
+- Overwrites existing files without creating backups
+- Creates empty directories for logs and CSVs
+
+**Prompt Location:** Inline in function decorator
+
+**Example Use:**
+```python
+# First, ensure OT2_PROJECT_DIR is set in your MCP configuration
+# Then call the tool (no parameters needed)
+initialize_project()
+```
+
+**When to Use:**
+- Before working with any other MCP tools (required first step)
+- When setting up a new experimental project
+- When project directory is missing required files
+- To reset a project to template defaults
+
+---
+
+### 2. Protocol Generation
 
 **File:** `src/ot2_cherrypick_mcp/tools/protocol_tools.py`
 
@@ -52,7 +101,7 @@ generate_protocol(
 
 ---
 
-### 2. Configuration Management
+### 3. Configuration Management
 
 **File:** `src/ot2_cherrypick_mcp/tools/config_tools.py`
 
@@ -119,7 +168,7 @@ apply_liquid_preset(
 
 ---
 
-### 3. CSV Template Generation
+### 4. CSV Template Generation
 
 **File:** `src/ot2_cherrypick_mcp/tools/csv_tools.py`
 
@@ -185,7 +234,7 @@ upload_csv_content(
 
 ---
 
-### 4. Labware Catalog Management
+### 5. Labware Catalog Management
 
 **File:** `src/ot2_cherrypick_mcp/tools/labware_tools.py`
 
@@ -233,7 +282,7 @@ add_labware_definition(
 
 ---
 
-### 5. Protocol Simulation
+### 6. Protocol Simulation
 
 **File:** `src/ot2_cherrypick_mcp/tools/simulation_tools.py`
 
@@ -267,7 +316,7 @@ simulate_protocol(
 
 ---
 
-### 6. Protocol Deployment
+### 7. Protocol Deployment
 
 **File:** `src/ot2_cherrypick_mcp/tools/deployment_tools.py`
 
@@ -302,7 +351,7 @@ deploy_to_opentrons(
 
 ---
 
-### 7. Configuration Validation
+### 8. Configuration Validation
 
 **File:** `src/ot2_cherrypick_mcp/tools/validation_tools.py`
 
@@ -342,7 +391,7 @@ validate_configuration(
 
 ---
 
-### 8. Full Workflow Orchestration
+### 9. Full Workflow Orchestration
 
 **File:** `src/ot2_cherrypick_mcp/tools/workflow_tools.py`
 
@@ -740,6 +789,7 @@ result = full_workflow(csv_path="CSVs/test.csv")
 
 ### Completed Features (Phase 1-3)
 
+✅ Project management (initialize_project)
 ✅ Core protocol generation tools
 ✅ Configuration management (update_settings, apply_liquid_preset)
 ✅ CSV template generation
@@ -817,4 +867,4 @@ print(response)
 
 ## Summary
 
-The MCP server provides **8 tools**, **6 resources**, and **2 prompts** that expose the complete OT-2 CherryPick protocol generation workflow to AI assistants. The implementation follows the design document closely, with all Phase 1-3 features completed and ready for use. The server enables natural language interaction with complex liquid handling protocol configuration while maintaining the human-readable TOML/CSV source-of-truth files.
+The MCP server provides **9 tools**, **6 resources**, and **2 prompts** that expose the complete OT-2 CherryPick protocol generation workflow to AI assistants. The implementation follows the design document closely, with all Phase 1-3 features completed and ready for use. The server enables natural language interaction with complex liquid handling protocol configuration while maintaining the human-readable TOML/CSV source-of-truth files.

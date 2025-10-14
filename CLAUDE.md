@@ -97,7 +97,7 @@ When you run `./simulate_protocol.sh CSVs/your_file.csv`:
 
 **src/ot2_cherrypick_mcp/** - MCP server implementation
 - `server.py` - FastMCP server entry point with `create_mcp_app()` and `main()`
-- `tools/` - 8 tool modules exposing protocol operations (protocol, config, csv, deployment, labware, simulation, validation, workflow)
+- `tools/` - 9 tool modules exposing protocol operations (project, protocol, config, csv, deployment, labware, simulation, validation, workflow)
 - `resources/` - 4 resource modules for read-only data (config, file, log, status)
 - `prompts/` - Workflow prompts for guided AI interactions (setup_new_experiment, troubleshoot_simulation_error)
 - `core/` - Core functionality (validation.py, simulation.py, deployment.py, toml_handler.py)
@@ -373,7 +373,10 @@ The Model Context Protocol (MCP) server enables AI-native interaction with the p
 - Auto-creates `.toml.backup` files before modifications
 - Preserves comments, formatting, and whitespace
 
-### MCP Tools (8 Categories)
+### MCP Tools (9 Categories)
+
+**Project Management** - `src/ot2_cherrypick_mcp/tools/project_tools.py`
+- `initialize_project` - Set up new project directory with template files (settings.toml, labware_dict.toml, CherryPick_OT2.py, CSVs/)
 
 **Protocol Generation** - `src/ot2_cherrypick_mcp/tools/protocol_tools.py`
 - `generate_protocol` - Compile TOML + CSV into CherryPick_OT2.py
