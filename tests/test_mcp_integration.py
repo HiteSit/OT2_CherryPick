@@ -2,60 +2,26 @@
 
 from __future__ import annotations
 
-import asyncio
-import shutil
 from pathlib import Path
-from typing import Any, Dict
+from typing import Callable
 
 import helper_cherry_pick
 import pytest
 
-from langchain_mistralai import ChatMistralAI
-from mcp_use import MCPAgent, MCPClient
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-CSV_STRING = """Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top\n\
-tube_rack_96_1500ul_4,A1,100,384_ppv_55ul_2,B1,2,-5\n\
-tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,B2,2,-5\n\
-tube_rack_96_1500ul_4,A3,75,384_ppv_55ul_2,B3,2,-5\n\
-tube_rack_96_1500ul_4,A4,25,384_ppv_55ul_2,B4,2,-5"""
-SETTINGS_TEMPLATE = (PROJECT_ROOT / "settings.toml").read_text(encoding="utf-8")
-SETTINGS_SCENARIOS = [
-    (
-        "settings.general.tip_reuse",
-        "never",
-        'tip_reuse = "never"',
-        "Use the update_settings tool to set path 'settings.general.tip_reuse' to 'never'",
-    ),
-    (
-        "settings.general.mode",
-        "single_X1",
-        'mode = "single_X1"',
-        "Use the update_settings tool to set path 'settings.general.mode' to 'single_X1'",
-    ),
-    (
-        "settings.general.head_speed.speed",
-        "250",
-        "speed = 250",
-        "Use the update_settings tool to set path 'settings.general.head_speed.speed' to '250'",
-    ),
-    (
-        "settings.liquid_handling.delays.post_aspirate",
-        "2.5",
-        "post_aspirate = 2.5",
-        "Use the update_settings tool to set path 'settings.liquid_handling.delays.post_aspirate' to '2.5'",
-    ),
-    (
-        "settings.liquid_handling.push_out.enabled",
-        "false",
-        "enabled = false",
-        "Use the update_settings tool to set path 'settings.liquid_handling.push_out.enabled' to 'false'",
-    ),
-]
+from .helpers import AgentRunner, Assertions, ProjectSetup
+from .test_data import (
+    CSV_BASIC,
+    CSV_TEMPLATE_SCENARIOS,
+    LABWARE_SCENARIOS,
+    LIQUID_PRESET_SCENARIOS,
+    UPDATE_SETTINGS_SCENARIOS,
+    VALIDATION_ERROR_SCENARIOS,
+)
 
 
-def _log_project_info(context: str, project_dir: Path) -> None:
-    """Emit helpful paths for manual inspection while running tests."""
+def _print_project_snapshot(context: str, project_dir: Path) -> None:
+    """Emit project directory details for manual inspection."""
+
     print(
         f"[{context}] project_dir={project_dir} "
         f"settings={project_dir / 'settings.toml'} "
@@ -65,98 +31,40 @@ def _log_project_info(context: str, project_dir: Path) -> None:
     )
 
 
-def _setup_project_dir(tmp_path: Path) -> Path:
-    """Set up a temporary project directory with required files."""
-    project_dir = tmp_path / "test_project"
-    project_dir.mkdir()
-
-    # Copy template files
-    shutil.copy2(PROJECT_ROOT / "settings.toml", project_dir / "settings.toml")
-    shutil.copy2(PROJECT_ROOT / "labware_dict.toml", project_dir / "labware_dict.toml")
-    shutil.copy2(PROJECT_ROOT / "CherryPick_OT2.py", project_dir / "CherryPick_OT2.py")
-
-    # Copy CSVs directory
-    shutil.copytree(PROJECT_ROOT / "CSVs", project_dir / "CSVs")
-
-    # Create logs directory
-    (project_dir / "logs").mkdir()
-
-    _log_project_info("setup", project_dir)
-    return project_dir
-
-
-def _build_config(project_dir: Path) -> Dict[str, Any]:
-    """Build MCP configuration with project directory."""
-    return {
-        "mcpServers": {
-            "ot2-cherrypick": {
-                "command": "pixi",
-                "args": [
-                    "run",
-                    "--manifest-path",
-                    str(PROJECT_ROOT / "pyproject.toml"),
-                    "python",
-                    "-m",
-                    "ot2_cherrypick_mcp.server",
-                ],
-                "env": {
-                    "LABWARE_PATH": str(PROJECT_ROOT),
-                    "OT2_PROJECT_DIR": str(project_dir),
-                },
-            }
-        }
-    }
-
-
-async def _run_agent(query: str, project_dir: Path) -> str:
-    """Run agent with project directory configuration."""
-    client = MCPClient(config=_build_config(project_dir))
-    llm = ChatMistralAI(model="mistral-medium-2508")
-    agent = MCPAgent(llm=llm, client=client, max_steps=20)
-    return await agent.run(query)
-
-
-def test_agent_lists_tools(tmp_path: Path) -> None:
+def test_agent_lists_tools(agent_runner: AgentRunner) -> None:
     """Test that agent can list available tools."""
-    project_dir = _setup_project_dir(tmp_path)
-    result = asyncio.run(
-        _run_agent("What tools are available for the OT-2 cherry-pick protocol?", project_dir)
-    )
-    assert isinstance(result, str)
+
+    result = agent_runner.run("What tools are available for the OT-2 cherry-pick protocol?")
+    Assertions.assert_no_errors(result)
     assert result
 
 
-def test_agent_runs_workflow_from_string(tmp_path: Path) -> None:
+def test_agent_runs_workflow_from_string(project_dir: Path, agent_runner: AgentRunner) -> None:
     """Test that agent can upload CSV and run workflow."""
-    project_dir = _setup_project_dir(tmp_path)
 
-    # Use project CSVs directory for the uploaded file
     csv_dir = project_dir / "CSVs"
     tmp_target = csv_dir / "tmp_uploaded.csv"
     tmp_target.unlink(missing_ok=True)
 
     query = (
-        f"I have some transfer data in CSV format that I'd like you to save to 'CSVs/tmp_uploaded.csv'. "
-        f"After saving it, please generate and validate the protocol (but skip the simulation step). "
-        f"Here's the CSV data:\n\n{CSV_STRING}\n\n"
-        f"Let me know if everything worked correctly."
+        "I have some transfer data in CSV format that I'd like you to save to "
+        "'CSVs/tmp_uploaded.csv'. After saving it, please generate and validate the protocol "
+        "(but skip the simulation step). Here's the CSV data:\n\n"
+        f"{CSV_BASIC}\n\n"
+        "Let me know if everything worked correctly."
     )
 
-    result = asyncio.run(_run_agent(query, project_dir))
-    assert isinstance(result, str)
-    assert tmp_target.exists()
-    lower = result.lower()
-    if "invalid_request_message_order" not in lower:
-        assert "error:" not in lower
-    print(
-        f"[workflow_from_string] csv_saved={tmp_target} protocol={project_dir / 'CherryPick_OT2.py'}",
-        flush=True,
-    )
+    result = agent_runner.run(query)
+    Assertions.assert_no_errors(result)
+    Assertions.assert_file_exists(tmp_target)
+
+    _print_project_snapshot("workflow_from_string", project_dir)
 
 
-def test_agent_full_pipeline_updates_protocol(tmp_path: Path) -> None:
+def test_agent_full_pipeline_updates_protocol(
+    project_dir: Path, agent_runner: AgentRunner
+) -> None:
     """Ensure agents can update settings, run full workflow, and embed JSON in protocol."""
-    project_dir = _setup_project_dir(tmp_path)
 
     csv_relative = "CSVs/pipeline_full.csv"
     csv_path = project_dir / csv_relative
@@ -165,71 +73,226 @@ def test_agent_full_pipeline_updates_protocol(tmp_path: Path) -> None:
     upload_query = (
         "Please save the following CSV data to 'CSVs/pipeline_full.csv' so it can be used for "
         "a protocol run:\n\n"
-        f"{CSV_STRING}\n\n"
+        f"{CSV_BASIC}\n\n"
         "Confirm when it has been saved."
     )
-    upload_result = asyncio.run(_run_agent(upload_query, project_dir))
-    assert isinstance(upload_result, str)
-    assert csv_path.exists()
-    lower_upload = upload_result.lower()
-    if "invalid_request_message_order" not in lower_upload:
-        assert "error:" not in lower_upload
+    upload_result = agent_runner.run(upload_query)
+    Assertions.assert_no_errors(upload_result)
+    Assertions.assert_file_exists(csv_path)
 
     update_query = (
         "Use the update_settings tool to set the path 'settings.general.mode' to the value 'single_X1'."
     )
-    update_result = asyncio.run(_run_agent(update_query, project_dir))
-    assert isinstance(update_result, str)
-    lower_update = update_result.lower()
-    if "invalid_request_message_order" not in lower_update:
-        assert "error:" not in lower_update
+    update_result = agent_runner.run(update_query)
+    Assertions.assert_no_errors(update_result)
     updated_settings = (project_dir / "settings.toml").read_text(encoding="utf-8")
     assert 'mode = "single_X1"' in updated_settings
-    print(
-        f"[full_pipeline] updated_settings={project_dir / 'settings.toml'} "
-        f"csv={csv_path}",
-        flush=True,
-    )
 
     workflow_query = (
         "Run full_workflow on 'CSVs/pipeline_full.csv' with simulate set to false and deployment "
         "disabled. Let me know when the workflow is complete."
     )
-    workflow_result = asyncio.run(_run_agent(workflow_query, project_dir))
-    assert isinstance(workflow_result, str)
-    lower_workflow = workflow_result.lower()
-    if "invalid_request_message_order" not in lower_workflow:
-        assert "error:" not in lower_workflow
+    workflow_result = agent_runner.run(workflow_query)
+    Assertions.assert_no_errors(workflow_result)
 
     protocol_path = project_dir / "CherryPick_OT2.py"
-    protocol_content = protocol_path.read_text(encoding="utf-8")
-    print(f"[full_pipeline] protocol_path={protocol_path}", flush=True)
     expected_json = helper_cherry_pick.create_json_config(
         str(project_dir / "labware_dict.toml"),
         str(project_dir / "settings.toml"),
         str(csv_path),
         verbose=False,
     )
-    assert expected_json in protocol_content
+    Assertions.assert_file_contains(protocol_path, expected_json)
+
+    _print_project_snapshot("full_pipeline", project_dir)
 
 
-@pytest.mark.parametrize("path,value,expected,prompt", SETTINGS_SCENARIOS)
+@pytest.mark.parametrize("path,value,expected,prompt", UPDATE_SETTINGS_SCENARIOS)
 def test_agent_updates_settings(
-    tmp_path: Path, capsys, path: str, value: str, expected: str, prompt: str
+    tmp_path: Path,
+    project_setup: ProjectSetup,
+    agent_factory: Callable[..., AgentRunner],
+    path: str,
+    value: str,
+    expected: str,
+    prompt: str,
 ) -> None:
     """Test that agent can update settings via natural language."""
-    project_dir = _setup_project_dir(tmp_path)
-    settings_file = project_dir / "settings.toml"
+
+    project_dir: Path = project_setup.create_standard_project(tmp_path)
+    runner: AgentRunner = agent_factory(project_dir, max_steps=8)
 
     query = f"{prompt} in the settings file"
+    result = runner.run(query)
+    Assertions.assert_no_errors(result)
 
-    client = MCPClient(config=_build_config(project_dir))
-    llm = ChatMistralAI(model="mistral-medium-2508")
-    agent = MCPAgent(llm=llm, client=client, max_steps=8)
-    _ = asyncio.run(agent.run(query))
-
-    print(f"Project settings: {settings_file}")
-    captured = capsys.readouterr()
-
+    settings_file = project_dir / "settings.toml"
     updated = settings_file.read_text(encoding="utf-8")
     assert expected in updated
+
+    _print_project_snapshot("updates_settings", project_dir)
+
+
+@pytest.mark.parametrize("scenario_name,params", CSV_TEMPLATE_SCENARIOS)
+def test_agent_generate_csv_template(
+    project_dir: Path,
+    agent_runner: AgentRunner,
+    scenario_name: str,
+    params: dict[str, object],
+) -> None:
+    """Agent can generate CSV templates with requested characteristics."""
+
+    filename = f"CSVs/generated_{scenario_name}.csv"
+    base_prompt = (
+        f"Use the generate_csv_template tool to create '{filename}' "
+        f"with {params['transfers']} transfers from {params['source_labware']} to {params['dest_labware']} "
+        f"and a default volume of {params.get('default_volume', 0)}."
+    )
+    if "source_height" in params:
+        base_prompt += f" Set the source height to {params['source_height']}."
+
+    result = agent_runner.run(base_prompt)
+    Assertions.assert_no_errors(result)
+
+    csv_path = project_dir / filename
+    Assertions.assert_file_exists(csv_path)
+    content = csv_path.read_text(encoding="utf-8").strip().splitlines()
+    assert len(content) == params["transfers"] + 1  # header + rows
+
+
+@pytest.mark.parametrize("scenario_name,labware_def", LABWARE_SCENARIOS)
+def test_agent_add_labware_definition(
+    tmp_path: Path,
+    project_setup: ProjectSetup,
+    agent_factory: Callable[..., AgentRunner],
+    scenario_name: str,
+    labware_def: dict[str, object],
+) -> None:
+    """Agent can register custom labware definitions in labware_dict.toml."""
+
+    project_dir = project_setup.create_standard_project(tmp_path)
+    runner = agent_factory(project_dir)
+
+    prompt = (
+        "Use the add_labware_definition tool with the following parameters:\n"
+        f"labware_id: {labware_def['labware_id']}\n"
+        f"category: {labware_def['category']}\n"
+        f"well_count: {labware_def['well_count']}\n"
+        f"well_volume: {labware_def['well_volume']}\n"
+    )
+    if "offset_x" in labware_def:
+        prompt += (
+            f"offset_x: {labware_def['offset_x']}\n"
+            f"offset_y: {labware_def['offset_y']}\n"
+            f"offset_z: {labware_def['offset_z']}\n"
+        )
+
+    result = runner.run(prompt)
+    Assertions.assert_no_errors(result)
+    Assertions.assert_file_contains(
+        project_dir / "labware_dict.toml",
+        str(labware_def["labware_id"]),
+    )
+
+
+def test_agent_validate_configuration_success(
+    project_with_csv: Path, agent_factory: Callable[..., AgentRunner]
+) -> None:
+    """Agent validates a correct configuration without errors."""
+
+    runner = agent_factory(project_with_csv)
+    query = (
+        "Use the validate_configuration tool to validate the configuration for 'CSVs/test.csv'."
+    )
+    result = runner.run(query)
+    Assertions.assert_no_errors(result)
+    assert any(keyword in result.lower() for keyword in ("ok", "valid", "success"))
+
+
+@pytest.mark.parametrize("scenario_name,bad_config,expected_error", VALIDATION_ERROR_SCENARIOS)
+def test_agent_validate_configuration_errors(
+    tmp_path: Path,
+    project_setup: ProjectSetup,
+    agent_factory: Callable[..., AgentRunner],
+    scenario_name: str,
+    bad_config: dict[str, object],
+    expected_error: str,
+) -> None:
+    """Agent surfaces validation errors for incorrect configurations."""
+
+    project_dir = project_setup.create_standard_project(tmp_path)
+    runner = agent_factory(project_dir)
+
+    csv_path = bad_config.get("csv_path")
+    if csv_path:
+        target = project_dir / csv_path
+        if target.exists():
+            target.unlink()
+
+    query = "Use the validate_configuration tool to validate the configuration."
+    result = runner.run(query)
+    lower = result.lower()
+    assert "not found" in lower
+    assert "csv" in lower
+
+
+
+def test_agent_initialize_project(
+    empty_project_dir: Path, agent_factory: Callable[..., AgentRunner]
+) -> None:
+    """Agent can initialize a new project structure from scratch."""
+
+    runner = agent_factory(empty_project_dir)
+    query = "Use the initialize_project tool to set up a new OT2 project."
+    result = runner.run(query)
+
+    Assertions.assert_no_errors(result)
+    Assertions.assert_file_exists(empty_project_dir / "settings.toml")
+    Assertions.assert_file_exists(empty_project_dir / "labware_dict.toml")
+    Assertions.assert_file_exists(empty_project_dir / "CherryPick_OT2.py")
+    assert (empty_project_dir / "CSVs").exists()
+    assert (empty_project_dir / "logs").exists()
+
+    _print_project_snapshot("initialize_project", empty_project_dir)
+
+
+
+@pytest.mark.parametrize("preset_name,expected_changes", LIQUID_PRESET_SCENARIOS)
+def test_agent_apply_liquid_preset(
+    project_dir: Path,
+    agent_runner: AgentRunner,
+    preset_name: str,
+    expected_changes: dict,
+) -> None:
+    """Agent applies liquid handling presets and modifies settings.toml accordingly."""
+
+    query = f"Use the apply_liquid_preset tool to apply the '{preset_name}' preset."
+    result = agent_runner.run(query)
+
+    Assertions.assert_no_errors(result)
+    for path, value in expected_changes.items():
+        full_path = f"settings.liquid_handling.{path}"
+        Assertions.assert_toml_value(project_dir / "settings.toml", full_path, value)
+
+    _print_project_snapshot("apply_liquid_preset", project_dir)
+
+
+
+def test_agent_deploy_to_opentrons(
+    project_with_protocol: Path, tmp_path: Path, agent_factory: Callable[..., AgentRunner]
+) -> None:
+    """Agent deploys protocol to specified target directory."""
+
+    runner = agent_factory(project_with_protocol)
+    target_dir = tmp_path / "deployment_target"
+    target_dir.mkdir()
+
+    query = f"Use the deploy tool to copy the protocol to '{target_dir}'."
+    result = runner.run(query)
+
+    Assertions.assert_no_errors(result)
+    deployed_files = list(target_dir.glob("*.py"))
+    assert len(deployed_files) == 1
+    assert "CherryPick_OT2" in deployed_files[0].name
+
+    _print_project_snapshot("deploy_to_opentrons", project_with_protocol)

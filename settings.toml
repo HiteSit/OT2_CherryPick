@@ -39,7 +39,7 @@ aspirate_volume = 0             # µL to aspirate/dispense for tip conditioning
 # Post-Aspirate Tip Wicking
 # Removes residual droplets after aspiration (universal across all protocols)
 [settings.liquid_handling.post_aspirate_wick]
-enabled = true                  # Enable tip wicking after aspiration
+enabled = false                 # Enable tip wicking after aspiration
 radius = 1                      # Touch tip radius
 v_offset_mm = -1.5              # Vertical offset from well top (mm)
 speed = 20                      # Touch tip speed
@@ -119,7 +119,7 @@ position_rack = "4"
 
 [[settings.working_plate]]
 type = "destination"
-labware_id = "384_ppv_55ul"
+labware_id = "384_ldv_12ul"
 position_rack = "2"
 
 [[settings.working_plate]]
