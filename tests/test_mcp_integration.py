@@ -19,11 +19,36 @@ tube_rack_96_1500ul_4,A3,75,384_ppv_55ul_2,B3,2,-5\n\
 tube_rack_96_1500ul_4,A4,25,384_ppv_55ul_2,B4,2,-5"""
 SETTINGS_TEMPLATE = (PROJECT_ROOT / "settings.toml").read_text(encoding="utf-8")
 SETTINGS_SCENARIOS = [
-    ("settings.general.tip_reuse", "never", 'tip_reuse = "never"'),
-    ("settings.general.mode", "single_X1", 'mode = "single_X1"'),
-    ("settings.general.head_speed.speed", "250", "speed = 250"),
-    ("settings.liquid_handling.delays.post_aspirate", "2.5", "post_aspirate = 2.5"),
-    ("settings.liquid_handling.push_out.enabled", "false", "enabled = false"),
+    (
+        "settings.general.tip_reuse",
+        "never",
+        'tip_reuse = "never"',
+        "Change the tip reuse strategy to never",
+    ),
+    (
+        "settings.general.mode",
+        "single_X1",
+        'mode = "single_X1"',
+        "Set the pipette mode to single_X1",
+    ),
+    (
+        "settings.general.head_speed.speed",
+        "250",
+        "speed = 250",
+        "Reduce the head movement speed to 250 mm/min",
+    ),
+    (
+        "settings.liquid_handling.delays.post_aspirate",
+        "2.5",
+        "post_aspirate = 2.5",
+        "Set the post-aspirate delay to 2.5 seconds",
+    ),
+    (
+        "settings.liquid_handling.push_out.enabled",
+        "false",
+        "enabled = false",
+        "Disable the push-out feature",
+    ),
 ]
 
 
@@ -50,13 +75,13 @@ def _build_config() -> Dict[str, Any]:
 
 async def _run_agent(query: str) -> str:
     client = MCPClient(config=_build_config())
-    llm = ChatMistralAI(model="ministral-8b-2410")
+    llm = ChatMistralAI(model="mistral-medium-2508")
     agent = MCPAgent(llm=llm, client=client, max_steps=20)
     return await agent.run(query)
 
 
 def test_agent_lists_tools() -> None:
-    result = asyncio.run(_run_agent("List available tools on the OT-2 cherry-pick server."))
+    result = asyncio.run(_run_agent("What tools are available for the OT-2 cherry-pick protocol?"))
     assert isinstance(result, str)
     assert result
 
@@ -66,10 +91,10 @@ def test_agent_runs_workflow_from_string(tmp_path: Path) -> None:
     tmp_target.unlink(missing_ok=True)
     (PROJECT_ROOT / "CSVs" / "tmp_uploaded.csv").unlink(missing_ok=True)
     query = (
-        f"Use upload_csv_content with filename 'tmp_uploaded.csv', output_dir '{tmp_path}', "
-        "and the following CSV content. Then call full_workflow with csv_path='"
-        f"{tmp_target}' and simulate=false. Finally, report the workflow status.\n\nCSV_CONTENT:\n"
-        f"{CSV_STRING}"
+        f"I have some transfer data in CSV format that I'd like you to save to '{tmp_target}'. "
+        f"After saving it, please generate and validate the protocol (but skip the simulation step). "
+        f"Here's the CSV data:\n\n{CSV_STRING}\n\n"
+        f"Let me know if everything worked correctly."
     )
 
     result = asyncio.run(_run_agent(query))
@@ -80,19 +105,17 @@ def test_agent_runs_workflow_from_string(tmp_path: Path) -> None:
         assert "error" not in lower
 
 
-@pytest.mark.parametrize("path,value,expected", SETTINGS_SCENARIOS)
-def test_agent_updates_settings(tmp_path: Path, capsys, path: str, value: str, expected: str) -> None:
+@pytest.mark.parametrize("path,value,expected,prompt", SETTINGS_SCENARIOS)
+def test_agent_updates_settings(
+    tmp_path: Path, capsys, path: str, value: str, expected: str, prompt: str
+) -> None:
     settings_copy = tmp_path / f"settings_{path.replace('.', '_')}.toml"
     settings_copy.write_text(SETTINGS_TEMPLATE, encoding="utf-8")
 
-    query = (
-        "Call update_settings with the following arguments: "
-        f"path '{path}', value '{value}', settings_path '{settings_copy}'. "
-        "After the tool call, confirm the new value."
-    )
+    query = f"{prompt} in the settings file at {settings_copy}"
 
     client = MCPClient(config=_build_config())
-    llm = ChatMistralAI(model="ministral-8b-2410")
+    llm = ChatMistralAI(model="mistral-medium-2508")
     agent = MCPAgent(llm=llm, client=client, max_steps=8)
     _ = asyncio.run(agent.run(query))
 
