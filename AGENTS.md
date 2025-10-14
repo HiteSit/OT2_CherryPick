@@ -16,6 +16,8 @@ TOML configuration + CSV transfer maps → compiled JSON → embedded in self-co
 
 The system handles complex pipetting tasks like cherry-picking samples from multiple source tubes into specific destination wells with precise control over volumes, heights, flow rates, and tip management strategies.
 
+**🆕 MCP Server Integration:** The system now includes a Model Context Protocol (MCP) server (`src/ot2_cherrypick_mcp/`) that exposes protocol generation through AI-native tools. This enables natural language interaction with the system while maintaining the human-readable TOML/CSV workflow.
+
 ## Exploration Rules
 
 **Use MCP Serena tools for codebase exploration and editing:**
@@ -62,7 +64,8 @@ When you run `./simulate_protocol.sh CSVs/your_file.csv`:
 - Reads `labware_dict.toml` + `settings.toml` + CSV
 - Creates compact JSON configuration
 - Patches `CherryPick_OT2.py` with embedded JSON
-- Functions: `read_toml_file`, `read_csv_file`, `create_json_config`, `update_protocol_file`
+- Functions: `read_toml_file`, `read_csv_file`, `create_json_config`, `update_protocol_file`, `generate_protocol`
+- Refactored for MCP compatibility: exception-based errors, verbose control, importable functions
 
 **simulate_protocol.sh** - Automation script
 - Machine configs: "local" or "remote" (edit `MACHINE_CONFIG` variable)
@@ -86,10 +89,28 @@ When you run `./simulate_protocol.sh CSVs/your_file.csv`:
 
 **pyproject.toml** - Python package manifest and environment configuration
 - `[project]` - Package metadata, dependencies, console script entry points
+- `[project.scripts]` - Console script: `ot2-mcp-server` entry point for MCP server
 - `[tool.pixi.workspace]` - Pixi workspace configuration (channels, platforms)
 - `[tool.pixi.dependencies]` - Conda-forge package dependencies
 - `[tool.pixi.pypi-dependencies]` - PyPI package dependencies
 - `[tool.pixi.tasks]` - Task definitions for pixi run commands
+
+**src/ot2_cherrypick_mcp/** - MCP server implementation
+- `server.py` - FastMCP server entry point with `create_mcp_app()` and `main()`
+- `tools/` - 8 tool modules exposing protocol operations (protocol, config, csv, deployment, labware, simulation, validation, workflow)
+- `resources/` - 4 resource modules for read-only data (config, file, log, status)
+- `prompts/` - Workflow prompts for guided AI interactions (setup_new_experiment, troubleshoot_simulation_error)
+- `core/` - Core functionality (validation.py, simulation.py, deployment.py, toml_handler.py)
+- `utils/` - Utilities including TomlHandler class for format-preserving TOML editing (toml.py, errors.py, logging_config.py, paths.py)
+
+**tests/** - Test suite
+- Unit tests for tools, resources, and core modules
+- `test_mcp_integration.py` - End-to-end mcp-use tests with Mistral LLM
+- `test_toml_handler.py` - TOML preservation tests
+
+**README.md** - Project overview with MCP usage instructions
+
+**docs/mcp_tools_guide.md** - Comprehensive MCP server tool reference
 
 ## Key Configuration Settings
 
@@ -335,6 +356,113 @@ These tiny misalignments cause:
 - **single_X1 / multi_X1 modes:** Each CSV row = 1 individual transfer
 - **multi mode:** Each CSV row = 8 simultaneous transfers (entire column). Well name `A1` means column 1 (wells A1-H1)
 
+## MCP Server Architecture
+
+The Model Context Protocol (MCP) server enables AI-native interaction with the protocol generation system. It exposes the entire workflow through tools, resources, and prompts while maintaining TOML/CSV as the source of truth.
+
+### Core Components
+
+**Server Entry Point** - `src/ot2_cherrypick_mcp/server.py`
+- `create_mcp_app()` - Initializes FastMCP instance and registers all components
+- `main()` - Console script entry point, runs STDIO transport
+- Run with: `pixi run ot2-mcp-server`
+
+**TOML Handler** - `src/ot2_cherrypick_mcp/utils/toml.py`
+- `TomlHandler` class - Format-preserving TOML editing using tomlkit
+- Methods: `read_text()`, `read_document()`, `get_value()`, `set_value()`, `set_values()`, `append_array_item()`
+- Auto-creates `.toml.backup` files before modifications
+- Preserves comments, formatting, and whitespace
+
+### MCP Tools (8 Categories)
+
+**Protocol Generation** - `src/ot2_cherrypick_mcp/tools/protocol_tools.py`
+- `generate_protocol` - Compile TOML + CSV into CherryPick_OT2.py
+
+**Configuration** - `src/ot2_cherrypick_mcp/tools/config_tools.py`
+- `update_settings` - Modify settings.toml via dot-notation paths (e.g., "settings.general.tip_reuse")
+- `apply_liquid_preset` - Apply preset configurations (standard/viscous/slippery/minimal/aggressive)
+
+**CSV Management** - `src/ot2_cherrypick_mcp/tools/csv_tools.py`
+- `generate_csv_template` - Create CSV skeleton with proper structure
+- `upload_csv_content` - Save CSV text to disk
+
+**Labware** - `src/ot2_cherrypick_mcp/tools/labware_tools.py`
+- `add_labware_definition` - Register new labware with calibration offsets
+
+**Simulation** - `src/ot2_cherrypick_mcp/tools/simulation_tools.py`
+- `simulate_protocol` - Run opentrons_simulate for validation
+
+**Validation** - `src/ot2_cherrypick_mcp/tools/validation_tools.py`
+- `validate_configuration` - Pre-flight checks on TOML and CSV
+
+**Deployment** - `src/ot2_cherrypick_mcp/tools/deployment_tools.py`
+- `deploy_to_opentrons` - Copy protocol to target path and/or clipboard
+
+**Workflow** - `src/ot2_cherrypick_mcp/tools/workflow_tools.py`
+- `full_workflow` - End-to-end: validation → generation → simulation → deployment
+
+### MCP Resources (Read-Only Data)
+
+**Configuration** - `src/ot2_cherrypick_mcp/resources/config_resources.py`
+- `config://settings` - Current settings.toml content
+- `config://labware` - Labware catalog definitions
+
+**Status** - `src/ot2_cherrypick_mcp/resources/status_resources.py`
+- `status://deck-layout` - Visual deck configuration summary
+- `status://liquid-handling-config` - Active liquid handling parameters
+
+**Files** - `src/ot2_cherrypick_mcp/resources/file_resources.py`
+- `files://csvs` - List of available CSV transfer files
+
+**Logs** - `src/ot2_cherrypick_mcp/resources/log_resources.py`
+- `logs://last-simulation` - Most recent simulation output
+
+### MCP Prompts (Guided Workflows)
+
+**Prompts** - `src/ot2_cherrypick_mcp/prompts/workflow_prompts.py`
+- `setup_new_experiment` - Step-by-step experiment configuration
+- `troubleshoot_simulation_error` - Systematic error diagnosis
+
+### Integration with Claude Desktop
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "ot2-cherrypick": {
+      "command": "pixi",
+      "args": [
+        "run",
+        "--manifest-path",
+        "/path/to/OT2_CherryPick/pyproject.toml",
+        "ot2-mcp-server"
+      ],
+      "env": {
+        "LABWARE_PATH": "/path/to/opentrons/labware"
+      }
+    }
+  }
+}
+```
+
+### Testing with mcp-use
+
+The MCP server is tested using **mcp-use** library with **Mistral LLM** (`mistral-medium-2508`):
+
+```python
+from mcp_use import MCPClient, MCPAgent
+from langchain_mistralai import ChatMistralAI
+
+client = MCPClient(config=CONFIG)
+llm = ChatMistralAI(model="mistral-medium-2508")
+agent = MCPAgent(llm=llm, client=client, max_steps=20)
+
+response = await agent.run("Apply viscous preset and generate protocol from CSVs/example_basic.csv")
+```
+
+Test suite: `tests/test_mcp_integration.py`
+
 ## Development Workflow
 
 ### Environment Setup
@@ -363,6 +491,16 @@ pixi run pytest tests/
 - No need to manually activate/deactivate environments
 - Pixi automatically updates the lockfile and installs the environment if needed
 
+**Running the MCP Server:**
+
+```bash
+# Start MCP server (STDIO transport for Claude Desktop)
+pixi run ot2-mcp-server
+
+# Run MCP integration tests
+pixi run pytest tests/test_mcp_integration.py
+```
+
 **Adding Missing Packages (Only if Needed):**
 
 If you encounter an error indicating a package is missing:
@@ -379,10 +517,20 @@ pixi add package-name --pypi
 
 ### Standard Workflow
 
+**Option A: Traditional Script-Based Workflow**
+
 1. **Edit CSV file** - Define your transfers
 2. **Configure settings.toml** - Set deck layout, pipette mode, liquid handling
 3. **Run simulation:** `./simulate_protocol.sh CSVs/your_file.csv`
 4. **Deploy to OT-2:** `./simulate_protocol.sh CSVs/your_file.csv --send-to-opentrons`
+
+**Option B: MCP-Based Workflow (via Claude Desktop or mcp-use)**
+
+1. **Natural language request** - "Set up cherry-pick with viscous liquid, 96 to 384-well, 50µL transfers"
+2. **AI configures and generates** - Claude uses MCP tools to update settings, generate CSV, validate, and simulate
+3. **Review and deploy** - Check generated protocol, deploy if simulation succeeds
+
+Both workflows produce the same CherryPick_OT2.py protocol file.
 
 ### Script Configuration (simulate_protocol.sh)
 
@@ -482,403 +630,3 @@ Use `projects/<experiment>/` directories to archive:
 - **Keep sensitive data out** of repo - share redacted/anonymized CSVs externally
 
 ---
-
-## Opentrons V2 API Documentation
-
-Comprehensive API reference for protocol development with Opentrons Protocol API v2.24 (compatible with ≥v2.16).
-
-### Quick Reference - Minimal Protocol Template
-
-```python
-from opentrons import protocol_api
-
-metadata = {
-    "apiLevel": "2.16",
-    "protocolName": "My Protocol",
-    "description": "Protocol description",
-    "author": "Your Name"
-}
-requirements = {"robotType": "OT-2", "apiLevel": "2.16"}
-
-def run(protocol: protocol_api.ProtocolContext):
-    # Load labware
-    plate = protocol.load_labware('corning_96_wellplate_360ul_flat', 1)
-    tiprack = protocol.load_labware('opentrons_96_tiprack_300ul', 2)
-
-    # Load pipette (ALWAYS after labware!)
-    pipette = protocol.load_instrument('p300_single_gen2', 'right', tip_racks=[tiprack])
-
-    # Basic operations
-    pipette.transfer(100, plate['A1'], plate['B1'])  # Simple transfer
-    pipette.distribute(50, plate['A1'], plate.rows()[0])  # One-to-many
-    pipette.consolidate(50, plate.rows()[0], plate['A1'])  # Many-to-one
-```
-
-### Critical Concepts
-
-**Load Order (MUST FOLLOW):**
-1. Labware first: `protocol.load_labware()`
-2. Pipettes second: `protocol.load_instrument()`
-3. Modules third: `protocol.load_module()`
-
-**Multi-Channel Behavior:**
-- 8-channel pipettes act on entire columns via row A only
-- `plate['A1']` with 8-channel pipette affects A1-H1 simultaneously
-- Use `single_X1` or `multi_X1` mode for per-well cherry picking
-
-**Tip Management:**
-- Default: new tip per transfer
-- `new_tip='always'` - new tip every time
-- `new_tip='once'` - one tip for entire operation
-- `new_tip='never'` - manual tip management
-- Ensure sufficient tip racks loaded
-
-### Core API Documentation by Category
-
-#### 1. Protocol Context & Setup ⭐ CRITICAL
-
-**URL**: https://docs.opentrons.com/v2/new_protocol_api.html
-
-**Key Methods:**
-- `load_labware(name, slot)` - Load plates, tips, reservoirs
-- `load_instrument(name, mount, tip_racks=[...])` - Load pipette
-- `load_module(name, slot)` - Load temperature/magnetic/shaker module
-- `pause(msg)` - Pause with message
-- `delay(seconds=None, minutes=None)` - Wait specified time
-
-**Common Pattern:**
-```python
-# Always this order!
-labware = protocol.load_labware('labware_name', slot_number)
-pipette = protocol.load_instrument('pipette_name', 'left'|'right', tip_racks=[tiprack])
-```
-
-#### 2. Labware Management ⭐ CRITICAL
-
-**URL**: https://docs.opentrons.com/v2/new_labware.html
-
-**Well Selection:**
-```python
-# Single wells
-plate['A1']                      # By name (recommended)
-plate.wells()[0]                 # By index
-plate.wells_by_name()['A1']      # Explicit dict
-
-# Groups
-plate.rows()[0]                  # Row A: [A1, A2, ..., A12]
-plate.columns()[0]               # Column 1: [A1, B1, ..., H1]
-plate.rows_by_name()['A']        # Row A by name
-plate.columns_by_name()['1']     # Column 1 by name
-
-# Advanced
-plate.wells()[1:]                # All except A1
-plate.columns()[1::2]            # Every other column
-```
-
-**Custom Labware:**
-Place JSON files in `$LABWARE_PATH` directory and reference by `api_id` in TOML config.
-
-#### 3. Pipette Control ⭐ CRITICAL
-
-**URL**: https://docs.opentrons.com/v2/new_pipette.html
-
-**Core Operations:**
-```python
-# Manual tip control
-pipette.pick_up_tip()
-pipette.aspirate(volume, location)
-pipette.dispense(volume, location)
-pipette.drop_tip()
-
-# Automatic (recommended)
-pipette.transfer(volume, source, dest, new_tip='always')
-```
-
-**Flow Rate Control:**
-```python
-pipette.flow_rate.aspirate = 50   # μL/s
-pipette.flow_rate.dispense = 100  # μL/s
-pipette.flow_rate.blow_out = 200  # μL/s
-```
-
-#### 4. Liquid Handling Commands ⭐ CRITICAL
-
-**URL**: https://docs.opentrons.com/v2/new_examples.html
-
-**Transfer Patterns:**
-```python
-# Simple transfer
-pipette.transfer(100, source, dest)
-
-# With options
-pipette.transfer(
-    100, source, dest,
-    mix_before=(3, 50),      # Mix 3x with 50μL before aspirate
-    mix_after=(3, 50),       # Mix 3x with 50μL after dispense
-    new_tip='always',
-    blow_out=True,
-    touch_tip=True,
-    air_gap=10               # 10μL air gap
-)
-
-# Distribute (one-to-many)
-pipette.distribute(
-    50,
-    reservoir['A1'],
-    plate.rows()[0],
-    disposal_volume=10       # Extra volume for accuracy
-)
-
-# Consolidate (many-to-one)
-pipette.consolidate(
-    50,
-    plate.rows()[0],
-    reservoir['A1'],
-    pre_wet=True             # Wet tip before aspirating
-)
-
-# Mix
-pipette.mix(repetitions=5, volume=100, location=well)
-```
-
-#### 5. Hardware Modules
-
-**URL**: https://docs.opentrons.com/v2/new_modules.html
-
-**Temperature Module:**
-```python
-temp_mod = protocol.load_module('temperature module gen2', 3)
-temp_plate = temp_mod.load_labware('corning_96_wellplate_360ul_flat')
-temp_mod.set_temperature(4)          # Set to 4°C
-temp_mod.await_temperature(4)        # Wait until reached
-temp_mod.deactivate()                # Turn off
-```
-
-**Magnetic Module:**
-```python
-mag_mod = protocol.load_module('magnetic module gen2', 6)
-mag_plate = mag_mod.load_labware('nest_96_wellplate_2ml_deep')
-mag_mod.engage(height_from_base=5)   # Engage magnets 5mm from base
-protocol.delay(minutes=2)            # Wait for beads
-mag_mod.disengage()                  # Release magnets
-```
-
-**Thermocycler:**
-```python
-tc_mod = protocol.load_module('thermocycler module')
-tc_plate = tc_mod.load_labware('nest_96_wellplate_100ul_pcr_full_skirt')
-tc_mod.open_lid()
-tc_mod.close_lid()
-tc_mod.set_lid_temperature(105)
-tc_mod.set_block_temperature(95, hold_time_seconds=30)
-```
-
-**Heater-Shaker:**
-```python
-hs_mod = protocol.load_module('heaterShakerModuleV1', 1)
-hs_plate = hs_mod.load_labware('nest_96_wellplate_2ml_deep')
-hs_mod.set_and_wait_for_shake_speed(500)  # 500 rpm
-hs_mod.set_and_wait_for_temperature(37)   # 37°C
-hs_mod.deactivate_shaker()
-hs_mod.deactivate_heater()
-```
-
-#### 6. Advanced Liquid Handling
-
-**URL**: https://docs.opentrons.com/v2/new_advanced_running.html
-
-**Serial Dilution:**
-```python
-# Dilute across columns
-for i in range(11):
-    pipette.transfer(
-        50,
-        plate.columns()[i],
-        plate.columns()[i+1],
-        mix_after=(5, 50),
-        new_tip='always'
-    )
-```
-
-**Custom Height Control:**
-```python
-from opentrons.protocol_api import Well
-
-# Aspirate from bottom
-pipette.aspirate(100, source_well.bottom(z=2))  # 2mm from bottom
-
-# Dispense from top
-pipette.dispense(100, dest_well.top(z=-5))      # 5mm below top
-```
-
-**Liquid Classes (API ≥2.20):**
-```python
-glycerol_class = protocol.get_liquid_class('glycerol_50')
-pipette.transfer_with_liquid_class(
-    liquid_class=glycerol_class,
-    volume=100,
-    source=reservoir['A1'],
-    dest=plate.columns()[0]
-)
-```
-
-#### 7. Runtime Parameters
-
-**URL**: https://docs.opentrons.com/v2/runtime-parameters.html
-
-**Define Parameters:**
-```python
-def add_parameters(parameters):
-    parameters.add_int(
-        variable_name='sample_count',
-        display_name='Number of Samples',
-        description='How many samples to process',
-        default=24,
-        minimum=1,
-        maximum=96,
-        unit='samples'
-    )
-
-    parameters.add_float(
-        variable_name='dilution_factor',
-        display_name='Dilution Factor',
-        default=10.0,
-        minimum=2.0,
-        maximum=100.0
-    )
-
-    parameters.add_bool(
-        variable_name='include_controls',
-        display_name='Include Controls',
-        default=True
-    )
-
-def run(protocol, sample_count, dilution_factor, include_controls):
-    # Use parameters in protocol
-    for i in range(sample_count):
-        # Process with dilution_factor
-        pass
-```
-
-#### 8. Protocol Simulation & Testing
-
-**URL**: https://docs.opentrons.com/v2/new_simulate.html
-
-**Simulate Protocol:**
-```bash
-opentrons_simulate protocol.py
-opentrons_simulate --custom-labware /path/to/labware protocol.py
-```
-
-**Debugging Tips:**
-1. Always simulate before hardware run
-2. Print well names during development: `print(f"Aspirating from {well}")`
-3. Check tip counts: ensure sufficient racks loaded
-4. Test edge cases: max volumes, empty wells
-5. Monitor flow rates for viscous liquids
-
-#### 9. Common Patterns & Recipes
-
-**PCR Setup:**
-```python
-temp_mod = protocol.load_module('temperature module gen2', 1)
-plate = temp_mod.load_labware('nest_96_wellplate_100ul_pcr_full_skirt')
-temp_mod.set_temperature(4)  # Keep cold
-
-pipette.distribute(20, mastermix_tube, plate.wells(), new_tip='once')
-pipette.transfer(5, sample_plate.wells(), plate.wells(), new_tip='always')
-```
-
-**Magnetic Bead Cleanup:**
-```python
-mag_mod.engage()
-protocol.delay(minutes=5)
-
-# Remove supernatant
-pipette.transfer(
-    180,
-    mag_plate.wells(),
-    waste,
-    new_tip='always',
-    blow_out=True
-)
-
-# Wash
-pipette.transfer(200, ethanol, mag_plate.wells(), new_tip='always')
-protocol.delay(seconds=30)
-pipette.transfer(200, mag_plate.wells(), waste, new_tip='always')
-
-mag_mod.disengage()
-```
-
-**Plate Stamping (96→384):**
-```python
-# Map 96-well to 384-well quadrants
-for i, source_well in enumerate(source_plate.wells()):
-    dest_well = dest_plate.wells()[i * 4]  # Top-left of 2x2 block
-    pipette.transfer(5, source_well, dest_well, new_tip='always')
-```
-
-### Common Errors & Solutions
-
-| Error | Cause | Solution |
-|-------|-------|----------|
-| "No tips available" | Tip racks depleted | Load more tip racks or use `new_tip='once'` |
-| "Labware not found" | Wrong name | Check exact name in Opentrons Labware Library |
-| "Cannot aspirate" | Multi-channel misalignment | Use row A selectors for 8-channel pipettes |
-| "Module not found" | Wrong identifier | Use exact: `'temperature module gen2'` |
-| "Liquid will overflow" | Volume exceeds well capacity | Reduce volume or split into multiple transfers |
-
-### Quick Command Reference
-
-```python
-# Protocol structure
-from opentrons import protocol_api
-metadata = {'apiLevel': '2.16'}
-requirements = {'robotType': 'OT-2', 'apiLevel': '2.16'}
-def run(protocol: protocol_api.ProtocolContext):
-    pass
-
-# Loading
-labware = protocol.load_labware('name', slot)
-pipette = protocol.load_instrument('name', 'left'|'right', tip_racks=[tips])
-module = protocol.load_module('name', slot)
-
-# Liquid handling
-pipette.pick_up_tip()
-pipette.aspirate(volume, location)
-pipette.dispense(volume, location)
-pipette.mix(reps, volume, location)
-pipette.blow_out(location)
-pipette.touch_tip()
-pipette.drop_tip()
-
-# Complex commands
-pipette.transfer(volume, source, dest, **options)
-pipette.distribute(volume, source, dests, **options)
-pipette.consolidate(volume, sources, dest, **options)
-
-# Module control
-temp_module.set_temperature(celsius)
-mag_module.engage(height_from_base=mm)
-heater_shaker.set_and_wait_for_shake_speed(rpm)
-thermocycler.set_block_temperature(temp, hold_time_seconds=seconds)
-
-# Timing
-protocol.delay(seconds=10)
-protocol.delay(minutes=2)
-protocol.pause(msg="Replace plate")
-```
-
-### Documentation Resources
-
-- **Protocol API**: https://docs.opentrons.com/v2/new_protocol_api.html
-- **Labware**: https://docs.opentrons.com/v2/new_labware.html
-- **Pipettes**: https://docs.opentrons.com/v2/new_pipette.html
-- **Liquid Handling**: https://docs.opentrons.com/v2/new_examples.html
-- **Modules**: https://docs.opentrons.com/v2/new_modules.html
-- **Advanced**: https://docs.opentrons.com/v2/new_advanced_running.html
-- **Simulation**: https://docs.opentrons.com/v2/new_simulate.html
-- **Tutorial**: https://docs.opentrons.com/v2/tutorial.html
-- **Runtime Parameters**: https://docs.opentrons.com/v2/runtime-parameters.html
-- **Labware Library**: https://labware.opentrons.com/
