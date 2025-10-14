@@ -54,6 +54,17 @@ SETTINGS_SCENARIOS = [
 ]
 
 
+def _log_project_info(context: str, project_dir: Path) -> None:
+    """Emit helpful paths for manual inspection while running tests."""
+    print(
+        f"[{context}] project_dir={project_dir} "
+        f"settings={project_dir / 'settings.toml'} "
+        f"protocol={project_dir / 'CherryPick_OT2.py'} "
+        f"csv_dir={project_dir / 'CSVs'}",
+        flush=True,
+    )
+
+
 def _setup_project_dir(tmp_path: Path) -> Path:
     """Set up a temporary project directory with required files."""
     project_dir = tmp_path / "test_project"
@@ -70,6 +81,7 @@ def _setup_project_dir(tmp_path: Path) -> Path:
     # Create logs directory
     (project_dir / "logs").mkdir()
 
+    _log_project_info("setup", project_dir)
     return project_dir
 
 
@@ -136,6 +148,10 @@ def test_agent_runs_workflow_from_string(tmp_path: Path) -> None:
     lower = result.lower()
     if "invalid_request_message_order" not in lower:
         assert "error:" not in lower
+    print(
+        f"[workflow_from_string] csv_saved={tmp_target} protocol={project_dir / 'CherryPick_OT2.py'}",
+        flush=True,
+    )
 
 
 def test_agent_full_pipeline_updates_protocol(tmp_path: Path) -> None:
@@ -169,6 +185,11 @@ def test_agent_full_pipeline_updates_protocol(tmp_path: Path) -> None:
         assert "error:" not in lower_update
     updated_settings = (project_dir / "settings.toml").read_text(encoding="utf-8")
     assert 'mode = "single_X1"' in updated_settings
+    print(
+        f"[full_pipeline] updated_settings={project_dir / 'settings.toml'} "
+        f"csv={csv_path}",
+        flush=True,
+    )
 
     workflow_query = (
         "Run full_workflow on 'CSVs/pipeline_full.csv' with simulate set to false and deployment "
@@ -182,6 +203,7 @@ def test_agent_full_pipeline_updates_protocol(tmp_path: Path) -> None:
 
     protocol_path = project_dir / "CherryPick_OT2.py"
     protocol_content = protocol_path.read_text(encoding="utf-8")
+    print(f"[full_pipeline] protocol_path={protocol_path}", flush=True)
     expected_json = helper_cherry_pick.create_json_config(
         str(project_dir / "labware_dict.toml"),
         str(project_dir / "settings.toml"),
