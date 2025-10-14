@@ -65,8 +65,9 @@ def test_agent_lists_tools() -> None:
     assert result
 
 
-def test_agent_runs_workflow_from_string() -> None:
-    Path(TMP_UPLOAD_TARGET).unlink(missing_ok=True)
+def test_agent_runs_workflow_from_string(tmp_path: Path) -> None:
+    tmp_target = tmp_path / "tmp_uploaded.csv"
+    tmp_target.unlink(missing_ok=True)
     (PROJECT_ROOT / "CSVs" / "tmp_uploaded.csv").unlink(missing_ok=True)
     query = (
         f"Use upload_csv_content with filename 'tmp_uploaded.csv', output_dir '{TMP_DIR}', "
@@ -85,7 +86,7 @@ def test_agent_runs_workflow_from_string() -> None:
 
 @pytest.mark.parametrize("path,value,expected", SETTINGS_SCENARIOS)
 def test_agent_updates_settings(tmp_path: Path, capsys, path: str, value: str, expected: str) -> None:
-    settings_copy = TMP_DIR / f"settings_{path.replace('.', '_')}.toml"
+    settings_copy = tmp_path / f"settings_{path.replace('.', '_')}.toml"
     settings_copy.write_text(SETTINGS_TEMPLATE, encoding="utf-8")
 
     query = (
