@@ -106,6 +106,15 @@ offset_y = 0.80
 offset_z = -0.30
 
 [[labware]]
+category = "plate"
+labware_id = "384_ldv_12ul"
+well_count = 384
+well_volume = 12
+offset_x = -0.2
+offset_y = 0.6
+offset_z = 0.4
+
+[[labware]]
 category = "tube_rack"
 labware_id = "tube_rack_96_2000ul"
 well_count = 96
