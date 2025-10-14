@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from ..utils.errors import ConfigurationError
-from ..utils.paths import resolve_repo_path
+from ..utils.paths import resolve_project_path
 
 CSV_REQUIRED_COLUMNS = {
     "Source Labware",
@@ -23,7 +23,7 @@ WELL_PATTERN = re.compile(r"^[A-HP][1-9][0-9]*$", re.IGNORECASE)
 
 
 def _load_toml(path: str | Path) -> Dict[str, object]:
-    handler_path = resolve_repo_path(path)
+    handler_path = resolve_project_path(path)
     if not handler_path.exists():
         raise ConfigurationError(f"Configuration file not found at {handler_path}")
     return tomllib.loads(handler_path.read_text(encoding="utf-8"))
@@ -73,7 +73,7 @@ def validate_configuration(
                         f"Labware '{labware_id}' referenced in settings.working_plate is not defined in labware_dict.toml"
                     )
 
-    csv_file = resolve_repo_path(csv_path)
+    csv_file = resolve_project_path(csv_path)
     if not csv_file.exists():
         errors.append(f"CSV transfer map not found at {csv_file}")
         return _result(errors, warnings)

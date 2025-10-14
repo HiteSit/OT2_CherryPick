@@ -8,7 +8,7 @@ from typing import Dict, Iterable, List, Optional
 from fastmcp import FastMCP
 
 from ..utils.errors import ConfigurationError
-from ..utils.paths import resolve_repo_path
+from ..utils.paths import resolve_project_path
 
 CSV_HEADERS = [
     "Source Labware",
@@ -50,7 +50,7 @@ def generate_csv_template(
     if transfers <= 0:
         raise ConfigurationError("transfers must be a positive integer")
 
-    output_directory = resolve_repo_path(output_dir)
+    output_directory = resolve_project_path(output_dir)
     output_directory.mkdir(parents=True, exist_ok=True)
 
     target_path = output_directory / filename
@@ -82,7 +82,7 @@ def generate_csv_template(
 def list_csv_files(directory: str | Path = DEFAULT_CSV_DIR) -> List[str]:
     """Return a sorted list of CSV files in the given directory."""
 
-    csv_dir = resolve_repo_path(directory)
+    csv_dir = resolve_project_path(directory)
     if not csv_dir.exists():
         return []
 
@@ -108,7 +108,7 @@ def save_csv_content(
             "csv_content is missing expected columns: " + ", ".join(missing)
         )
 
-    output_directory = resolve_repo_path(output_dir)
+    output_directory = resolve_project_path(output_dir)
     output_directory.mkdir(parents=True, exist_ok=True)
 
     target_path = output_directory / filename

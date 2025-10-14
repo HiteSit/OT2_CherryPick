@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import shutil
 from pathlib import Path
 
 from ot2_cherrypick_mcp.server import create_mcp_app
@@ -10,8 +11,28 @@ from ot2_cherrypick_mcp.core.simulation import DEFAULT_LOG_FILE
 from ot2_cherrypick_mcp.utils.toml import TomlHandler as RealTomlHandler
 
 
-def test_settings_resource_registered_and_readable() -> None:
+def _setup_project_dir(tmp_path: Path) -> Path:
+    """Set up a temporary project directory with required files."""
+    repo_root = Path(__file__).resolve().parents[1]
+    project_dir = tmp_path / "test_project"
+    project_dir.mkdir()
+
+    # Copy template files
+    shutil.copy2(repo_root / "settings.toml", project_dir / "settings.toml")
+    shutil.copy2(repo_root / "labware_dict.toml", project_dir / "labware_dict.toml")
+
+    # Create directories
+    (project_dir / "CSVs").mkdir()
+    (project_dir / "logs").mkdir()
+
+    return project_dir
+
+
+def test_settings_resource_registered_and_readable(tmp_path: Path, monkeypatch) -> None:
     """Settings resource should be available and return TOML text."""
+    project_dir = _setup_project_dir(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+
     app = create_mcp_app()
     resources = asyncio.run(app.get_resources())
     assert "config://settings" in resources
@@ -19,8 +40,11 @@ def test_settings_resource_registered_and_readable() -> None:
     assert "settings.general" in content
 
 
-def test_labware_resource_registered_and_readable() -> None:
+def test_labware_resource_registered_and_readable(tmp_path: Path, monkeypatch) -> None:
     """Labware resource should be available and return TOML text."""
+    project_dir = _setup_project_dir(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+
     app = create_mcp_app()
     resources = asyncio.run(app.get_resources())
     assert "config://labware" in resources
@@ -30,16 +54,12 @@ def test_labware_resource_registered_and_readable() -> None:
 
 def test_csv_file_resource_lists_files(tmp_path: Path, monkeypatch) -> None:
     """CSV resource should list available files."""
+    project_dir = _setup_project_dir(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
 
-    csv_dir = tmp_path / "CSVs"
-    csv_dir.mkdir()
+    csv_dir = project_dir / "CSVs"
     (csv_dir / "b.csv").write_text("", encoding="utf-8")
     (csv_dir / "a.csv").write_text("", encoding="utf-8")
-
-    monkeypatch.setattr(
-        "ot2_cherrypick_mcp.resources.file_resources.DEFAULT_CSV_DIR",
-        csv_dir,
-    )
 
     app = create_mcp_app()
     resources = asyncio.run(app.get_resources())
@@ -47,21 +67,11 @@ def test_csv_file_resource_lists_files(tmp_path: Path, monkeypatch) -> None:
     assert "a.csv" in content.splitlines()[0]
 def test_last_simulation_resource(tmp_path: Path, monkeypatch) -> None:
     """Log resource should serve latest simulation entry."""
+    project_dir = _setup_project_dir(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
 
-    log_path = tmp_path / "logs" / "last_simulation.json"
-    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path = project_dir / "logs" / "last_simulation.json"
     log_path.write_text("{\"status\": \"ok\"}", encoding="utf-8")
-
-    monkeypatch.setattr(
-        "ot2_cherrypick_mcp.core.simulation.DEFAULT_LOG_FILE",
-        log_path,
-        raising=False,
-    )
-    monkeypatch.setattr(
-        "ot2_cherrypick_mcp.resources.log_resources.DEFAULT_LOG_FILE",
-        log_path,
-        raising=False,
-    )
 
     app = create_mcp_app()
     resources = asyncio.run(app.get_resources())
@@ -70,7 +80,12 @@ def test_last_simulation_resource(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_status_resources(tmp_path: Path, monkeypatch) -> None:
-    settings_copy = tmp_path / "settings.toml"
+    """Status resources should provide deck and liquid handling summaries."""
+    project_dir = _setup_project_dir(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+
+    # Update the settings file in the project directory
+    settings_copy = project_dir / "settings.toml"
     settings_copy.write_text(
         """
 [settings]
@@ -84,12 +99,6 @@ def test_status_resources(tmp_path: Path, monkeypatch) -> None:
 """,
         encoding="utf-8",
     )
-
-    class FakeTomlHandler(RealTomlHandler):
-        def __init__(self, path):  # type: ignore[super-init-not-called]
-            super().__init__(settings_copy)
-
-    monkeypatch.setattr("ot2_cherrypick_mcp.resources.status_resources.TomlHandler", FakeTomlHandler)
 
     app = create_mcp_app()
     resources = asyncio.run(app.get_resources())

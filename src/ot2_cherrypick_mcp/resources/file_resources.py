@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 
-from ..utils.paths import resolve_repo_path
+from ..utils.paths import resolve_project_path
 
 DEFAULT_CSV_DIR = Path("CSVs")
 
@@ -18,7 +18,7 @@ def register_file_resources(mcp: FastMCP) -> None:
 
     @mcp.resource("files://csvs", description="List of available CSV transfer files")
     def list_csvs() -> str:  # pragma: no cover - simple wrapper
-        csv_dir = resolve_repo_path(DEFAULT_CSV_DIR)
+        csv_dir = resolve_project_path(DEFAULT_CSV_DIR)
         if not csv_dir.exists():
             return ""
         files = sorted(path.name for path in csv_dir.glob("*.csv"))

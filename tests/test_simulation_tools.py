@@ -53,9 +53,9 @@ def test_simulate_protocol_with_labware(tmp_path: Path) -> None:
     assert str(labware_dir) in recorded["command"]
 
 
-def test_simulate_protocol_failure_raises(tmp_path: Path) -> None:
+def test_simulate_protocol_failure_raises(tmp_path: Path, monkeypatch) -> None:
     """Non-zero exit codes raise SimulationError."""
-
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(tmp_path))
     protocol_copy = _copy_protocol(tmp_path)
 
     def runner(command):
@@ -65,8 +65,9 @@ def test_simulate_protocol_failure_raises(tmp_path: Path) -> None:
         simulate_protocol(protocol_copy, runner=runner)
 
 
-def test_simulate_protocol_missing_file_raises() -> None:
+def test_simulate_protocol_missing_file_raises(tmp_path: Path, monkeypatch) -> None:
     """Missing protocol files raise configuration errors."""
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(tmp_path))
 
     with pytest.raises(ConfigurationError):
         simulate_protocol("nonexistent.py", runner=lambda cmd: CompletedProcess(cmd, 0, "", ""))

@@ -11,7 +11,7 @@ from tomlkit import TOMLDocument
 from tomlkit.items import Item
 
 from .errors import ConfigurationError
-from .paths import resolve_repo_path
+from .paths import resolve_project_path
 
 _PathLike = Union[str, Path]
 _Token = Union[str, int]
@@ -32,7 +32,7 @@ class TomlHandler:
     path: Path
 
     def __init__(self, path: _PathLike):
-        object.__setattr__(self, "path", resolve_repo_path(path))
+        object.__setattr__(self, "path", resolve_project_path(path))
 
     # ------------------------------------------------------------------
     # Reading helpers

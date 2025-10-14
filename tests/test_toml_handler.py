@@ -18,20 +18,26 @@ def _copy_settings(tmp_path: Path) -> Path:
     return destination
 
 
-def test_toml_handler_gets_scalar_value() -> None:
+def test_toml_handler_gets_scalar_value(tmp_path: Path, monkeypatch) -> None:
     """Expect dotted-path lookup to return scalar values."""
+    settings_copy = _copy_settings(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(tmp_path))
     handler = TomlHandler("settings.toml")
     assert handler.get_value("settings.general.tip_reuse") == "always"
 
 
-def test_toml_handler_handles_array_indices() -> None:
+def test_toml_handler_handles_array_indices(tmp_path: Path, monkeypatch) -> None:
     """Array notation should resolve to nested values."""
+    settings_copy = _copy_settings(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(tmp_path))
     handler = TomlHandler("settings.toml")
     assert handler.get_value("settings.working_plate[0].type") == "source"
 
 
-def test_toml_handler_invalid_path_raises() -> None:
+def test_toml_handler_invalid_path_raises(tmp_path: Path, monkeypatch) -> None:
     """Invalid paths raise configuration errors."""
+    settings_copy = _copy_settings(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(tmp_path))
     handler = TomlHandler("settings.toml")
     with pytest.raises(ConfigurationError):
         handler.get_value("settings.missing.section")

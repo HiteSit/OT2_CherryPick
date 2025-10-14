@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Callable, Sequence
 
 from ..utils.errors import ConfigurationError, DeploymentError
-from ..utils.paths import resolve_repo_path
+from ..utils.paths import resolve_project_path
 
 DEFAULT_CLIP_COMMAND = ["/mnt/c/Windows/System32/clip.exe"]
 
@@ -25,7 +25,7 @@ def deploy_protocol(
 ) -> dict[str, object]:
     """Deploy the compiled protocol by copying and/or putting it on the clipboard."""
 
-    protocol_file = resolve_repo_path(protocol_path)
+    protocol_file = resolve_project_path(protocol_path)
     if not protocol_file.exists():
         raise ConfigurationError(f"Protocol file not found at {protocol_file}")
 
@@ -52,7 +52,7 @@ def deploy_protocol(
 
 
 def _resolve_destination(target: str | Path, filename: str) -> Path:
-    dest = resolve_repo_path(target)
+    dest = resolve_project_path(target)
 
     if dest.exists() and dest.is_dir():
         return dest / filename

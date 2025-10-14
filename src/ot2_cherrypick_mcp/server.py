@@ -17,7 +17,6 @@ from .resources import (
 )
 from .tools import register_tools
 from .utils.logging_config import configure_logging
-from .utils.paths import get_repo_root
 
 APP_NAME = "OT-2 Cherry Pick MCP Server"
 APP_INSTRUCTIONS = (
@@ -43,14 +42,41 @@ def create_mcp_app() -> FastMCP:
 def main() -> None:
     """Run the MCP server via STDIO transport."""
     configure_logging()
-    repo_root = get_repo_root()
-    os.chdir(repo_root)
 
-    transport = os.getenv("MCP_TRANSPORT", "http")
-    host = os.getenv("MCP_HOST", "127.0.0.2")
-    port_str = int(os.getenv("MCP_PORT", "8000"))
-    path = os.getenv("MCP_PATH", "/mcp")
+    # Validate project directory is configured and exists
+    project_dir_env = os.getenv("OT2_PROJECT_DIR")
+    if not project_dir_env:
+        raise ValueError(
+            "OT2_PROJECT_DIR environment variable is required.\n"
+            "Add it to your MCP configuration's env section pointing to your project directory.\n"
+            "Example: \"OT2_PROJECT_DIR\": \"/path/to/my/project\""
+        )
 
+    from pathlib import Path
+
+    from .utils.paths import get_project_root
+
+    try:
+        project_dir = get_project_root()
+    except ValueError as e:
+        raise ValueError(f"Project directory validation failed: {e}") from e
+
+    # Check for required files
+    required_files = ["settings.toml", "labware_dict.toml"]
+    missing_files = [f for f in required_files if not (project_dir / f).exists()]
+
+    if missing_files:
+        raise ValueError(
+            f"Project directory is missing required files: {missing_files}\n"
+            f"Project directory: {project_dir}\n"
+            f"Use the 'initialize_project' tool to create the project structure, "
+            f"or manually copy the required files to the project directory."
+        )
+
+    # Change to project directory for all operations
+    os.chdir(project_dir)
+
+    # Run the MCP server
     create_mcp_app().run()
 
 

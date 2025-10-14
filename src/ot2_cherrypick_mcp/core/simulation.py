@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Callable, Mapping, MutableMapping, Sequence
 
 from ..utils.errors import ConfigurationError, SimulationError
-from ..utils.paths import resolve_repo_path
+from ..utils.paths import resolve_project_path
 
 
 def _default_runner(
@@ -60,16 +60,16 @@ def simulate_protocol(
         SimulationError: If the simulator returns a non-zero exit code.
     """
 
-    protocol_file = resolve_repo_path(protocol_path)
+    protocol_file = resolve_project_path(protocol_path)
     if not protocol_file.exists():
         raise ConfigurationError(f"Protocol file not found at {protocol_file}")
 
     labware_dir: Path | None
     if labware_path is None:
         raw_labware = os.getenv("LABWARE_PATH")
-        labware_dir = resolve_repo_path(raw_labware) if raw_labware else None
+        labware_dir = resolve_project_path(raw_labware) if raw_labware else None
     else:
-        labware_dir = resolve_repo_path(labware_path)
+        labware_dir = resolve_project_path(labware_path)
 
     if labware_dir is not None and not labware_dir.exists():
         raise ConfigurationError(f"Labware directory not found at {labware_dir}")
@@ -113,7 +113,7 @@ def simulate_protocol(
 def _write_simulation_log(log_file: str | Path, payload: Mapping[str, object]) -> None:
     """Persist simulation details for consumption via resources."""
 
-    log_path = resolve_repo_path(log_file)
+    log_path = resolve_project_path(log_file)
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
     entry = dict(payload)

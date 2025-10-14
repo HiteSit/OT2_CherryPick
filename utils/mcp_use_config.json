@@ -11,7 +11,8 @@
         "ot2_cherrypick_mcp.server"
       ],
       "env": {
-        "LABWARE_PATH": "{labware_path}"
+        "LABWARE_PATH": "{labware_path}",
+        "OT2_PROJECT_DIR": "{project_directory}"
       }
     }
   }

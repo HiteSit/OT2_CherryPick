@@ -14,7 +14,7 @@ import helper_cherry_pick
 from fastmcp import FastMCP
 
 from ..utils.errors import ConfigurationError, ProtocolGenerationError
-from ..utils.paths import resolve_repo_path
+from ..utils.paths import resolve_project_path
 
 DEFAULT_LABWARE_PATH = Path("labware_dict.toml")
 DEFAULT_SETTINGS_PATH = Path("settings.toml")
@@ -49,10 +49,10 @@ def run_generate_protocol(
         ProtocolGenerationError: When the helper script fails for another reason.
     """
 
-    csv_file = resolve_repo_path(csv_path)
-    labware_file = resolve_repo_path(labware_path)
-    settings_file = resolve_repo_path(settings_path)
-    protocol_file = resolve_repo_path(protocol_path)
+    csv_file = resolve_project_path(csv_path)
+    labware_file = resolve_project_path(labware_path)
+    settings_file = resolve_project_path(settings_path)
+    protocol_file = resolve_project_path(protocol_path)
 
     for path, description in (
         (csv_file, "CSV transfer map"),

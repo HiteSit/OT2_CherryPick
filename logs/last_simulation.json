@@ -1,12 +1,12 @@
 {
   "command": [
     "opentrons_simulate",
-    "/tmp/pytest-of-hitesit/pytest-55/test_simulate_protocol_failure0/CherryPick_OT2.py"
+    "/tmp/pytest-of-hitesit/pytest-13/test_simulate_protocol_failure0/CherryPick_OT2.py"
   ],
   "stdout": "",
   "stderr": "boom",
   "returncode": 1,
-  "protocol_path": "/tmp/pytest-of-hitesit/pytest-55/test_simulate_protocol_failure0/CherryPick_OT2.py",
+  "protocol_path": "/tmp/pytest-of-hitesit/pytest-13/test_simulate_protocol_failure0/CherryPick_OT2.py",
   "labware_path": null,
-  "timestamp": "2025-10-13T16:56:34.754733+00:00"
+  "timestamp": "2025-10-14T08:46:04.263851+00:00"
 }
