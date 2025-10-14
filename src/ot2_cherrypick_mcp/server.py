@@ -45,6 +45,12 @@ def main() -> None:
     configure_logging()
     repo_root = get_repo_root()
     os.chdir(repo_root)
+
+    transport = os.getenv("MCP_TRANSPORT", "http")
+    host = os.getenv("MCP_HOST", "127.0.0.2")
+    port_str = int(os.getenv("MCP_PORT", "8000"))
+    path = os.getenv("MCP_PATH", "/mcp")
+
     create_mcp_app().run()
 
 

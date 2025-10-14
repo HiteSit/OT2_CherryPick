@@ -12,15 +12,11 @@ from langchain_mistralai import ChatMistralAI
 from mcp_use import MCPAgent, MCPClient
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-TMP_DIR = PROJECT_ROOT / "tests" / "tmp"
-TMP_DIR.mkdir(parents=True, exist_ok=True)
 CSV_STRING = """Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top\n\
 tube_rack_96_1500ul_4,A1,100,384_ppv_55ul_2,B1,2,-5\n\
 tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,B2,2,-5\n\
 tube_rack_96_1500ul_4,A3,75,384_ppv_55ul_2,B3,2,-5\n\
 tube_rack_96_1500ul_4,A4,25,384_ppv_55ul_2,B4,2,-5"""
-
-TMP_UPLOAD_TARGET = str(TMP_DIR / "tmp_uploaded.csv")
 SETTINGS_TEMPLATE = (PROJECT_ROOT / "settings.toml").read_text(encoding="utf-8")
 SETTINGS_SCENARIOS = [
     ("settings.general.tip_reuse", "never", 'tip_reuse = "never"'),
@@ -70,15 +66,15 @@ def test_agent_runs_workflow_from_string(tmp_path: Path) -> None:
     tmp_target.unlink(missing_ok=True)
     (PROJECT_ROOT / "CSVs" / "tmp_uploaded.csv").unlink(missing_ok=True)
     query = (
-        f"Use upload_csv_content with filename 'tmp_uploaded.csv', output_dir '{TMP_DIR}', "
+        f"Use upload_csv_content with filename 'tmp_uploaded.csv', output_dir '{tmp_path}', "
         "and the following CSV content. Then call full_workflow with csv_path='"
-        f"{TMP_UPLOAD_TARGET}' and simulate=false. Finally, report the workflow status.\n\nCSV_CONTENT:\n"
+        f"{tmp_target}' and simulate=false. Finally, report the workflow status.\n\nCSV_CONTENT:\n"
         f"{CSV_STRING}"
     )
 
     result = asyncio.run(_run_agent(query))
     assert isinstance(result, str)
-    assert Path(TMP_UPLOAD_TARGET).exists()
+    assert tmp_target.exists()
     lower = result.lower()
     if "invalid_request_message_order" not in lower:
         assert "error" not in lower
