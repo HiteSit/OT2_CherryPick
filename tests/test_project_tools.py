@@ -49,6 +49,7 @@ def test_initialize_project_copies_templates(tmp_path: Path, monkeypatch) -> Non
     # Check template files copied
     assert (project_dir / "settings.toml").exists()
     assert (project_dir / "labware_dict.toml").exists()
+    assert (project_dir / "CherryPick_OT2.py").exists()
 
     # Verify files have content
     settings_content = (project_dir / "settings.toml").read_text()
@@ -56,6 +57,9 @@ def test_initialize_project_copies_templates(tmp_path: Path, monkeypatch) -> Non
 
     labware_content = (project_dir / "labware_dict.toml").read_text()
     assert "pipettes" in labware_content
+
+    protocol_content = (project_dir / "CherryPick_OT2.py").read_text()
+    assert "def get_values" in protocol_content
 
 
 def test_initialize_project_copies_csvs(tmp_path: Path, monkeypatch) -> None:
@@ -86,27 +90,25 @@ def test_initialize_project_creates_logs_directory(tmp_path: Path, monkeypatch) 
     assert logs_dir.is_dir()
 
 
-def test_initialize_project_backs_up_existing_files(tmp_path: Path, monkeypatch) -> None:
-    """initialize_project backs up existing files before overwriting."""
+def test_initialize_project_overwrites_existing_files(tmp_path: Path, monkeypatch) -> None:
+    """initialize_project overwrites existing files without backups."""
     project_dir = tmp_path / "test_project"
     project_dir.mkdir()
     monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
 
-    # Create existing settings file
+    # Create existing settings file with recognizable content
     existing_settings = project_dir / "settings.toml"
-    existing_settings.write_text("# Old settings\n")
+    existing_settings.write_text("# Old settings\n", encoding="utf-8")
 
-    result = initialize_project()
+    initialize_project()
 
-    # Original file should be updated
-    new_content = existing_settings.read_text()
+    # Original file should be replaced with template content
+    new_content = existing_settings.read_text(encoding="utf-8")
     assert "# Old settings" not in new_content
 
-    # Backup should exist
+    # No backup file should be created
     backup = project_dir / "settings.toml.backup"
-    assert backup.exists()
-    backup_content = backup.read_text()
-    assert "# Old settings" in backup_content
+    assert not backup.exists()
 
 
 def test_initialize_project_returns_detailed_result(tmp_path: Path, monkeypatch) -> None:
@@ -125,6 +127,7 @@ def test_initialize_project_returns_detailed_result(tmp_path: Path, monkeypatch)
     # Should list created files
     assert "settings.toml" in result["created_files"]
     assert "labware_dict.toml" in result["created_files"]
+    assert "CherryPick_OT2.py" in result["created_files"]
 
     # Should list created directories
     created_dirs_str = " ".join(result["created_directories"])

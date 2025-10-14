@@ -24,6 +24,7 @@ def initialize_project() -> Dict[str, object]:
     Creates:
         - settings.toml (from template)
         - labware_dict.toml (from template)
+        - CherryPick_OT2.py (protocol template)
         - CSVs/ directory with example files
         - logs/ directory (empty)
 
@@ -58,6 +59,7 @@ def initialize_project() -> Dict[str, object]:
     templates = [
         ("settings.toml", "settings.toml"),
         ("labware_dict.toml", "labware_dict.toml"),
+        ("CherryPick_OT2.py", "CherryPick_OT2.py"),
     ]
 
     for src_name, dest_name in templates:
@@ -66,16 +68,8 @@ def initialize_project() -> Dict[str, object]:
 
         if not src_path.exists():
             raise IOError(f"Template file not found: {src_path}")
-
-        if dest_path.exists():
-            # Backup existing file
-            backup_path = dest_path.with_suffix(dest_path.suffix + ".backup")
-            shutil.copy2(dest_path, backup_path)
-            created_files.append(f"{dest_name} (backed up to {backup_path.name})")
-        else:
-            created_files.append(dest_name)
-
         shutil.copy2(src_path, dest_path)
+        created_files.append(dest_name)
 
     # Copy CSVs directory
     src_csvs = repo_root / "CSVs"
@@ -125,6 +119,7 @@ def register_project_tools(mcp: FastMCP) -> None:
         (configured in your MCP client settings) and creates:
         - settings.toml - Protocol execution parameters
         - labware_dict.toml - Hardware definitions
+        - CherryPick_OT2.py - Protocol template for downstream generation
         - CSVs/ - Directory with example transfer CSV files
         - logs/ - Directory for simulation logs
 
