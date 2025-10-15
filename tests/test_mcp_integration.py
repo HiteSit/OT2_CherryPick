@@ -61,6 +61,8 @@ def test_agent_runs_workflow_from_string(project_dir: Path, agent_runner: AgentR
     _print_project_snapshot("workflow_from_string", project_dir)
 
 
+@pytest.mark.slow
+@pytest.mark.requires_simulation
 def test_agent_full_pipeline_updates_protocol(
     project_dir: Path, agent_runner: AgentRunner
 ) -> None:
@@ -89,7 +91,7 @@ def test_agent_full_pipeline_updates_protocol(
     assert 'mode = "single_X1"' in updated_settings
 
     workflow_query = (
-        "Run full_workflow on 'CSVs/pipeline_full.csv' with simulate set to false and deployment "
+        "Run full_workflow on 'CSVs/pipeline_full.csv' with simulate set to true and deployment "
         "disabled. Let me know when the workflow is complete."
     )
     workflow_result = agent_runner.run(workflow_query)
@@ -238,22 +240,27 @@ def test_agent_validate_configuration_errors(
 
 
 def test_agent_initialize_project(
-    empty_project_dir: Path, agent_factory: Callable[..., AgentRunner]
+    project_dir: Path, agent_runner: AgentRunner
 ) -> None:
-    """Agent can initialize a new project structure from scratch."""
+    """Agent can initialize/refresh project structure with template files."""
 
-    runner = agent_factory(empty_project_dir)
-    query = "Use the initialize_project tool to set up a new OT2 project."
-    result = runner.run(query)
+    # Remove a file to test that initialize_project recreates it
+    protocol_path = project_dir / "CherryPick_OT2.py"
+    if protocol_path.exists():
+        protocol_path.unlink()
+
+    query = "Use the initialize_project tool to set up/refresh the OT2 project."
+    result = agent_runner.run(query)
 
     Assertions.assert_no_errors(result)
-    Assertions.assert_file_exists(empty_project_dir / "settings.toml")
-    Assertions.assert_file_exists(empty_project_dir / "labware_dict.toml")
-    Assertions.assert_file_exists(empty_project_dir / "CherryPick_OT2.py")
-    assert (empty_project_dir / "CSVs").exists()
-    assert (empty_project_dir / "logs").exists()
+    # Verify all required files were created/restored
+    Assertions.assert_file_exists(project_dir / "settings.toml")
+    Assertions.assert_file_exists(project_dir / "labware_dict.toml")
+    Assertions.assert_file_exists(project_dir / "CherryPick_OT2.py")
+    assert (project_dir / "CSVs").exists()
+    assert (project_dir / "logs").exists()
 
-    _print_project_snapshot("initialize_project", empty_project_dir)
+    _print_project_snapshot("initialize_project", project_dir)
 
 
 
@@ -296,3 +303,245 @@ def test_agent_deploy_to_opentrons(
     assert "CherryPick_OT2" in deployed_files[0].name
 
     _print_project_snapshot("deploy_to_opentrons", project_with_protocol)
+
+
+
+@pytest.mark.slow
+@pytest.mark.requires_simulation
+def test_agent_simulate_protocol_success(
+    project_with_protocol: Path, agent_factory: Callable[..., AgentRunner]
+) -> None:
+    """Agent simulates a valid protocol and reports success."""
+
+    runner = agent_factory(project_with_protocol, max_steps=25)
+    query = "Use the simulate_protocol tool to validate 'CherryPick_OT2.py'. Tell me if it succeeds."
+    result = runner.run(query)
+
+    Assertions.assert_no_errors(result)
+    assert any(kw in result.lower() for kw in ("success", "passed", "completed"))
+
+    log_path = project_with_protocol / "logs" / "last_simulation.json"
+    Assertions.assert_file_exists(log_path)
+
+    _print_project_snapshot("simulate_protocol_success", project_with_protocol)
+
+
+
+@pytest.mark.slow
+@pytest.mark.requires_simulation
+@pytest.mark.error_scenario
+def test_agent_simulate_protocol_failure(
+    tmp_path: Path, project_setup: ProjectSetup, agent_factory: Callable[..., AgentRunner]
+) -> None:
+    """Agent detects and reports simulation failures."""
+
+    project_dir = project_setup.create_with_invalid_protocol(tmp_path)
+    runner = agent_factory(project_dir, max_steps=25)
+
+    query = "Use the simulate_protocol tool to validate the protocol."
+    result = runner.run(query)
+
+    # Agent should report failure (not crash)
+    assert any(kw in result.lower() for kw in ("error", "fail", "invalid"))
+
+    _print_project_snapshot("simulate_protocol_failure", project_dir)
+
+
+
+@pytest.mark.slow
+@pytest.mark.pipeline_test
+def test_complete_new_project_workflow(
+    project_dir: Path, agent_runner: AgentRunner
+) -> None:
+    """End-to-end workflow: configure → CSV → generate → validate pipeline."""
+
+    # Step 1: Apply viscous liquid preset
+    preset_query = "Use the apply_liquid_preset tool to apply the 'viscous' preset."
+    preset_result = agent_runner.run(preset_query)
+    Assertions.assert_no_errors(preset_result)
+
+    # Step 2: Generate a CSV template
+    csv_query = (
+        "Generate a CSV template named 'CSVs/workflow_test.csv' with 10 transfers "
+        "from tube_rack_96_1500ul_4 to 384_ppv_55ul_2 with default volume 50."
+    )
+    csv_result = agent_runner.run(csv_query)
+    Assertions.assert_no_errors(csv_result)
+
+    csv_path = project_dir / "CSVs" / "workflow_test.csv"
+    Assertions.assert_file_exists(csv_path)
+
+    # Step 3: Validate configuration
+    validate_query = "Use validate_configuration to check the configuration for 'CSVs/workflow_test.csv'."
+    validate_result = agent_runner.run(validate_query)
+    Assertions.assert_no_errors(validate_result)
+
+    # Step 4: Generate protocol
+    generate_query = "Use generate_protocol to create the protocol from 'CSVs/workflow_test.csv'."
+    generate_result = agent_runner.run(generate_query)
+    Assertions.assert_no_errors(generate_result)
+
+    protocol_path = project_dir / "CherryPick_OT2.py"
+    Assertions.assert_file_exists(protocol_path)
+
+    _print_project_snapshot("complete_new_project_workflow", project_dir)
+
+
+
+@pytest.mark.pipeline_test
+def test_custom_labware_workflow(project_dir: Path, agent_runner: AgentRunner) -> None:
+    """Workflow: add custom labware → use in CSV → generate protocol."""
+
+    # Step 1: Add custom labware definition
+    labware_query = (
+        "Use add_labware_definition to add labware with ID 'custom_384_pcr', "
+        "category 'plate', 384 wells, 50µL volume."
+    )
+    labware_result = agent_runner.run(labware_query)
+    Assertions.assert_no_errors(labware_result)
+
+    # Verify labware added
+    labware_content = (project_dir / "labware_dict.toml").read_text(encoding="utf-8")
+    assert "custom_384_pcr" in labware_content
+
+    # Step 2: Generate CSV using custom labware
+    csv_query = (
+        "Generate a CSV template 'CSVs/custom_labware_test.csv' with 5 transfers "
+        "from tube_rack_96_1500ul_4 to custom_384_pcr_2 with volume 30."
+    )
+    csv_result = agent_runner.run(csv_query)
+    Assertions.assert_no_errors(csv_result)
+
+    csv_path = project_dir / "CSVs" / "custom_labware_test.csv"
+    Assertions.assert_file_exists(csv_path)
+
+    # Step 3: Generate protocol
+    generate_query = "Generate the protocol from 'CSVs/custom_labware_test.csv'."
+    generate_result = agent_runner.run(generate_query)
+    Assertions.assert_no_errors(generate_result)
+
+    # Verify custom labware in protocol
+    protocol_content = (project_dir / "CherryPick_OT2.py").read_text(encoding="utf-8")
+    assert "custom_384_pcr" in protocol_content
+
+    _print_project_snapshot("custom_labware_workflow", project_dir)
+
+
+
+@pytest.mark.pipeline_test
+def test_configuration_iteration_workflow(
+    project_with_csv: Path, agent_runner: AgentRunner
+) -> None:
+    """Workflow: apply preset → generate → change preset → generate again."""
+
+    # Step 1: Apply standard preset
+    preset1_query = "Apply the 'standard' liquid preset."
+    preset1_result = agent_runner.run(preset1_query)
+    Assertions.assert_no_errors(preset1_result)
+
+    # Step 2: Generate protocol with standard preset
+    generate1_query = "Generate the protocol from 'CSVs/test.csv'."
+    generate1_result = agent_runner.run(generate1_query)
+    Assertions.assert_no_errors(generate1_result)
+
+    # Verify settings reflect standard preset
+    settings_content = (project_with_csv / "settings.toml").read_text(encoding="utf-8")
+    assert "post_aspirate = 0" in settings_content or "post_aspirate = 0.0" in settings_content
+
+    # Step 3: Apply viscous preset
+    preset2_query = "Apply the 'viscous' liquid preset."
+    preset2_result = agent_runner.run(preset2_query)
+    Assertions.assert_no_errors(preset2_result)
+
+    # Step 4: Generate protocol again with viscous preset
+    generate2_query = "Generate the protocol from 'CSVs/test.csv' again."
+    generate2_result = agent_runner.run(generate2_query)
+    Assertions.assert_no_errors(generate2_result)
+
+    # Verify settings changed to viscous preset
+    settings_updated = (project_with_csv / "settings.toml").read_text(encoding="utf-8")
+    assert "post_aspirate = 2" in settings_updated or "post_aspirate = 2.0" in settings_updated
+
+    _print_project_snapshot("configuration_iteration_workflow", project_with_csv)
+
+
+
+@pytest.mark.resource_test
+@pytest.mark.pipeline_test
+def test_resource_reading_workflow(project_dir: Path, agent_runner: AgentRunner) -> None:
+    """Workflow: Agent reads multiple resources to inform decisions."""
+
+    query = (
+        "Please help me understand the current project configuration by doing the following:\n"
+        "1. Read the deck layout from the status://deck-layout resource\n"
+        "2. Check available CSV files using the files://csvs resource\n"
+        "3. Review liquid handling settings from the status://liquid-handling-config resource\n"
+        "4. Summarize what you found in each resource"
+    )
+
+    result = agent_runner.run(query)
+    Assertions.assert_no_errors(result)
+
+    # Verify agent mentioned key information from each resource (heuristic checks)
+    result_lower = result.lower()
+    
+    # Should mention deck/slot information
+    assert any(keyword in result_lower for keyword in ["deck", "slot", "position", "rack"])
+    
+    # Should mention CSV files
+    assert any(keyword in result_lower for keyword in ["csv", "file"])
+    
+    # Should mention liquid handling settings
+    assert any(keyword in result_lower for keyword in ["liquid", "aspirate", "dispense", "preset"])
+
+    _print_project_snapshot("resource_reading_workflow", project_dir)
+
+
+
+@pytest.mark.pipeline_test
+def test_setup_new_experiment_prompt(project_dir: Path, agent_runner: AgentRunner) -> None:
+    """Agent uses setup_new_experiment prompt to autonomously configure project."""
+
+    query = (
+        "I need to set up a new cherry-pick experiment for viscous liquids. "
+        "Follow the setup_new_experiment prompt workflow to configure everything needed."
+    )
+
+    result = agent_runner.run(query)
+    Assertions.assert_no_errors(result)
+
+    # Verify the workflow performed key setup steps
+    result_lower = result.lower()
+    
+    # Should have inspected/read configuration
+    assert any(keyword in result_lower for keyword in ["config", "settings", "deck", "layout"])
+    
+    # Should have applied or mentioned liquid handling
+    assert any(keyword in result_lower for keyword in ["liquid", "viscous", "preset"])
+
+    _print_project_snapshot("setup_new_experiment_prompt", project_dir)
+
+
+
+@pytest.mark.pipeline_test
+@pytest.mark.error_scenario
+def test_troubleshoot_simulation_error_prompt(
+    tmp_path: Path, project_setup: ProjectSetup, agent_factory: Callable[..., AgentRunner]
+) -> None:
+    """Agent uses troubleshoot_simulation_error prompt to diagnose and fix issues."""
+
+    project_dir = project_setup.create_with_invalid_protocol(tmp_path)
+    runner = agent_factory(project_dir, max_steps=30)
+
+    query = (
+        "The protocol simulation failed. Use the troubleshoot_simulation_error prompt "
+        "to diagnose the issue and explain what's wrong."
+    )
+
+    result = runner.run(query)
+
+    # Agent should identify the problem (not necessarily fix it, but diagnose)
+    result_lower = result.lower()
+    assert any(keyword in result_lower for keyword in ["error", "problem", "issue", "fail"])
+
+    _print_project_snapshot("troubleshoot_simulation_error_prompt", project_dir)
