@@ -119,7 +119,7 @@ position_rack = "4"
 
 [[settings.working_plate]]
 type = "destination"
-labware_id = "384_ldv_12ul"
+labware_id = "384_ppv_55ul"
 position_rack = "2"
 
 [[settings.working_plate]]
