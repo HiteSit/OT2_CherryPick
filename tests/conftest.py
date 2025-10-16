@@ -56,6 +56,7 @@ def build_mcp_config(project_root: Path) -> Callable[[Path], Dict[str, Any]]:
                 "ot2-cherrypick": {
                     "command": "uv",
                     "args": [
+                        "--directory", str(project_root),
                         "run",
                         "ot2-mcp-server",
                     ],
@@ -63,7 +64,6 @@ def build_mcp_config(project_root: Path) -> Callable[[Path], Dict[str, Any]]:
                         "LABWARE_PATH": str(project_root),
                         "OT2_PROJECT_DIR": str(project_dir),
                     },
-                    "cwd": str(project_root),
                 }
             }
         }

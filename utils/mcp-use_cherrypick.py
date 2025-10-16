@@ -27,6 +27,7 @@ async def main():
             "ot2-cherrypick": {
                 "command": "uv",
                 "args": [
+                    "--directory", str(project_root),
                     "run",
                     "ot2-mcp-server",
                 ],
@@ -34,7 +35,6 @@ async def main():
                     "LABWARE_PATH": str(project_root),
                     "OT2_PROJECT_DIR": str(project_dir),
                 },
-                "cwd": str(project_root),
             }
         }
     })

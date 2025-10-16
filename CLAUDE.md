@@ -434,14 +434,14 @@ Add to `claude_desktop_config.json`:
     "ot2-cherrypick": {
       "command": "uv",
       "args": [
+        "--directory", "/path/to/OT2_CherryPick",
         "run",
         "ot2-mcp-server"
       ],
       "env": {
         "LABWARE_PATH": "/path/to/opentrons/labware",
         "OT2_PROJECT_DIR": "/path/to/your/project"
-      },
-      "cwd": "/path/to/OT2_CherryPick"
+      }
     }
   }
 }

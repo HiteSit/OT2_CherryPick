@@ -434,9 +434,8 @@ Add to `claude_desktop_config.json`:
     "ot2-cherrypick": {
       "command": "uv",
       "args": [
+        "--directory", "/path/to/OT2_CherryPick",
         "run",
-        "--directory",
-        "/path/to/OT2_CherryPick",
         "ot2-mcp-server"
       ],
       "env": {

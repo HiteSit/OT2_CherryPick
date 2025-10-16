@@ -50,6 +50,7 @@ CONFIG = {
         "ot2-cherrypick": {
             "command": "uv",
             "args": [
+                "--directory", "/absolute/path/to/OT2_CherryPick",
                 "run",
                 "ot2-mcp-server",
             ],
@@ -57,7 +58,6 @@ CONFIG = {
                 "LABWARE_PATH": "/absolute/path/to/labware",
                 "OT2_PROJECT_DIR": "/absolute/path/to/your/project",
             },
-            "cwd": "/absolute/path/to/OT2_CherryPick",
         }
     }
 }
