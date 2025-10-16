@@ -6,14 +6,12 @@ from mcp_use import MCPAgent, MCPClient
 
 # Add tests directory to path to import helpers
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
-from helpers import ProjectSetup
 
 async def main():
     # Get repository root (parent of utils directory)
     project_root = Path(__file__).resolve().parents[1]
 
     # Create a properly initialized project directory (not just empty)
-    project_setup = ProjectSetup(project_root=project_root)
     project_dir = project_root / "utils" / "test_project"
 
     # Use the same setup as tests - copies template files
@@ -22,12 +20,7 @@ async def main():
         shutil.rmtree(project_dir)  # Clean up old version
 
     project_dir.mkdir()
-    import shutil
-    # shutil.copy2(project_root / "settings.toml", project_dir / "settings.toml")
-    # shutil.copy2(project_root / "labware_dict.toml", project_dir / "labware_dict.toml")
-    # shutil.copy2(project_root / "CherryPick_OT2.py", project_dir / "CherryPick_OT2.py")
-    # shutil.copytree(project_root / "CSVs", project_dir / "CSVs")
-    # (project_dir / "logs").mkdir()
+    # Files no longer need to be copied manually - initialize_project will create them
 
     client = MCPClient(config={
         "mcpServers": {
@@ -55,10 +48,12 @@ async def main():
     # Create agent with tools - use same max_steps as tests
     agent = MCPAgent(llm=llm, client=client, max_steps=20)
 
-    # Run the query - project is already initialized with template files
-    # Be specific about which CSV file to use
+    # Run the query - first initialize the project, then configure settings, then generate protocol
     result = await agent.run(
-        "List all tools"
+        "Initialize the project using initialize_project tool. "
+        "Then set settings.liquid_handling.pre_aspirate_contact.enabled to true and "
+        "settings.liquid_handling.pre_aspirate_contact.aspirate_volume to 10. "
+        "Finally generate the protocol from CSVs/example_basic.csv."
     )
 
     print("\n" + "="*80)

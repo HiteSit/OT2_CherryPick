@@ -61,18 +61,6 @@ def main() -> None:
     except ValueError as e:
         raise ValueError(f"Project directory validation failed: {e}") from e
 
-    # Check for required files
-    required_files = ["settings.toml", "labware_dict.toml"]
-    missing_files = [f for f in required_files if not (project_dir / f).exists()]
-
-    if missing_files:
-        raise ValueError(
-            f"Project directory is missing required files: {missing_files}\n"
-            f"Project directory: {project_dir}\n"
-            f"Use the 'initialize_project' tool to create the project structure, "
-            f"or manually copy the required files to the project directory."
-        )
-
     # Change to project directory for all operations
     os.chdir(project_dir)
 
