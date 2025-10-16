@@ -1,41 +1,42 @@
 [project]
-authors = [{name = "Riccardo_Linux", email = "riccardofusco99@gmail.com"}]
+name = "OT2_CherryPick"
+version = "0.1.0"
+description = "Automated Cherry-Pick for OT2 using MCP and FastMCP integration"
+authors = [
+    { name = "Riccardo_Linux", email = "riccardofusco99@gmail.com" }
+]
+requires-python = ">=3.12,<3.13"
+readme = "README.md"
+license = { text = "Insert your license name here" }
 dependencies = [
     "mcp-use>=1.3.7,<2",
-    "langchain-mistralai>=0.2.12,<0.3"
+    "langchain-mistralai>=0.2.12,<0.3",
+    "numpy>=1.20.0,<2",
+    "pandas>=2.3.3,<3",
+    "rdkit>=2025.9.1,<2026",
+    "seaborn>=0.13.2,<0.14",
+    "datamol>=0.12.5,<0.13",
+    "toml>=0.10.2,<0.11",
+    "tomli>=2.3.0,<3",
+    "tomlkit>=0.13.3,<0.14",
+    "fastmcp>=2.3.0",
+    "mcp>=1.8.0"
 ]
-name = "OT2_CherryPick"
-requires-python = ">= 3.12,<3.13"
-version = "0.1.0"
 
-[build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling"]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/ot2_cherrypick_mcp"]
-
-[tool.pixi.pypi-dependencies]
-ot2_cherrypick = { path = ".", editable = true }
+[project.optional-dependencies]
+test = [
+    "pytest>=8.4.2,<9"
+]
 
 [project.scripts]
 ot2-mcp-server = "ot2_cherrypick_mcp.server:main"
 
-[tool.pixi.workspace]
-channels = ["conda-forge"]
-platforms = ["linux-64"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.pixi.tasks]
+[tool.hatch.build.targets.wheel]
+packages = [ "src/ot2_cherrypick_mcp" ]
 
-[tool.pixi.dependencies]
-numpy = ">=1.20.0,<2"
-pandas = ">=2.3.3,<3"
-rdkit = ">=2025.9.1,<2026"
-seaborn = ">=0.13.2,<0.14"
-datamol = ">=0.12.5,<0.13"
-toml = ">=0.10.2,<0.11"
-tomli = ">=2.3.0,<3"
-tomlkit = ">=0.13.3,<0.14"
-pytest = ">=8.4.2,<9"
-fastmcp = ">=2.3.0"
-mcp = ">=1.8.0"
+[tool.uv]
+managed = true
