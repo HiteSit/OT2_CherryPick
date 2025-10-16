@@ -3,13 +3,13 @@
     "ot2-cherrypick": {
       "command": "uv",
       "args": [
-        "--directory", "{repository_root}",
+        "--directory", "${REPOSITORY_ROOT}",
         "run",
         "ot2-mcp-server"
       ],
       "env": {
-        "LABWARE_PATH": "{labware_path}",
-        "OT2_PROJECT_DIR": "{project_directory}"
+        "LABWARE_PATH": "${LABWARE_PATH}",
+        "OT2_PROJECT_DIR": "${OT2_PROJECT_DIR}"
       }
     }
   }
