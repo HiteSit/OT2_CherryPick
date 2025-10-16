@@ -820,26 +820,218 @@ mcp.run(
 
 ## Deployment
 
+FastMCP servers can be deployed in three ways: local development, self-hosted production, and FastMCP Cloud managed hosting. Each approach offers different tradeoffs between simplicity, control, and operational overhead.
+
+---
+
 ### Local Development
+
+The fastest way to run and test your server locally:
 
 ```bash
 fastmcp run server.py
 ```
 
-### FastMCP Cloud
+**CLI Features:**
+- Automatic dependency management via `uv`
+- Python version specification support
+- Command-line argument passing (after `--`)
+- Development mode with MCP Inspector integration
+- Hot reloading during development
 
-Deploy to managed hosting with instant HTTPS:
+**With specific Python version:**
+```bash
+fastmcp run server.py --python 3.12
+```
 
-1. Sign up at [fastmcp.cloud](https://fastmcp.cloud)
-2. Deploy with CLI:
-   ```bash
-   fastmcp deploy server.py
-   ```
+**With additional dependencies:**
+```bash
+fastmcp run server.py --with httpx --with pandas
+```
 
-### Self-Hosted
+**With requirements file:**
+```bash
+fastmcp run server.py --requirements requirements.txt
+```
 
-Run as HTTP server:
+**Pass arguments to your server:**
+```bash
+fastmcp run server.py -- --debug --port 9000
+```
 
+---
+
+### Server Configuration (fastmcp.json)
+
+FastMCP uses `fastmcp.json` for declarative project configuration. This file is organized around three key sections: **source**, **environment**, and **deployment**.
+
+#### Configuration Structure
+
+```json
+{
+  "source": {
+    "type": "filesystem",
+    "path": "./server.py",
+    "entrypoint": "mcp"
+  },
+  "environment": {
+    "python": ">=3.10",
+    "dependencies": [
+      "httpx>=0.24.0",
+      "pandas",
+      "numpy>=1.24"
+    ]
+  },
+  "deployment": {
+    "transport": "http",
+    "host": "0.0.0.0",
+    "port": 8000,
+    "path": "/mcp/",
+    "log_level": "INFO",
+    "env": {
+      "DATABASE_URL": "${DATABASE_URL}",
+      "API_KEY": "${API_KEY}",
+      "DEBUG": "false"
+    }
+  }
+}
+```
+
+#### Source Configuration
+
+Specifies where your server code lives.
+
+**Fields:**
+- `type` (optional): Source type - currently only `"filesystem"` supported (future: Git repos, cloud-hosted)
+- `path` (required): Path to Python file containing your server
+- `entrypoint` (optional): Name of server instance or factory function
+  - Defaults to auto-detection: searches for `mcp`, `server`, or `app`
+
+**Example:**
+```json
+{
+  "source": {
+    "path": "./src/my_server.py",
+    "entrypoint": "create_server"
+  }
+}
+```
+
+#### Environment Configuration
+
+Manages build-time dependencies and Python environment setup using `uv`.
+
+**Fields:**
+- `python` (optional): Python version constraint
+  - Examples: `">=3.10"`, `"3.12"`, `">=3.10,<3.13"`
+- `dependencies` (optional): List of pip packages with optional version specifiers
+  - Examples: `["httpx>=0.24.0", "pandas", "numpy>=1.24"]`
+- `requirements` (optional): Path to requirements.txt file
+  - Example: `"./requirements.txt"`
+- `project` (optional): Path to directory containing pyproject.toml
+  - Example: `"./"`
+- `editable` (optional): List of packages installed in editable mode for local development
+  - Example: `["./local-package"]`
+
+**Example with requirements.txt:**
+```json
+{
+  "environment": {
+    "python": "3.12",
+    "requirements": "./requirements.txt"
+  }
+}
+```
+
+**Example with pyproject.toml:**
+```json
+{
+  "environment": {
+    "project": "./",
+    "python": ">=3.10"
+  }
+}
+```
+
+#### Deployment Configuration
+
+Controls runtime behavior and server execution.
+
+**Fields:**
+- `transport` (optional): Communication protocol
+  - Options: `"stdio"` (default), `"http"`, `"sse"` (deprecated)
+- `host` (optional): Network interface to bind to
+  - Default: `"127.0.0.1"`
+  - Use `"0.0.0.0"` for external access
+- `port` (optional): HTTP port number
+  - Default: `3000`
+- `path` (optional): URL endpoint path for MCP
+  - Default: `"/mcp/"`
+- `log_level` (optional): Logging verbosity
+  - Options: `"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"`, `"CRITICAL"`
+- `env` (optional): Environment variables with interpolation support
+  - Supports `${VAR_NAME}` syntax for runtime substitution
+- `cwd` (optional): Working directory for the process
+- `args` (optional): Command-line arguments passed to the server
+
+**Example production configuration:**
+```json
+{
+  "deployment": {
+    "transport": "http",
+    "host": "0.0.0.0",
+    "port": 8000,
+    "log_level": "WARNING",
+    "env": {
+      "DATABASE_URL": "${DATABASE_URL}",
+      "REDIS_URL": "${REDIS_URL}",
+      "API_KEY": "${API_KEY}",
+      "ENVIRONMENT": "production"
+    }
+  }
+}
+```
+
+#### Environment Variable Interpolation
+
+The `env` field supports dynamic variable substitution using `${VAR_NAME}` syntax. This enables secure configuration across different deployment environments without hardcoding credentials.
+
+**How it works:**
+- Variables are resolved at runtime from the system environment
+- Unmatched placeholders remain unchanged
+- Useful for secrets, connection strings, and environment-specific settings
+
+**Example:**
+```json
+{
+  "deployment": {
+    "env": {
+      "DATABASE_URL": "${DATABASE_URL}",
+      "API_KEY": "${API_KEY}",
+      "LOG_LEVEL": "${LOG_LEVEL:-INFO}"
+    }
+  }
+}
+```
+
+Then set environment variables before running:
+```bash
+export DATABASE_URL="postgresql://localhost/mydb"
+export API_KEY="secret-key-here"
+fastmcp run server.py
+```
+
+---
+
+### Self-Hosted Deployment
+
+Self-hosting provides maximum control over infrastructure, security, and performance. FastMCP supports two deployment approaches: **Direct HTTP Server** (simple) and **ASGI Application** (production).
+
+#### Direct HTTP Server (Simple)
+
+The built-in `run()` method handles all server configuration automatically. Ideal for standalone MCP servers without additional complexity.
+
+**Basic HTTP server:**
 ```python
 # server.py
 from fastmcp import FastMCP
@@ -854,19 +1046,535 @@ if __name__ == "__main__":
     mcp.run(
         transport="http",
         host="0.0.0.0",
-        port=8000
+        port=8000,
+        path="/mcp/"
     )
 ```
 
-Run with production server:
-
+**Run directly:**
 ```bash
-# With uvicorn
-uvicorn server:mcp --host 0.0.0.0 --port 8000
-
-# With gunicorn
-gunicorn server:mcp -w 4 -k uvicorn.workers.UvicornWorker
+uv run python server.py
 ```
+
+**Custom endpoint path:**
+```python
+mcp.run(
+    transport="http",
+    host="0.0.0.0",
+    port=8000,
+    path="/api/mcp/"  # Access at http://host:8000/api/mcp/
+)
+```
+
+#### ASGI Application (Production)
+
+For production environments, create an ASGI application to leverage multiple workers, custom middleware, monitoring, and standard ASGI tooling.
+
+**Create ASGI app:**
+```python
+# server.py
+from fastmcp import FastMCP
+
+mcp = FastMCP("Production Server")
+
+@mcp.tool
+def process_data(data: str) -> dict:
+    """Process incoming data."""
+    return {"processed": data.upper(), "length": len(data)}
+
+# Create ASGI application
+app = mcp.http_app()
+```
+
+**Run with Uvicorn (single worker):**
+```bash
+uvicorn server:app --host 0.0.0.0 --port 8000
+```
+
+**Run with Uvicorn (multiple workers for concurrency):**
+```bash
+# Install uvicorn with standard extras for better performance
+pip install uvicorn[standard]
+
+# Run with 4 worker processes
+uvicorn server:app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+**Run with Gunicorn + Uvicorn workers:**
+```bash
+gunicorn server:app \
+  --workers 4 \
+  --worker-class uvicorn.workers.UvicornWorker \
+  --bind 0.0.0.0:8000
+```
+
+**Run with Hypercorn:**
+```bash
+hypercorn server:app --bind 0.0.0.0:8000 --workers 4
+```
+
+#### Authentication (Highly Recommended)
+
+**Why authentication matters:** Remote MCP servers expose tools and resources over the network. Many LLM clients require authentication for remote connections. FastMCP supports multiple authentication strategies.
+
+**API Key Authentication:**
+```python
+from fastmcp import FastMCP
+from fastmcp.server.auth import APIKeyProvider
+
+auth = APIKeyProvider(
+    valid_keys={"key1", "key2", "key3"}
+)
+
+mcp = FastMCP("Secured Server", auth=auth)
+```
+
+**JWT Authentication:**
+```python
+from fastmcp.server.auth import JWTProvider
+
+auth = JWTProvider(
+    secret="your-secret-key",
+    algorithm="HS256"
+)
+
+mcp = FastMCP("JWT Secured Server", auth=auth)
+```
+
+**OAuth (Google, GitHub, Azure, etc.):**
+```python
+from fastmcp.server.auth import GoogleProvider
+
+auth = GoogleProvider(
+    client_id="your_client_id",
+    client_secret="your_client_secret",
+    base_url="https://yourserver.com"
+)
+
+mcp = FastMCP("OAuth Secured Server", auth=auth)
+```
+
+**Environment variable best practice:**
+```python
+import os
+from fastmcp.server.auth import APIKeyProvider
+
+auth = APIKeyProvider(
+    valid_keys={
+        os.environ.get("API_KEY_1"),
+        os.environ.get("API_KEY_2")
+    }
+)
+```
+
+#### Health Check Endpoints
+
+Add custom health check routes for monitoring and load balancer integration:
+
+```python
+from fastmcp import FastMCP
+
+mcp = FastMCP("Production Server")
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check():
+    """Health check endpoint for load balancers."""
+    return {"status": "healthy", "version": "1.0.0"}
+
+@mcp.custom_route("/status", methods=["GET"])
+async def status():
+    """Detailed status information."""
+    return {
+        "status": "operational",
+        "tools": len(mcp.list_tools()),
+        "resources": len(mcp.list_resources())
+    }
+```
+
+#### Hosting Infrastructure Options
+
+FastMCP servers can deploy on any infrastructure supporting Python 3.10+ and HTTP port exposure:
+
+**Cloud Virtual Machines:**
+- AWS EC2
+- Google Compute Engine
+- Azure Virtual Machines
+- DigitalOcean Droplets
+- Linode Compute Instances
+
+**Container Platforms:**
+- Google Cloud Run
+- AWS ECS/Fargate
+- Azure Container Instances
+- Docker Swarm
+
+**Platform-as-a-Service:**
+- Railway
+- Render
+- Vercel (with serverless functions)
+- Fly.io
+- Heroku
+
+**Orchestration:**
+- Kubernetes clusters (any managed service)
+- Docker Compose
+- Nomad
+
+**Edge Platforms:**
+- Cloudflare Workers (Python support via Pyodide)
+
+#### Docker Deployment
+
+**Dockerfile example:**
+```dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install uv for dependency management
+RUN pip install uv
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies
+RUN uv sync --frozen
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 8000
+
+# Run server
+CMD ["uv", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+**Docker Compose example:**
+```yaml
+version: '3.8'
+
+services:
+  fastmcp-server:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - API_KEY=${API_KEY}
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+```
+
+**Build and run:**
+```bash
+docker build -t my-fastmcp-server .
+docker run -p 8000:8000 -e API_KEY=secret my-fastmcp-server
+```
+
+#### Kubernetes Deployment
+
+**Deployment manifest:**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastmcp-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fastmcp-server
+  template:
+    metadata:
+      labels:
+        app: fastmcp-server
+    spec:
+      containers:
+      - name: server
+        image: my-fastmcp-server:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fastmcp-secrets
+              key: api-key
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastmcp-service
+spec:
+  selector:
+    app: fastmcp-server
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: LoadBalancer
+```
+
+#### Production Best Practices
+
+**Security:**
+- Always use authentication for remote servers
+- Store secrets in environment variables or secret managers (AWS Secrets Manager, HashiCorp Vault)
+- Use HTTPS/TLS termination (reverse proxy or load balancer)
+- Implement rate limiting for public endpoints
+- Regularly update dependencies
+
+**Performance:**
+- Use multiple workers for concurrent request handling
+- Install uvicorn with standard extras: `pip install uvicorn[standard]`
+- Enable HTTP/2 support where possible
+- Configure appropriate timeouts
+- Use connection pooling for databases
+
+**Monitoring:**
+- Implement health check endpoints
+- Log errors and performance metrics
+- Use application performance monitoring (APM) tools
+- Set up alerts for failures and degraded performance
+- Track resource usage (CPU, memory, network)
+
+**Reliability:**
+- Use process managers (systemd, supervisor) for automatic restarts
+- Configure graceful shutdown handling
+- Implement circuit breakers for external dependencies
+- Set up horizontal scaling with load balancers
+- Use container orchestration for automatic failover
+
+---
+
+### FastMCP Cloud (Managed Hosting)
+
+FastMCP Cloud provides instant deployment with zero infrastructure management. The platform automatically builds, deploys, and hosts your server with continuous deployment from GitHub.
+
+**Current Status:** Completely free during beta period with new features released weekly.
+
+#### Prerequisites
+
+- GitHub account (required for authentication)
+- GitHub repository (public or private) containing FastMCP server
+- At least one Python file with a FastMCP server instance
+- Dependencies defined in `requirements.txt` or `pyproject.toml`
+
+#### Deployment Process
+
+**1. Sign Up**
+- Navigate to [fastmcp.cloud](https://fastmcp.cloud)
+- Sign in with GitHub credentials
+- Authorize FastMCP Cloud to access your repositories
+
+**2. Create Project**
+Configure your deployment:
+- **Project name**: Unique identifier (becomes part of your URL)
+- **Repository**: Select GitHub repository containing your server
+- **Python entrypoint**: Specify the file containing your FastMCP server
+  - Example: `server.py`, `src/mcp_server.py`
+- **Entrypoint variable**: Name of server instance (auto-detected if not specified)
+  - Defaults to searching for: `mcp`, `server`, or `app`
+- **Authentication**: Configure authentication settings (API keys, OAuth, etc.)
+
+**Automatic dependency detection:**
+FastMCP Cloud automatically detects Python dependencies from:
+- `requirements.txt` (pip format)
+- `pyproject.toml` (Poetry, PDM, uv, setuptools formats)
+
+**3. Deploy**
+FastMCP Cloud automatically:
+- Clones your repository
+- Detects and installs dependencies
+- Builds the server
+- Deploys to unique URL: `https://your-project-name.fastmcp.app/mcp`
+- Provides instant connection instructions for LLM clients
+
+**4. Connect**
+Access your deployed server:
+- **URL format**: `https://your-project-name.fastmcp.app/mcp`
+- **LLM client integration**: Copy-paste connection details for Claude, Cursor, or other MCP clients
+- **API access**: Use FastMCP Client library to connect programmatically
+
+#### Key Features
+
+**Continuous Deployment:**
+- Automatically redeploys when changes push to main branch
+- Zero-downtime deployments
+- Build logs available in dashboard
+
+**Pull Request Deployments:**
+- Unique preview URL for each PR: `https://pr-123-your-project-name.fastmcp.app/mcp`
+- Test changes before merging
+- Automatic cleanup when PR closes
+
+**Version Compatibility:**
+- Supports both FastMCP 2.0 and FastMCP 1.0 servers
+- Automatic version detection
+- Migration assistance available
+
+**Instant Connections:**
+- Pre-configured connection snippets for popular LLM clients
+- One-click integration for Claude Desktop
+- WebSocket and HTTP transport support
+
+**Dashboard Features:**
+- Real-time deployment status
+- Build logs and error messages
+- Traffic and usage metrics (coming soon)
+- Environment variable management
+- Authentication configuration
+
+#### Example Deployment
+
+**Minimal server.py:**
+```python
+from fastmcp import FastMCP
+
+mcp = FastMCP("My Cloud Server")
+
+@mcp.tool
+def greet(name: str) -> str:
+    """Greet a person by name."""
+    return f"Hello, {name}!"
+
+# Note: Do NOT include if __name__ == "__main__" block
+# FastMCP Cloud ignores these blocks during deployment
+```
+
+**requirements.txt:**
+```
+fastmcp>=2.0.0
+httpx>=0.24.0
+```
+
+**Push to GitHub:**
+```bash
+git add server.py requirements.txt
+git commit -m "Add FastMCP server"
+git push origin main
+```
+
+**Deploy on FastMCP Cloud:**
+1. Go to [fastmcp.cloud](https://fastmcp.cloud)
+2. Click "New Project"
+3. Select repository
+4. Set entrypoint: `server.py`
+5. Click "Deploy"
+
+**Access deployed server:**
+- URL: `https://my-cloud-server.fastmcp.app/mcp`
+- Connect with Claude Desktop, Cursor, or programmatically
+
+#### Environment Variables and Secrets
+
+Configure secrets and environment variables through the FastMCP Cloud dashboard:
+
+**In Dashboard:**
+1. Navigate to project settings
+2. Add environment variables:
+   - `DATABASE_URL`: `postgresql://...`
+   - `API_KEY`: `secret-key-here`
+   - `DEBUG`: `false`
+3. Variables are securely encrypted and injected at runtime
+
+**In code:**
+```python
+import os
+from fastmcp import FastMCP
+
+mcp = FastMCP("Secure Server")
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+API_KEY = os.environ.get("API_KEY")
+
+@mcp.tool
+def query_database(query: str) -> dict:
+    """Execute database query."""
+    # Use DATABASE_URL here
+    return {"result": "data"}
+```
+
+#### Limitations and Considerations
+
+**Current Limitations:**
+- Requires GitHub repository (no direct file uploads)
+- Must contain Python file with FastMCP server instance
+- `if __name__ == "__main__"` blocks are ignored during deployment
+- Cold start latency for inactive servers (typical of serverless platforms)
+- Resource limits apply during beta (check documentation for current limits)
+
+**Best Practices for Cloud Deployment:**
+- Keep dependencies minimal to reduce build time
+- Use environment variables for all secrets and configuration
+- Test locally before pushing to GitHub
+- Monitor build logs for dependency conflicts
+- Use PR deployments to test breaking changes
+
+#### Connecting LLM Clients
+
+**Claude Desktop:**
+Add to `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "my-server": {
+      "url": "https://your-project-name.fastmcp.app/mcp"
+    }
+  }
+}
+```
+
+**Cursor:**
+Add to Cursor settings:
+```json
+{
+  "mcp": {
+    "servers": {
+      "my-server": {
+        "url": "https://your-project-name.fastmcp.app/mcp"
+      }
+    }
+  }
+}
+```
+
+**Programmatic Access:**
+```python
+from fastmcp import Client
+import asyncio
+
+async def main():
+    async with Client("https://your-project-name.fastmcp.app/mcp") as client:
+        tools = await client.list_tools()
+        result = await client.call_tool("greet", {"name": "Alice"})
+        print(result.content[0].text)
+
+asyncio.run(main())
+```
+
+#### Pricing
+
+**Beta Period:** Completely free with no credit card required
+
+**Future Pricing:** To be announced as platform exits beta. Expected to include:
+- Free tier for hobby projects
+- Paid tiers with higher resource limits
+- Enterprise options with SLA guarantees
+
+Stay updated at [fastmcp.cloud/pricing](https://fastmcp.cloud/pricing)
 
 ---
 
