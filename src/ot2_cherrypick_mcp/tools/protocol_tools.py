@@ -10,9 +10,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict
 
-import helper_cherry_pick
 from fastmcp import FastMCP
 
+from ..core import protocol_generator
 from ..utils.errors import ConfigurationError, ProtocolGenerationError
 from ..utils.paths import resolve_project_path
 
@@ -66,7 +66,7 @@ def run_generate_protocol(
         raise ConfigurationError(f"Protocol template not found at {protocol_file}")
 
     try:
-        result = helper_cherry_pick.generate_protocol(
+        result = protocol_generator.generate_protocol(
             str(labware_file),
             str(settings_file),
             str(csv_file),
