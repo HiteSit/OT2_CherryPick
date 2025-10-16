@@ -26,10 +26,10 @@ The OpenTron cherry-picking workflow can now be orchestrated through the Model C
 
 ## Running the Server
 
-Always launch the server through pixi to guarantee the correct environment:
+Always launch the server through uv to guarantee the correct environment:
 
 ```bash
-pixi run python -m ot2_cherrypick_mcp.server
+uv run ot2-mcp-server
 ```
 
 Ensure the `LABWARE_PATH` environment variable points to any custom labware directory required for simulation.
@@ -48,18 +48,16 @@ from mcp_use import MCPAgent, MCPClient
 CONFIG = {
     "mcpServers": {
         "ot2-cherrypick": {
-            "command": "pixi",
+            "command": "uv",
             "args": [
                 "run",
-                "--manifest-path",
-                "/absolute/path/to/pyproject.toml",
-                "python",
-                "-m",
-                "ot2_cherrypick_mcp.server",
+                "ot2-mcp-server",
             ],
             "env": {
                 "LABWARE_PATH": "/absolute/path/to/labware",
+                "OT2_PROJECT_DIR": "/absolute/path/to/your/project",
             },
+            "cwd": "/absolute/path/to/OT2_CherryPick",
         }
     }
 }
@@ -95,13 +93,13 @@ if __name__ == "__main__":
 Run the full suite (unit + integration) with:
 
 ```bash
-pixi run pytest
+uv run pytest
 ```
 
 Highlights:
 - Unit tests cover individual tools (protocol, configuration, labware, deployment) and resources.
 - Workflow tests ensure multi-step orchestration behaves correctly.
-- `tests/test_mcp_integration.py` launches the server through pixi, connects via `mcp-use`, and executes agent prompts end-to-end using Mistral.
+- `tests/test_mcp_integration.py` launches the server through uv, connects via `mcp-use`, and executes agent prompts end-to-end using Mistral.
 
 ## Repository Structure
 

@@ -25,19 +25,16 @@ async def main():
     client = MCPClient(config={
         "mcpServers": {
             "ot2-cherrypick": {
-                "command": "pixi",
+                "command": "uv",
                 "args": [
                     "run",
-                    "--manifest-path",
-                    str(project_root / "pyproject.toml"),
-                    "python",
-                    "-m",
-                    "ot2_cherrypick_mcp.server",
+                    "ot2-mcp-server",
                 ],
                 "env": {
                     "LABWARE_PATH": str(project_root),
                     "OT2_PROJECT_DIR": str(project_dir),
-                }
+                },
+                "cwd": str(project_root),
             }
         }
     })
@@ -50,10 +47,7 @@ async def main():
 
     # Run the query - first initialize the project, then configure settings, then generate protocol
     result = await agent.run(
-        "Initialize the project using initialize_project tool. "
-        "Then set settings.liquid_handling.pre_aspirate_contact.enabled to true and "
-        "settings.liquid_handling.pre_aspirate_contact.aspirate_volume to 10. "
-        "Finally generate the protocol from CSVs/example_basic.csv."
+        "List all Tools"
     )
 
     print("\n" + "="*80)

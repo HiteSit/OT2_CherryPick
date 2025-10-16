@@ -90,14 +90,12 @@ When you run `./simulate_protocol.sh CSVs/your_file.csv`:
 **pyproject.toml** - Python package manifest and environment configuration
 - `[project]` - Package metadata, dependencies, console script entry points
 - `[project.scripts]` - Console script: `ot2-mcp-server` entry point for MCP server
-- `[tool.pixi.workspace]` - Pixi workspace configuration (channels, platforms)
-- `[tool.pixi.dependencies]` - Conda-forge package dependencies
-- `[tool.pixi.pypi-dependencies]` - PyPI package dependencies
-- `[tool.pixi.tasks]` - Task definitions for pixi run commands
+- `[project.optional-dependencies]` - Optional dependency groups (e.g., test)
+- `[tool.uv]` - UV package manager configuration (managed = true)
 
 **src/ot2_cherrypick_mcp/** - MCP server implementation
 - `server.py` - FastMCP server entry point with `create_mcp_app()` and `main()`
-- `tools/` - 8 tool modules exposing protocol operations (protocol, config, csv, deployment, labware, simulation, validation, workflow)
+- `tools/` - 9 tool modules exposing protocol operations (project, protocol, config, csv, deployment, labware, simulation, validation, workflow)
 - `resources/` - 4 resource modules for read-only data (config, file, log, status)
 - `prompts/` - Workflow prompts for guided AI interactions (setup_new_experiment, troubleshoot_simulation_error)
 - `core/` - Core functionality (validation.py, simulation.py, deployment.py, toml_handler.py)
@@ -365,7 +363,7 @@ The Model Context Protocol (MCP) server enables AI-native interaction with the p
 **Server Entry Point** - `src/ot2_cherrypick_mcp/server.py`
 - `create_mcp_app()` - Initializes FastMCP instance and registers all components
 - `main()` - Console script entry point, runs STDIO transport
-- Run with: `pixi run ot2-mcp-server`
+- Run with: `uv run ot2-mcp-server`
 
 **TOML Handler** - `src/ot2_cherrypick_mcp/utils/toml.py`
 - `TomlHandler` class - Format-preserving TOML editing using tomlkit
@@ -373,7 +371,10 @@ The Model Context Protocol (MCP) server enables AI-native interaction with the p
 - Auto-creates `.toml.backup` files before modifications
 - Preserves comments, formatting, and whitespace
 
-### MCP Tools (8 Categories)
+### MCP Tools (9 Categories)
+
+**Project Management** - `src/ot2_cherrypick_mcp/tools/project_tools.py`
+- `initialize_project` - Set up new project directory with template files (settings.toml, labware_dict.toml, CherryPick_OT2.py, CSVs/)
 
 **Protocol Generation** - `src/ot2_cherrypick_mcp/tools/protocol_tools.py`
 - `generate_protocol` - Compile TOML + CSV into CherryPick_OT2.py
@@ -431,15 +432,16 @@ Add to `claude_desktop_config.json`:
 {
   "mcpServers": {
     "ot2-cherrypick": {
-      "command": "pixi",
+      "command": "uv",
       "args": [
         "run",
-        "--manifest-path",
-        "/path/to/OT2_CherryPick/pyproject.toml",
+        "--directory",
+        "/path/to/OT2_CherryPick",
         "ot2-mcp-server"
       ],
       "env": {
-        "LABWARE_PATH": "/path/to/opentrons/labware"
+        "LABWARE_PATH": "/path/to/opentrons/labware",
+        "OT2_PROJECT_DIR": "/path/to/your/project"
       }
     }
   }
@@ -467,38 +469,39 @@ Test suite: `tests/test_mcp_integration.py`
 
 ### Environment Setup
 
-This project uses **pixi** for package management with a **local per-project environment**. The environment is configured via `pyproject.toml` with `[tool.pixi]` sections, and the `.pixi/` directory in the repository root contains all project dependencies.
+This project uses **uv** for package management with a **local per-project environment**. The environment is configured via `pyproject.toml` and dependencies are automatically resolved and installed in the `.venv/` directory in the repository root.
 
-**All Python commands must be run with `pixi run`:**
+**All Python commands must be run with `uv run`:**
 
 ```bash
 # Run helper script
-pixi run python helper_cherry_pick.py -l labware_dict.toml -s settings.toml -c CSVs/example_basic.csv -p CherryPick_OT2.py
+uv run python helper_cherry_pick.py -l labware_dict.toml -s settings.toml -c CSVs/example_basic.csv -p CherryPick_OT2.py
 
 # Run simulation
-pixi run opentrons_simulate --custom-labware $LABWARE_PATH CherryPick_OT2.py
+uv run opentrons_simulate --custom-labware $LABWARE_PATH CherryPick_OT2.py
 
 # Run any Python script
-pixi run python your_script.py
+uv run python your_script.py
 
 # Run tests
-pixi run pytest tests/
+uv run pytest tests/
 ```
 
-**Why `pixi run`?**
-- Automatically activates the local `.pixi/` environment
+**Why `uv run`?**
+- Automatically manages the local `.venv/` environment
 - Ensures consistent dependencies across all runs
 - No need to manually activate/deactivate environments
-- Pixi automatically updates the lockfile and installs the environment if needed
+- UV automatically syncs dependencies from pyproject.toml when needed
+- Fast, Rust-based package resolution
 
 **Running the MCP Server:**
 
 ```bash
 # Start MCP server (STDIO transport for Claude Desktop)
-pixi run ot2-mcp-server
+uv run ot2-mcp-server
 
 # Run MCP integration tests
-pixi run pytest tests/test_mcp_integration.py
+uv run pytest tests/test_mcp_integration.py
 ```
 
 **Adding Missing Packages (Only if Needed):**
@@ -506,14 +509,14 @@ pixi run pytest tests/test_mcp_integration.py
 If you encounter an error indicating a package is missing:
 
 ```bash
-# For conda-forge packages (preferred):
-pixi add package-name
+# Add a package to dependencies
+uv add package-name
 
-# For PyPI-only packages:
-pixi add package-name --pypi
+# Add a package to optional dependencies (e.g., dev tools)
+uv add --optional dev package-name
 ```
 
-**Note:** Conda-forge packages are preferred when available as they include non-Python dependencies and integrate better with the conda ecosystem. Use `--pypi` only for packages that are exclusively available on PyPI.
+**Note:** UV automatically fetches packages from PyPI and resolves all dependencies. The `uv.lock` file pins exact versions for reproducibility.
 
 ### Standard Workflow
 
@@ -565,7 +568,7 @@ TARGET_PROTOCOL_SRC_WIN="C:\Users\ricca\AppData\Roaming\Opentrons\protocols\ea83
 
 **Why Windows paths?** Convenience - copy-paste directly from Windows File Explorer. Script handles conversion automatically using `wslpath`.
 
-**Note:** With the pixi-based workflow, the ENV_EXE and ENV_NAME variables are no longer needed since pixi automatically manages the local `.pixi/` environment based on the `pyproject.toml` configuration.
+**Note:** With the uv-based workflow, the ENV_EXE and ENV_NAME variables are no longer needed since uv automatically manages the local `.venv/` environment based on the `pyproject.toml` configuration.
 
 ### Using --send-to-opentrons
 

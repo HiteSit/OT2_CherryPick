@@ -1,19 +1,16 @@
 {
   "mcpServers": {
     "ot2-cherrypick": {
-      "command": "pixi",
+      "command": "uv",
       "args": [
         "run",
-        "--manifest-path",
-        "{manifest_path}",
-        "python",
-        "-m",
-        "ot2_cherrypick_mcp.server"
+        "ot2-mcp-server"
       ],
       "env": {
         "LABWARE_PATH": "{labware_path}",
         "OT2_PROJECT_DIR": "{project_directory}"
-      }
+      },
+      "cwd": "{repository_root}"
     }
   }
 }

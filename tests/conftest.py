@@ -54,19 +54,16 @@ def build_mcp_config(project_root: Path) -> Callable[[Path], Dict[str, Any]]:
         return {
             "mcpServers": {
                 "ot2-cherrypick": {
-                    "command": "pixi",
+                    "command": "uv",
                     "args": [
                         "run",
-                        "--manifest-path",
-                        str(project_root / "pyproject.toml"),
-                        "python",
-                        "-m",
-                        "ot2_cherrypick_mcp.server",
+                        "ot2-mcp-server",
                     ],
                     "env": {
                         "LABWARE_PATH": str(project_root),
                         "OT2_PROJECT_DIR": str(project_dir),
                     },
+                    "cwd": str(project_root),
                 }
             }
         }

@@ -824,11 +824,11 @@ result = full_workflow(csv_path="CSVs/test.csv")
 
 **Execution:**
 ```bash
-# Via pixi task (recommended)
-pixi run ot2-mcp-server
+# Via console script entry point (recommended)
+uv run ot2-mcp-server
 
-# Direct Python execution
-pixi run python -m ot2_cherrypick_mcp.server
+# Direct Python module execution
+uv run -m ot2_cherrypick_mcp.server
 ```
 
 **Server Configuration:**

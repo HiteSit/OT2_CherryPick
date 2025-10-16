@@ -126,11 +126,11 @@ fi
 echo "=== Using $MACHINE_CONFIG configuration ==="
 
 echo "=== Step 1: Updating protocol with helper ==="
-pixi run python helper_cherry_pick.py -l labware_dict.toml -s settings.toml -c "$CSV_FILE" -p CherryPick_OT2.py
+uv run python helper_cherry_pick.py -l labware_dict.toml -s settings.toml -c "$CSV_FILE" -p CherryPick_OT2.py
 
 echo ""
 echo "=== Step 2: Running protocol simulation ==="
-pixi run opentrons_simulate --custom-labware $LABWARE_PATH CherryPick_OT2.py
+opentrons_simulate --custom-labware $LABWARE_PATH CherryPick_OT2.py
 
 # Check if simulation succeeded and copy to clipboard if it did
 if [ $? -eq 0 ]; then
