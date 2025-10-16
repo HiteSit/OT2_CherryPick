@@ -17,8 +17,8 @@ async def main():
           }
         }
       }
-    }
-    )
+    })
+
     # Create LLM
     llm = ChatMistralAI(model="mistral-medium-2508")
     # Create agent with tools
