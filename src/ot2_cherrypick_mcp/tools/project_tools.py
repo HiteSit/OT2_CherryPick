@@ -110,27 +110,16 @@ def initialize_project() -> Dict[str, object]:
 def register_project_tools(mcp: FastMCP) -> None:
     """Register project management tools with the MCP server."""
 
-    @mcp.tool()
+    @mcp.tool(
+        name="initialize_project",
+        description=(
+            "Create the OT-2 project structure by copying template TOML files, "
+            "the protocol stub, and the CSV/log directories. Reads "
+            "OT2_PROJECT_DIR from the environment and should be called before "
+            "other tools when the workspace is missing."
+        ),
+    )
     def initialize_project_tool() -> str:
-        """
-        Initialize a new OT2 project directory with template configuration files.
-
-        Reads the project path from the OT2_PROJECT_DIR environment variable
-        (configured in your MCP client settings) and creates:
-        - settings.toml - Protocol execution parameters
-        - labware_dict.toml - Hardware definitions
-        - CherryPick_OT2.py - Protocol template for downstream generation
-        - CSVs/ - Directory with example transfer CSV files
-        - logs/ - Directory for simulation logs
-
-        This tool must be called before using any other OT2 cherry-pick tools
-        if the project directory doesn't exist yet.
-
-        Returns:
-            Success message with details of created files and directories.
-
-        Raises:
-            ValueError: If OT2_PROJECT_DIR environment variable is not set.
-        """
+        """Initialize the OT-2 project directory and return a status message."""
         result = initialize_project()
         return result["message"]
