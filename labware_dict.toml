@@ -89,6 +89,9 @@ category = "plate"
 labware_id = "384_pp_standard_100ul"
 well_count = 384
 well_volume = 100
+offset_x = 0
+offset_y = 0.7
+offset_z = 0
 
 [[labware]]
 category = "plate"
