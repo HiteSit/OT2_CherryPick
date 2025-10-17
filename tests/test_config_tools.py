@@ -71,6 +71,23 @@ def test_update_settings_invalid_path_errors(tmp_path: Path) -> None:
         )
 
 
+def test_update_settings_position_rack_coerces_to_string(tmp_path: Path) -> None:
+    """Working plate position_rack values are always stored as strings."""
+
+    settings_copy = _copy_settings(tmp_path)
+
+    result = update_settings_value(
+        path="settings.working_plate[0].position_rack",
+        value="4",
+        settings_path=str(settings_copy),
+    )
+
+    assert result["new_value"] == "4"
+
+    text = settings_copy.read_text(encoding="utf-8")
+    assert 'position_rack = "4"' in text
+
+
 def test_list_settings_values_returns_flattened_entries(tmp_path: Path) -> None:
     """Listing settings returns both nested data and flattened paths."""
 

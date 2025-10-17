@@ -125,6 +125,7 @@ Modifies specific values in settings.toml using dot-notation paths while preserv
 - `settings.general.*` - Core behavior (tip_reuse, mode, starting_tip_well, head_speed)
 - `settings.liquid_handling.*` - Physical parameters (pre-aspirate, wicking, delays, push-out)
 - `settings.working_plate[N].*` - Deck layout entries
+- `settings.working_plate[N].position_rack` inputs are coerced to strings to match the template format
 
 **Prompt Location:** Inline in function decorator
 

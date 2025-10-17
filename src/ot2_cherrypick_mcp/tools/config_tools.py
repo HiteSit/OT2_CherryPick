@@ -40,6 +40,12 @@ def _parse_value(raw_value: str) -> tomlkit.items.Item:
     return document["value"]
 
 
+def _is_working_plate_position(path: str) -> bool:
+    """Return True if the dotted path targets a working_plate position slot."""
+
+    return path.startswith("settings.working_plate[") and path.endswith(".position_rack")
+
+
 def _normalize_for_output(value: object) -> object:
     """Convert TOML values to JSON-serializable representations."""
 
@@ -108,7 +114,13 @@ def update_settings_value(
     """Update a value within settings.toml using dotted-path access."""
 
     handler = TomlHandler(settings_path)
-    parsed_value = _parse_value(value)
+    if _is_working_plate_position(path):
+        sanitized = value.strip()
+        if len(sanitized) >= 2 and sanitized[0] == sanitized[-1] and sanitized[0] in {'"', "'"}:
+            sanitized = sanitized[1:-1]
+        parsed_value = tomlkit.string(sanitized)
+    else:
+        parsed_value = _parse_value(value)
     old_value, new_value = handler.set_value(path, parsed_value)
     return {
         "settings_file": str(handler.path),
