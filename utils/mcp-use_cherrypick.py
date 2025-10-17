@@ -32,7 +32,7 @@ async def main():
                     "ot2-mcp-server",
                 ],
                 "env": {
-                    "LABWARE_PATH": str(project_root),
+                    "LABWARE_PATH": "/mnt/c/Users/ricca/AppData/Roaming/Opentrons/labware",
                     "OT2_PROJECT_DIR": str(project_dir),
                 },
             }
@@ -45,9 +45,17 @@ async def main():
     # Create agent with tools - use same max_steps as tests
     agent = MCPAgent(llm=llm, client=client, max_steps=20)
 
-    # Run the query - first initialize the project, then configure settings, then generate protocol
+    # Run comprehensive workflow: initialize → configure → generate → validate
     result = await agent.run(
-        "List all Tools"
+        """Execute this complete workflow step by step:
+        
+        1. Initialize the project to create all necessary template files
+        2. Update the tip reuse setting to 'never' in settings.toml
+        3. Check what CSV files are available in the CSVs directory
+        4. Generate a protocol from example_basic.csv
+        5. Simulate the generated protocol to validate it works correctly
+        
+        Report each step's outcome clearly."""
     )
 
     print("\n" + "="*80)

@@ -47,6 +47,8 @@ def simulate_protocol(
         protocol_path: Path to the protocol file to simulate.
         labware_path: Optional path to a custom labware directory. If ``None``, the
             function will look for the ``LABWARE_PATH`` environment variable.
+            Must be a directory containing Opentrons JSON labware definitions, NOT a TOML file.
+            If invalid or not set, simulation runs without custom labware.
         extra_env: Optional mapping of additional environment variables for the
             subprocess invocation.
         timeout: Timeout in seconds for simulation execution.
@@ -64,24 +66,42 @@ def simulate_protocol(
     if not protocol_file.exists():
         raise ConfigurationError(f"Protocol file not found at {protocol_file}")
 
-    labware_dir: Path | None
+    labware_dir: Path | None = None
     if labware_path is None:
         raw_labware = os.getenv("LABWARE_PATH")
-        labware_dir = resolve_project_path(raw_labware) if raw_labware else None
+        if raw_labware:
+            try:
+                candidate = resolve_project_path(raw_labware)
+                # Validate it's a directory, not a file
+                if candidate.exists() and candidate.is_dir():
+                    labware_dir = candidate
+            except Exception:
+                # If resolution fails, skip custom labware
+                pass
     else:
-        labware_dir = resolve_project_path(labware_path)
-
-    if labware_dir is not None and not labware_dir.exists():
-        raise ConfigurationError(f"Labware directory not found at {labware_dir}")
+        try:
+            candidate = resolve_project_path(labware_path)
+            if candidate.exists() and candidate.is_dir():
+                labware_dir = candidate
+            elif candidate.exists() and not candidate.is_dir():
+                raise ConfigurationError(
+                    f"labware_path must be a directory containing JSON labware definitions, "
+                    f"not a file: {candidate}"
+                )
+        except ConfigurationError:
+            raise  # Re-raise explicit configuration errors
+        except Exception:
+            # For other errors, skip custom labware
+            pass
 
     command: list[str] = ["opentrons_simulate"]
     if labware_dir is not None:
         command.extend(["--custom-labware", str(labware_dir)])
     command.append(str(protocol_file))
 
-    env: MutableMapping[str, str] | None = None
+    # Always inherit current environment to ensure LABWARE_PATH and other vars are available
+    env = dict(os.environ)
     if extra_env is not None:
-        env = dict(os.environ)
         env.update(extra_env)
 
     runner_fn = runner or (lambda cmd: _default_runner(cmd, env=env, timeout=timeout))
