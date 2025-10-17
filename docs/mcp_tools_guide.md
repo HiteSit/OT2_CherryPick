@@ -115,11 +115,11 @@ Modifies specific values in settings.toml using dot-notation paths while preserv
 - `settings_path` (str, default: "settings.toml") - Settings file path
 
 **Returns:** Dict with:
-- `success` (bool) - Update status
+- `settings_file` (str) - File that was modified
 - `path` (str) - Path that was updated
 - `old_value` (any) - Previous value
 - `new_value` (any) - New value
-- `message` (str) - Status message
+- `backup_file` (str) - Path to the auto-generated backup copy
 
 **Editable Sections:**
 - `settings.general.*` - Core behavior (tip_reuse, mode, starting_tip_well, head_speed)
@@ -163,6 +163,27 @@ Applies a complete liquid handling preset configuration from settings.toml prese
 ```python
 apply_liquid_preset(
     preset_name="viscous"
+)
+```
+
+#### `list_settings`
+
+Lists every configuration value in `settings.toml`, returning both a nested view and a flattened list of dotted-path entries.
+
+**Parameters:**
+- `settings_path` (str, default: "settings.toml") - Settings file path
+
+**Returns:** Dict with:
+- `settings_file` (str) - File that was read
+- `entries` (list) - Flattened entries (`{"path": str, "value": any}`)
+- `data` (dict) - Nested JSON-serializable configuration tree
+- `total_entries` (int) - Number of flattened entries
+- `message` (str) - Summary message
+
+**Example Use:**
+```python
+list_settings(
+    settings_path="settings.toml"
 )
 ```
 

@@ -6,7 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from ot2_cherrypick_mcp.tools.config_tools import apply_liquid_preset, update_settings_value
+from ot2_cherrypick_mcp.tools.config_tools import (
+    apply_liquid_preset,
+    list_settings_values,
+    update_settings_value,
+)
 from ot2_cherrypick_mcp.utils.errors import ConfigurationError
 
 
@@ -65,6 +69,23 @@ def test_update_settings_invalid_path_errors(tmp_path: Path) -> None:
             value="false",
             settings_path=str(settings_copy),
         )
+
+
+def test_list_settings_values_returns_flattened_entries(tmp_path: Path) -> None:
+    """Listing settings returns both nested data and flattened paths."""
+
+    settings_copy = _copy_settings(tmp_path)
+    result = list_settings_values(settings_path=str(settings_copy))
+
+    assert result["settings_file"] == str(settings_copy)
+    assert result["total_entries"] > 0
+
+    entries = {entry["path"]: entry["value"] for entry in result["entries"]}
+    assert entries["settings.general.tip_reuse"] == "always"
+    assert entries["settings.liquid_handling.push_out.enabled"] is True
+
+    data = result["data"]
+    assert data["settings"]["general"]["head_speed"]["speed"] == 400
 
 
 def test_apply_liquid_preset_updates_multiple_sections(tmp_path: Path) -> None:

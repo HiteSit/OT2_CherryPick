@@ -10,7 +10,7 @@ The OpenTron cherry-picking workflow can now be orchestrated through the Model C
 - `simulate_protocol` – execute `opentrons_simulate` and capture logs
 - `deploy_to_opentrons` – copy the protocol to a target path and/or clipboard
 - `full_workflow` – chain validation → generation → optional simulation/deployment
-- Configuration helpers: `update_settings`, `apply_liquid_preset`
+- Configuration helpers: `update_settings`, `apply_liquid_preset`, `list_settings`
 - Labware utilities: `add_labware_definition`
 - CSV utilities: `generate_csv_template`, `upload_csv_content`
 
@@ -110,7 +110,7 @@ Highlights:
 
 ## Workflow Summary
 
-1. Inspect current configuration via status/resources.
+1. Inspect current configuration via status/resources or enumerate everything with `list_settings`.
 2. Adjust settings or apply presets through `update_settings` / `apply_liquid_preset`.
 3. Generate or review CSV transfer maps (`generate_csv_template`, `files://csvs`).
 4. Run `full_workflow` with desired options (simulation/deployment). The tool automatically chains validation, generation, simulation, and protocol deployment.

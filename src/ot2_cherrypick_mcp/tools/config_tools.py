@@ -2,18 +2,31 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from datetime import date, datetime, time
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, List
 
 import tomlkit
 from fastmcp import FastMCP
 
+try:  # Python 3.11+
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python <3.11 fallback
+    import tomli as tomllib  # type: ignore[no-redef]
+
 from ..utils.errors import ConfigurationError
+from ..utils.paths import resolve_project_path
 from ..utils.toml import TomlHandler
 
 DEFAULT_SETTINGS_PATH = Path("settings.toml")
 
-__all__ = ["register_config_tools", "update_settings_value", "apply_liquid_preset"]
+__all__ = [
+    "register_config_tools",
+    "update_settings_value",
+    "apply_liquid_preset",
+    "list_settings_values",
+]
 
 
 def _parse_value(raw_value: str) -> tomlkit.items.Item:
@@ -25,6 +38,65 @@ def _parse_value(raw_value: str) -> tomlkit.items.Item:
     except tomlkit.exceptions.TOMLKitError:
         document = tomlkit.parse(f'value = "{raw_value}"\n')
     return document["value"]
+
+
+def _normalize_for_output(value: object) -> object:
+    """Convert TOML values to JSON-serializable representations."""
+
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    if isinstance(value, (datetime, date, time)):
+        return value.isoformat()
+    if isinstance(value, Mapping):
+        return {key: _normalize_for_output(val) for key, val in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_normalize_for_output(item) for item in value]
+    return str(value)
+
+
+def list_settings_values(
+    *,
+    settings_path: str | Path = DEFAULT_SETTINGS_PATH,
+) -> Dict[str, object]:
+    """Return the complete settings structure with flattened entries."""
+
+    resolved_path = resolve_project_path(settings_path)
+    if not resolved_path.exists():
+        raise ConfigurationError(f"Settings file not found at {resolved_path}")
+
+    with resolved_path.open("rb") as handle:
+        data: Dict[str, Any] = tomllib.load(handle)
+
+    normalized = _normalize_for_output(data)
+
+    entries: List[Dict[str, object]] = []
+
+    def _walk(value: object, path: str) -> None:
+        if isinstance(value, Mapping):
+            for key, child in value.items():
+                child_path = f"{path}.{key}" if path else key
+                _walk(child, child_path)
+            return
+
+        if isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
+            for index, child in enumerate(value):
+                child_path = f"{path}[{index}]" if path else f"[{index}]"
+                _walk(child, child_path)
+            return
+
+        entries.append({"path": path, "value": _normalize_for_output(value)})
+
+    _walk(normalized, "")
+
+    return {
+        "settings_file": str(resolved_path),
+        "entries": entries,
+        "data": normalized,
+        "total_entries": len(entries),
+        "message": f"Found {len(entries)} settings entries in {resolved_path.name}.",
+    }
 
 
 def update_settings_value(
@@ -111,3 +183,12 @@ def register_config_tools(mcp: FastMCP) -> None:
         settings_path: str = str(DEFAULT_SETTINGS_PATH),
     ) -> Dict[str, object]:
         return apply_liquid_preset(preset_name=preset_name, settings_path=settings_path)
+
+    @mcp.tool(
+        name="list_settings",
+        description="List every setting and value from settings.toml using dotted paths.",
+    )
+    def list_settings_tool(
+        settings_path: str = str(DEFAULT_SETTINGS_PATH),
+    ) -> Dict[str, object]:
+        return list_settings_values(settings_path=settings_path)

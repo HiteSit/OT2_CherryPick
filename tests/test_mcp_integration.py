@@ -135,6 +135,25 @@ def test_agent_updates_settings(
     _print_project_snapshot("updates_settings", project_dir)
 
 
+def test_agent_list_settings(
+    tmp_path: Path,
+    project_setup: ProjectSetup,
+    agent_factory: Callable[..., AgentRunner],
+) -> None:
+    """Agent can enumerate all configuration settings via the new helper."""
+
+    project_dir: Path = project_setup.create_standard_project(tmp_path)
+    runner: AgentRunner = agent_factory(project_dir, max_steps=6)
+
+    query = "Use the list_settings tool to show me every configuration value."
+    result = runner.run(query)
+    Assertions.assert_no_errors(result)
+    lowered = result.lower()
+    assert "tip reuse" in lowered
+    assert "push out" in lowered
+    assert "settings.toml" in lowered
+
+
 @pytest.mark.parametrize("scenario_name,params", CSV_TEMPLATE_SCENARIOS)
 def test_agent_generate_csv_template(
     project_dir: Path,
