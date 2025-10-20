@@ -3,20 +3,21 @@
 # Usage: ./copy_essentials.sh [target_directory]
 
 # Default target directory (placeholder - change as needed)
-DEFAULT_TARGET="/mnt/domling/Instrument_OT-2/protocols/cherry_pick"
+DEFAULT_TARGET="/mnt/domling/Instrument_OT-2/protocols/cherrypick"
 
 # Use provided target or default
 TARGET_DIR="${1:-$DEFAULT_TARGET}"
 
 # Files and directories to copy
 ITEMS_TO_COPY=(
-    "CSVs"
-    "scripts_library"
-    "CherryPick_OT2.py"
-    "helper_cherry_pick.py"
-    "settings.toml"
-    "simulate_protocol.sh"
-    "labware_dict.toml"
+    "../CSVs"
+    "../CherryPick_OT2.py"
+    "../helper_cherry_pick.py"
+    "../settings.toml"
+    "../simulate_protocol.sh"
+    "../labware_dict.toml"
+    "../pyproject.toml"
+    "../src/ot2_cherrypick_mcp/core/protocol_generator.py"
 )
 
 echo "=== OpenTrons Cherry-Pick File Copy Tool ==="
