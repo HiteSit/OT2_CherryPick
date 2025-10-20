@@ -172,9 +172,48 @@ def register_config_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="update_settings",
-        description=(
-            "Update a dotted-path value in settings.toml while preserving formatting and backups."
-        ),
+        description="""Update settings.toml values from natural language or exact dotted paths.
+
+**WORKFLOW - When user gives natural language request:**
+1. Consult the common mappings below OR read config://settings resource
+2. Identify the exact dotted path and TOML-formatted value
+3. Call this tool with precise path and value
+
+**COMMON NATURAL LANGUAGE MAPPINGS:**
+
+LIQUID HANDLING:
+- "enable/disable pre-aspirate contact" → path: "settings.liquid_handling.pre_aspirate_contact.enabled", value: "true"/"false"
+- "set pre-aspirate volume to X" → path: "settings.liquid_handling.pre_aspirate_contact.aspirate_volume", value: X (number)
+- "enable/disable tip wick[ing]" → path: "settings.liquid_handling.post_aspirate_wick.enabled", value: "true"/"false"
+- "set post-aspirate delay to X" → path: "settings.liquid_handling.delays.post_aspirate", value: X (number)
+- "enable/disable push[-]out" → path: "settings.liquid_handling.push_out.enabled", value: "true"/"false"
+- "set push[-]out volume to X" → path: "settings.liquid_handling.push_out.volume_ul", value: X (number)
+
+GENERAL SETTINGS:
+- "set tip reuse to always/never/per_source" → path: "settings.general.tip_reuse", value: "always"/"never"/"per_source"
+- "set mode to single_X1/multi_X1/multi" → path: "settings.general.mode", value: "single_X1"/"multi_X1"/"multi"
+- "set [head] speed to X" → path: "settings.general.head_speed.speed", value: X (number, mm/min)
+- "set starting tip [well] to X" → path: "settings.general.starting_tip_well", value: "H1" (well name)
+
+DECK POSITIONS (working_plate array items use [index] notation):
+- "set source labware position to X" → path: "settings.working_plate[0].position_rack", value: "X" (slot number as string)
+- "set destination position to X" → path: "settings.working_plate[1].position_rack", value: "X"
+- (Check list_settings tool output to see exact indices)
+
+**IF UNSURE:** Use list_settings tool to see all available paths with current values, then match user intent.
+
+**Value formatting rules:**
+- Booleans: "true" or "false" (lowercase, no quotes in value string)
+- Strings: just the value (quotes added automatically)
+- Numbers: bare number like 400 or 2.0
+- For position_rack: always use quoted string like "4" or "5"
+
+**IMPORTANT:** If user request doesn't match common mappings:
+1. Read config://settings resource to see full structure
+2. Use list_settings tool to get all dotted paths
+3. Match user's intent to visible structure
+4. Then call update_settings with exact path
+""",
     )
     def update_settings_tool(  # pragma: no cover - exercised via update_settings_value tests
         path: str,
