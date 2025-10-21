@@ -1,6 +1,6 @@
 def get_values(*names):
     import json
-    _all_values = json.loads("""{"labware_dict":{"pipettes":[{"name":"Pipette_8","opentrons_id":"p300_multi_gen2","channels":8,"volume_range":[30,300],"preferred_mount":"right","tip_connections":["tip_rack_yellow_100ul"]},{"name":"Pipette_1","opentrons_id":"p1000_single_gen2","channels":1,"volume_range":[100,1000],"preferred_mount":"left","tip_connections":["tip_rack_yellow_100ul"]}],"labware":[{"category":"tip_rack","labware_id":"tip_rack_yellow_100ul","well_count":96,"well_volume":100},{"category":"tip_rack","labware_id":"opentrons_96_tiprack_300ul","well_count":96,"well_volume":300,"offset_x":0.3,"offset_y":0.1,"offset_z":-0.4},{"category":"reservoir","labware_id":"reservoir_horizontal","well_count":12,"well_volume":15000},{"category":"plate","labware_id":"384_pp_standard_100ul","well_count":384,"well_volume":100,"offset_x":0,"offset_y":0.7,"offset_z":0},{"category":"plate","labware_id":"384_pp_high_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ppv_55ul","well_count":384,"well_volume":55,"offset_x":-0.5,"offset_y":0.8,"offset_z":-0.3},{"category":"plate","labware_id":"384_ldv_12ul","well_count":384,"well_volume":12,"offset_x":-0.2,"offset_y":0.6,"offset_z":0.4},{"category":"tube_rack","labware_id":"tube_rack_96_2000ul","well_count":96,"well_volume":2000},{"category":"tube_rack","labware_id":"tube_rack_96_1500ul","well_count":96,"well_volume":1500,"offset_x":-0.3,"offset_y":0.9,"offset_z":0.0}]},"settings":{"settings":{"general":{"tip_reuse":"always","mode":"multi","starting_tip_well":"H1","head_speed":{"speed":400}},"liquid_handling":{"pre_aspirate_contact":{"enabled":false,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":false,"radius":1,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":true,"volume_ul":5},"presets":{"standard":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false}},"viscous":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":2.0},"push_out":{"enabled":true,"volume_ul":5}},"slippery":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":5},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false}},"minimal":{"pre_aspirate_contact":{"enabled":false},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false}},"aggressive":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":30,"aspirate_volume":10},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":15},"delays":{"post_aspirate":3.0},"push_out":{"enabled":true,"volume_ul":5}}}},"working_plate":[{"type":"source","labware_id":"tube_rack_96_1500ul","position_rack":"4"},{"type":"destination","labware_id":"384_ppv_55ul","position_rack":"2"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","position_rack":"5"}]}},"csv_data":"Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top\\ntube_rack_96_1500ul_4,A1,100,384_ppv_55ul_2,B1,2,-5\\ntube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,B2,2,-5\\ntube_rack_96_1500ul_4,A3,75,384_ppv_55ul_2,B3,2,-5\\ntube_rack_96_1500ul_4,A4,25,384_ppv_55ul_2,B4,2,-5"}""")
+    _all_values = json.loads("""{"labware_dict":{"pipettes":[{"name":"Pipette_8","opentrons_id":"p300_multi_gen2","channels":8,"volume_range":[30,300],"preferred_mount":"right","tip_connections":["opentrons_96_tiprack_300ul"]},{"name":"Pipette_1","opentrons_id":"p1000_single_gen2","channels":1,"volume_range":[100,1000],"preferred_mount":"left","tip_connections":["tip_rack_geb_1000ul"]}],"labware":[{"category":"tip_rack","labware_id":"tip_rack_yellow_100ul","well_count":96,"well_volume":100},{"category":"tip_rack","labware_id":"opentrons_96_tiprack_300ul","well_count":96,"well_volume":300,"offset_x":0.3,"offset_y":0.1,"offset_z":-0.4},{"category":"tip_rack","labware_id":"tip_rack_geb_1000ul","well_count":96,"well_volume":1000,"offset_x":0.1,"offset_y":0.4,"offset_z":-0.4},{"category":"reservoir","labware_id":"reservoir_horizontal","well_count":12,"well_volume":15000,"offset_x":0.0,"offset_y":0.0,"offset_z":0.0},{"category":"plate","labware_id":"384_pp_standard_100ul","well_count":384,"well_volume":100,"offset_x":0,"offset_y":0.7,"offset_z":0},{"category":"plate","labware_id":"384_pp_high_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ppv_55ul","well_count":384,"well_volume":55,"offset_x":-0.5,"offset_y":0.8,"offset_z":-0.3},{"category":"plate","labware_id":"384_ldv_12ul","well_count":384,"well_volume":12,"offset_x":-0.2,"offset_y":0.6,"offset_z":0.4},{"category":"tube_rack","labware_id":"tube_rack_96_2000ul","well_count":96,"well_volume":2000},{"category":"tube_rack","labware_id":"tube_rack_96_1500ul","well_count":96,"well_volume":1500,"offset_x":-0.3,"offset_y":0.9,"offset_z":0.0},{"category":"tube_rack","labware_id":"tube_rack_24_4000ul","well_count":24,"well_volume":4000},{"category":"tube_rack","labware_id":"tube_rack_48_1500ul","well_count":48,"well_volume":1500,"offset_x":1.6,"offset_y":1.3,"offset_z":0.0}]},"settings":{"settings":{"general":{"tip_reuse":"always","mode":"single_X1","starting_tip_well":"H1","head_speed":{"speed":400}},"liquid_handling":{"pre_aspirate_contact":{"enabled":false,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":false,"radius":1,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":true,"volume_ul":5},"presets":{"standard":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false}},"viscous":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":2.0},"push_out":{"enabled":true,"volume_ul":5}},"slippery":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":5},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false}},"minimal":{"pre_aspirate_contact":{"enabled":false},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false}},"aggressive":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":30,"aspirate_volume":10},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":15},"delays":{"post_aspirate":3.0},"push_out":{"enabled":true,"volume_ul":5}}}},"working_plate":[{"type":"module","module_type":"heaterShaker","position_rack":"10","adapter_id":"opentrons_universal_flat_adapter","labware_id":"","target_temperature":95,"target_shake_speed":2000,"persist_after_protocol":true},{"type":"reservoir","labware_id":"reservoir_horizontal","position_rack":"2"},{"type":"source","labware_id":"tube_rack_48_1500ul","position_rack":"3"},{"type":"destination","labware_id":"tube_rack_48_1500ul","position_rack":"5"},{"type":"destination","labware_id":"tube_rack_48_1500ul","position_rack":"6"},{"type":"tip","labware_id":"tip_rack_geb_1000ul","connection":"Pipette_1","position_rack":"1"}]}},"csv_data":"Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Flow Aspirate,Flow Dispense,Air Gap,Air Gap Rate,Tip Action\\nreservoir_horizontal_2,A1,1200,tube_rack_48_1500ul_3,A1,1,1.0,0,1.0,keep\\nreservoir_horizontal_2,A1,1200,tube_rack_48_1500ul_3,A2,1,1.0,0,1.0,new\\nreservoir_horizontal_2,A1,1200,tube_rack_48_1500ul_3,A3,1,1.0,0,1.0,new"}""")
     return [_all_values[n] for n in names]
 
 
@@ -387,7 +387,6 @@ def initialize_heater_shaker_module(protocol, plate_config):
     # Load adapter and labware
     protocol.comment(f"Loading adapter '{adapter_id}' and labware '{labware_id}' on heater-shaker")
     hs_adapter = hs_mod.load_adapter(adapter_id)
-    hs_plate = hs_adapter.load_labware(labware_id)
     
     # Close latch (safe even if already closed)
     protocol.comment("Closing heater-shaker latch")
@@ -457,6 +456,59 @@ def deactivate_modules(modules_list, protocol):
             if target_temp > 0:
                 module.deactivate_heater()
                 protocol.comment(f"  - Heater deactivated (was targeting {target_temp}°C, will cool passively)")
+
+def split_volume_into_chunks(volume, min_vol, max_vol):
+    """
+    Smart volume splitting algorithm with intelligent redistribution
+
+    Splits large volumes into multiple chunks that respect pipette min/max limits.
+    Uses intelligent redistribution to avoid chunks below minimum volume.
+
+    Args:
+        volume: Requested transfer volume (µL)
+        min_vol: Pipette minimum volume (µL)
+        max_vol: Pipette maximum volume (µL)
+
+    Returns:
+        list: Sub-volumes to transfer sequentially
+
+    Examples:
+        >>> split_volume_into_chunks(500, 100, 1000)
+        [500]  # No split needed
+
+        >>> split_volume_into_chunks(1500, 100, 1000)
+        [1000, 500]  # Simple split, remainder valid
+
+        >>> split_volume_into_chunks(1050, 100, 1000)
+        [525.0, 525.0]  # Smart redistribution (not [1000, 50])
+
+        >>> split_volume_into_chunks(3000, 100, 1000)
+        [1000, 1000, 1000]  # Even division
+    """
+    import math
+
+    # No split needed if within range
+    if volume <= max_vol:
+        return [volume]
+
+    # Calculate how many chunks we need
+    num_chunks = math.ceil(volume / max_vol)
+
+    # Try naive split: use max_vol chunks + remainder
+    full_chunks = int(volume // max_vol)
+    remainder = volume % max_vol
+
+    # Check if remainder is valid (above minimum or exactly zero)
+    if remainder == 0:
+        # Perfect division into max_vol chunks
+        return [max_vol] * full_chunks
+    elif remainder >= min_vol:
+        # Remainder is valid, use it
+        return [max_vol] * full_chunks + [remainder]
+    else:
+        # Remainder too small - redistribute evenly to keep all chunks above minimum
+        chunk_size = volume / num_chunks
+        return [chunk_size] * num_chunks
 
 def run(protocol: protocol_api.ProtocolContext):
     """Main protocol execution"""
@@ -646,7 +698,7 @@ def run(protocol: protocol_api.ProtocolContext):
         source_well = transfer['Source Well']
         dest_labware_name = transfer['Dest Labware']
         dest_well = transfer['Dest Well']
-        volume = float(transfer['Volume (ul)'])
+        requested_volume = float(transfer['Volume (ul)'])
         mix_volume = float(transfer.get('Mix Volume', 0)) if transfer.get('Mix Volume') else 0
 
         # Rate multipliers (optional in CSV, default 1.0 = normal speed)
@@ -661,13 +713,18 @@ def run(protocol: protocol_api.ProtocolContext):
         tip_action_raw = transfer.get('Tip Action', 'auto')
         tip_action = determine_tip_action(transfer, tip_reuse, source_labware_name, last_source_labware, pipette)
 
-        # Log essential transfer info only
-        protocol.comment(f"Transfer {i+1}/{len(transfers)}: {volume}µL {source_labware_name}[{source_well}] → {dest_labware_name}[{dest_well}]")
-
-        # Check volume is within pipette range
+        # Get pipette volume range for splitting algorithm
         min_vol, max_vol = pipette_config['volume_range']
-        if volume < min_vol or volume > max_vol:
-            protocol.comment(f"WARNING: Volume {volume}µL outside range [{min_vol}-{max_vol}]µL")
+
+        # Calculate sub-volumes using smart splitting algorithm
+        sub_volumes = split_volume_into_chunks(requested_volume, min_vol, max_vol)
+
+        # Log essential transfer info
+        protocol.comment(f"Transfer {i+1}/{len(transfers)}: {requested_volume}µL {source_labware_name}[{source_well}] → {dest_labware_name}[{dest_well}]")
+
+        # Log volume splitting if multiple chunks needed
+        if len(sub_volumes) > 1:
+            protocol.comment(f"Volume {requested_volume}µL exceeds capacity, splitting into {len(sub_volumes)} chunks: {sub_volumes}")
 
         # Get labware objects
         source_labware = loaded_labware[source_labware_name]
@@ -717,49 +774,61 @@ def run(protocol: protocol_api.ProtocolContext):
         if tip_reuse == 'per_source':
             last_source_labware = source_labware_name
 
-        # Perform liquid contact if tip hasn't contacted yet and contact is enabled
-        if not tip_contacted and liquid_contact_config.get('enabled', False):
-            perform_liquid_contact(pipette, primary_source_well, transfer, protocol, liquid_contact_config)
-            tip_contacted = True
+        # Execute transfer in chunks (may be single chunk if volume within range)
+        for chunk_idx, chunk_vol in enumerate(sub_volumes):
+            is_first_chunk = (chunk_idx == 0)
+            is_last_chunk = (chunk_idx == len(sub_volumes) - 1)
 
-        # Perform transfer
-        try:
-            # Aspirate
-            pipette.aspirate(volume, source_location, rate=rate_aspirate)
+            # Log chunk progress if splitting occurred
+            if len(sub_volumes) > 1:
+                protocol.comment(f"  Chunk {chunk_idx+1}/{len(sub_volumes)}: {chunk_vol}µL")
 
-            # Post-aspirate actions (wick + delay)
-            perform_post_aspirate_actions(
-                pipette, primary_source_well, protocol,
-                wick_config, delay_config.get('post_aspirate', 0)
-            )
+            # Perform liquid contact only on first chunk (tip conditioning)
+            if is_first_chunk and not tip_contacted and liquid_contact_config.get('enabled', False):
+                perform_liquid_contact(pipette, primary_source_well, transfer, protocol, liquid_contact_config)
+                tip_contacted = True
 
-            # Air gap if specified
-            if air_gap_volume > 0:
-                pipette.air_gap(volume=air_gap_volume, rate=air_gap_rate)
+            # Perform transfer
+            try:
+                # Aspirate
+                pipette.aspirate(chunk_vol, source_location, rate=rate_aspirate)
 
-            # Dispense with options
-            perform_dispense_with_options(
-                pipette, volume, dest_location, rate_dispense,
-                protocol, push_out_config, mix_volume, air_gap_volume
-            )
+                # Post-aspirate actions (wick + delay) - applied to every chunk per user preference
+                perform_post_aspirate_actions(
+                    pipette, primary_source_well, protocol,
+                    wick_config, delay_config.get('post_aspirate', 0)
+                )
 
-            # Mix if specified
-            if mix_volume > 0:
-                if mode == "multi":
-                    # Use first destination well for mixing in multi mode
-                    mix_location, mix_pos_desc = determine_well_position(transfer, dest_wells[0], 'mix')
-                else:
-                    mix_location, mix_pos_desc = determine_well_position(transfer, dest_labware[dest_well], 'mix')
-                pipette.mix(3, mix_volume, mix_location)
+                # Air gap only on last chunk (prevents dripping during final transport)
+                chunk_air_gap = air_gap_volume if is_last_chunk else 0
+                if chunk_air_gap > 0:
+                    pipette.air_gap(volume=chunk_air_gap, rate=air_gap_rate)
 
-            # Blow out at destination
-            pipette.blow_out(dest_location)
+                # Dispense with options (pass actual air gap for this chunk)
+                perform_dispense_with_options(
+                    pipette, chunk_vol, dest_location, rate_dispense,
+                    protocol, push_out_config, mix_volume, chunk_air_gap
+                )
 
-            protocol.comment("Transfer complete")
+                # Mix only after last chunk dispense
+                if is_last_chunk and mix_volume > 0:
+                    if mode == "multi":
+                        # Use first destination well for mixing in multi mode
+                        mix_location, mix_pos_desc = determine_well_position(transfer, dest_wells[0], 'mix')
+                    else:
+                        mix_location, mix_pos_desc = determine_well_position(transfer, dest_labware[dest_well], 'mix')
+                    pipette.mix(3, mix_volume, mix_location)
 
-        except Exception as e:
-            protocol.comment(f"Transfer failed: {e}")
-            raise
+                # Blow out at destination
+                pipette.blow_out(dest_location)
+
+                # Log completion only after last chunk
+                if is_last_chunk:
+                    protocol.comment("Transfer complete")
+
+            except Exception as e:
+                protocol.comment(f"Transfer failed: {e}")
+                raise
 
         # Track the tip action for final cleanup (last transfer determines final behavior)
         last_tip_action = tip_action

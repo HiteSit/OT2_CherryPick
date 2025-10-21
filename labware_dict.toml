@@ -9,7 +9,7 @@ opentrons_id = "p300_multi_gen2"
 channels = 8
 volume_range = [30, 300]
 preferred_mount = "right"
-tip_connections = ["tip_rack_yellow_100ul"]
+tip_connections = ["opentrons_96_tiprack_300ul"]
 
 [[pipettes]]
 name = "Pipette_1"
@@ -17,7 +17,7 @@ opentrons_id = "p1000_single_gen2"
 channels = 1
 volume_range = [100, 1000]
 preferred_mount = "left"
-tip_connections = ["tip_rack_yellow_100ul"]
+tip_connections = ["tip_rack_geb_1000ul"]
 
 # =============================================================================
 # Labware definitions - categorized by type using table arrays
@@ -79,10 +79,22 @@ offset_y = 0.10
 offset_z = -0.40
 
 [[labware]]
+category = "tip_rack"
+labware_id = "tip_rack_geb_1000ul"
+well_count = 96
+well_volume = 1000
+offset_x = 0.1
+offset_y = 0.4
+offset_z = -0.40
+
+[[labware]]
 category = "reservoir"
 labware_id = "reservoir_horizontal"
 well_count = 12
 well_volume = 15000
+offset_x = 0.0
+offset_y = 0.0
+offset_z = 0.0
 
 [[labware]]
 category = "plate"
@@ -130,4 +142,19 @@ well_count = 96
 well_volume = 1500
 offset_x = -0.30
 offset_y = 0.90
+offset_z = 0.0
+
+[[labware]]
+category = "tube_rack"
+labware_id = "tube_rack_24_4000ul"
+well_count = 24
+well_volume = 4000
+
+[[labware]]
+category = "tube_rack"
+labware_id = "tube_rack_48_1500ul"
+well_count = 48
+well_volume = 1500
+offset_x = 1.6
+offset_y = 1.3
 offset_z = 0.0
