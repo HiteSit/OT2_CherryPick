@@ -295,9 +295,13 @@ def validate_csv_labware_match(settings, transfers):
     Raises:
         ValueError: If any labware mismatch is found
     """
-    # Calculate expected labware names from settings.toml
+    # Calculate expected labware names from settings.toml (excluding modules)
     expected_labware = set()
     for plate_config in settings['settings']['working_plate']:
+        # Skip modules - they are background-only and not CSV-accessible
+        if plate_config.get('type') == 'module':
+            continue
+        
         labware_id = plate_config['labware_id']
         slot = plate_config['position_rack']
         expected_name = f"{labware_id}_{slot}"
@@ -330,8 +334,129 @@ def validate_csv_labware_match(settings, transfers):
         error_msg += "FIX: Either:\n"
         error_msg += "1. Update CSV to reference exact labware names from settings.toml, OR\n"
         error_msg += "2. Add missing labware definitions to settings.toml [[settings.working_plate]] sections\n"
+        error_msg += "\nNOTE: Hardware modules (type='module') are background-only and cannot be referenced in CSV.\n"
 
         raise ValueError(error_msg)
+
+def initialize_heater_shaker_module(protocol, plate_config):
+    """
+    Initialize heater-shaker module with background-only operation
+    
+    Args:
+        protocol: ProtocolContext
+        plate_config: Configuration dict from settings.toml [[settings.working_plate]]
+    
+    Returns:
+        dict: Module control object with module reference and config
+        
+    Raises:
+        ValueError: If required fields missing or invalid values
+    """
+    # Validate required fields
+    required_fields = ['module_type', 'position_rack', 'adapter_id', 'labware_id', 
+                      'target_temperature', 'target_shake_speed', 'persist_after_protocol']
+    missing = [f for f in required_fields if f not in plate_config]
+    if missing:
+        raise ValueError(f"Heater-shaker module missing required fields: {missing}")
+    
+    # Validate module type
+    module_type = plate_config['module_type']
+    if module_type != 'heaterShaker':
+        raise ValueError(f"Unsupported module_type: {module_type}. Only 'heaterShaker' supported.")
+    
+    # Extract configuration
+    slot = plate_config['position_rack']
+    adapter_id = plate_config['adapter_id']
+    labware_id = plate_config['labware_id']
+    target_temp = plate_config['target_temperature']
+    target_rpm = plate_config['target_shake_speed']
+    persist = plate_config['persist_after_protocol']
+    
+    # Validate temperature range (0 = disabled, 37-95 = active range)
+    if target_temp < 0 or (0 < target_temp < 37) or target_temp > 95:
+        raise ValueError(f"Invalid target_temperature: {target_temp}. Must be 0 (disabled) or 37-95°C")
+    
+    # Validate shake speed range (0 = disabled, 200-3000 = active range)
+    if target_rpm < 0 or (0 < target_rpm < 200) or target_rpm > 3000:
+        raise ValueError(f"Invalid target_shake_speed: {target_rpm}. Must be 0 (disabled) or 200-3000 RPM")
+    
+    # Load module
+    protocol.comment(f"Loading heater-shaker module in slot {slot}")
+    hs_mod = protocol.load_module('heaterShakerModuleV1', slot)
+    
+    # Load adapter and labware
+    protocol.comment(f"Loading adapter '{adapter_id}' and labware '{labware_id}' on heater-shaker")
+    hs_adapter = hs_mod.load_adapter(adapter_id)
+    hs_plate = hs_adapter.load_labware(labware_id)
+    
+    # Close latch (safe even if already closed)
+    protocol.comment("Closing heater-shaker latch")
+    hs_mod.close_labware_latch()
+    
+    # Initialize shaking if enabled (blocking command - takes ~5-10 seconds)
+    if target_rpm > 0:
+        protocol.comment(f"Starting shake at {target_rpm} RPM (blocking until speed reached)")
+        hs_mod.set_and_wait_for_shake_speed(target_rpm)
+        protocol.comment(f"Shake speed reached: {target_rpm} RPM")
+    else:
+        protocol.comment("Shaking disabled (target_shake_speed = 0)")
+    
+    # Initialize heating if enabled (non-blocking - ramps in background)
+    if target_temp > 0:
+        protocol.comment(f"Starting temperature ramp to {target_temp}°C (non-blocking, parallel operation)")
+        hs_mod.set_target_temperature(target_temp)
+        protocol.comment(f"Temperature ramping in background to {target_temp}°C")
+    else:
+        protocol.comment("Heating disabled (target_temperature = 0)")
+    
+    # Return module control object
+    return {
+        'module': hs_mod,
+        'persist': persist,
+        'slot': slot,
+        'target_temp': target_temp,
+        'target_rpm': target_rpm
+    }
+
+
+def deactivate_modules(modules_list, protocol):
+    """
+    Deactivate modules at protocol end based on persist_after_protocol setting
+    
+    Args:
+        modules_list: List of module control dicts from initialize_heater_shaker_module()
+        protocol: ProtocolContext for logging
+    """
+    if not modules_list:
+        return
+    
+    protocol.comment(f"Managing {len(modules_list)} module(s) at protocol end")
+    
+    for mod_ctrl in modules_list:
+        module = mod_ctrl['module']
+        persist = mod_ctrl['persist']
+        slot = mod_ctrl['slot']
+        target_temp = mod_ctrl['target_temp']
+        target_rpm = mod_ctrl['target_rpm']
+        
+        if persist:
+            protocol.comment(f"Module in slot {slot}: persist_after_protocol=true, keeping active")
+            if target_temp > 0:
+                protocol.comment(f"  - Temperature will continue ramping/maintaining at {target_temp}°C")
+            if target_rpm > 0:
+                protocol.comment(f"  - Shaking will continue at {target_rpm} RPM")
+        else:
+            protocol.comment(f"Module in slot {slot}: persist_after_protocol=false, deactivating immediately")
+            
+            # Deactivate shaker if it was running
+            if target_rpm > 0:
+                module.deactivate_shaker()
+                protocol.comment(f"  - Shaker deactivated (was {target_rpm} RPM)")
+            
+            # Deactivate heater if it was running
+            if target_temp > 0:
+                module.deactivate_heater()
+                protocol.comment(f"  - Heater deactivated (was targeting {target_temp}°C, will cool passively)")
 
 def run(protocol: protocol_api.ProtocolContext):
     """Main protocol execution"""
@@ -391,14 +516,33 @@ def run(protocol: protocol_api.ProtocolContext):
             pipette_name = pipette_item['name']
             available_pipettes[pipette_name] = pipette_item
 
-    # Load labware from settings
+    # Load labware and modules from settings
     loaded_labware = {}
     used_slots = set()
+    modules_to_manage = []  # Track modules for cleanup at protocol end
 
     for plate_config in settings['settings']['working_plate']:
         slot = plate_config['position_rack']
+        plate_type = plate_config.get('type', 'unknown')
+
+        # Check for slot conflicts
+        if slot in used_slots:
+            raise ValueError(f"Slot conflict: Slot {slot} is already occupied")
+
+        # Handle modules separately
+        if plate_type == 'module':
+            try:
+                module_ctrl = initialize_heater_shaker_module(protocol, plate_config)
+                modules_to_manage.append(module_ctrl)
+                used_slots.add(slot)
+                protocol.comment(f"Module initialized in slot {slot}")
+            except Exception as e:
+                protocol.comment(f"Failed to initialize module in slot {slot}: {e}")
+                raise
+            continue  # Skip normal labware loading for modules
+
+        # Normal labware loading
         labware_id = plate_config['labware_id']  # Now using labware_id
-        plate_type = plate_config['type']
 
         # Create unique labware name using labware_id_position_rack convention
         unique_labware_name = f"{labware_id}_{slot}"
@@ -423,7 +567,7 @@ def run(protocol: protocol_api.ProtocolContext):
             protocol.comment(f"Failed to load '{labware_id}': {e}")
             raise
 
-    # Labware loading complete (no dynamic CSV loading)
+    # Labware and module loading complete (no dynamic CSV loading)
 
     # Load pipette based on mode
     mode = general_settings['mode']
@@ -635,5 +779,8 @@ def run(protocol: protocol_api.ProtocolContext):
             # Drop tip (default for 'drop', 'new', or any other action)
             pipette.drop_tip()
             protocol.comment("Dropped final tip")
+
+    # Deactivate modules based on persist_after_protocol setting
+    deactivate_modules(modules_to_manage, protocol)
 
     protocol.comment(f"Protocol complete: {len(transfers)} transfers")
