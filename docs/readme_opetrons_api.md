@@ -188,15 +188,183 @@ tc_mod.set_lid_temperature(105)
 tc_mod.set_block_temperature(95, hold_time_seconds=30)
 ```
 
-**Heater-Shaker:**
+**Heater-Shaker:** ⚠️ COMPREHENSIVE GUIDE
+
+**URL**: https://docs.opentrons.com/v2/modules/heater_shaker.html
+
+**Loading Module:**
 ```python
+# OT-2: Slots 1, 3, 4, 6, 7, or 10
+# Flex: Any slot in columns 1 or 3
 hs_mod = protocol.load_module('heaterShakerModuleV1', 1)
+```
+
+**Loading Labware (Two Methods):**
+
+*Method 1: Direct (deep well plates only)*
+```python
 hs_plate = hs_mod.load_labware('nest_96_wellplate_2ml_deep')
-hs_mod.set_and_wait_for_shake_speed(500)  # 500 rpm
-hs_mod.set_and_wait_for_temperature(37)   # 37°C
+```
+
+*Method 2: With Adapter (recommended for flexibility)*
+```python
+# Load adapter first, then labware on top
+hs_adapter = hs_mod.load_adapter('opentrons_96_flat_bottom_adapter')
+hs_plate = hs_adapter.load_labware('nest_96_wellplate_200ul_flat')
+```
+
+**Available Adapters:**
+- `opentrons_universal_flat_adapter` - General purpose
+- `opentrons_96_pcr_adapter` - PCR plates
+- `opentrons_96_deep_well_adapter` - Deep well plates
+- `opentrons_96_flat_bottom_adapter` - Flat bottom plates
+
+**Temperature Control:**
+
+*Temperature Range:*
+- Standard: 37°C to 95°C
+- Extended (API ≥2.25): Down to ~1.5°C above ambient temperature
+
+*Blocking Commands (wait until target reached):*
+```python
+hs_mod.set_and_wait_for_temperature(75)  # Blocks until 75°C reached
+# Protocol pauses here until temperature stabilizes
+```
+
+*Non-Blocking Commands (parallel operations):*
+```python
+# Start heating in background
+hs_mod.set_target_temperature(75)
+
+# Perform other operations while heating
+pipette.transfer(100, source, dest)
+
+# Wait for temperature when needed
+hs_mod.wait_for_temperature()  # Blocks until target reached
+```
+
+*Deactivation:*
+```python
+hs_mod.deactivate_heater()  # Turn off heater (passive cooling only)
+```
+
+**Shaking Control:**
+
+*Speed Range:* 200–3000 RPM
+
+*Blocking Command:*
+```python
+hs_mod.set_and_wait_for_shake_speed(500)  # Wait until 500 RPM reached
+protocol.delay(minutes=5)                  # Shake for 5 minutes
+hs_mod.deactivate_shaker()                 # Stop shaking
+```
+
+**Labware Latch (CRITICAL for Shaking):**
+
+⚠️ **Latch MUST be closed before shaking** - prevents labware ejection
+
+```python
+# Open latch for pipetting access
+hs_mod.open_labware_latch()
+pipette.transfer(100, source, hs_plate['A1'])
+
+# Close latch before shaking
+hs_mod.close_labware_latch()
+hs_mod.set_and_wait_for_shake_speed(1000)
+protocol.delay(minutes=2)
+hs_mod.deactivate_shaker()
+
+# Open latch for next pipetting step
+hs_mod.open_labware_latch()
+```
+
+**Common Workflow Pattern:**
+```python
+# 1. Load module and labware
+hs_mod = protocol.load_module('heaterShakerModuleV1', 1)
+hs_adapter = hs_mod.load_adapter('opentrons_96_flat_bottom_adapter')
+hs_plate = hs_adapter.load_labware('nest_96_wellplate_200ul_flat')
+
+# 2. Open latch for initial sample loading
+hs_mod.open_labware_latch()
+pipette.transfer(100, source_plate.wells(), hs_plate.wells())
+
+# 3. Close latch and shake
+hs_mod.close_labware_latch()
+hs_mod.set_and_wait_for_shake_speed(500)
+protocol.delay(minutes=3)
+hs_mod.deactivate_shaker()
+
+# 4. Open latch for reagent addition
+hs_mod.open_labware_latch()
+pipette.transfer(50, reagent, hs_plate.wells())
+
+# 5. Heat + shake simultaneously
+hs_mod.close_labware_latch()
+hs_mod.set_and_wait_for_temperature(37)
+hs_mod.set_and_wait_for_shake_speed(300)
+protocol.delay(minutes=10)
+
+# 6. Stop and cool
 hs_mod.deactivate_shaker()
 hs_mod.deactivate_heater()
+hs_mod.open_labware_latch()
 ```
+
+**Advanced: Non-Blocking Temperature + Pipetting:**
+```python
+import time
+
+# Start heating
+hs_mod.set_target_temperature(75)
+start_time = time.monotonic()
+
+# Perform pipetting while heating
+pipette.transfer(100, source, other_plate.wells())
+
+# Calculate remaining wait time
+elapsed = time.monotonic() - start_time
+remaining = max(0, 300 - elapsed)  # Target 5 min total
+protocol.delay(seconds=remaining)
+
+hs_mod.wait_for_temperature()  # Ensure target reached
+```
+
+**OT-2 Placement Restrictions (CRITICAL):**
+
+⚠️ **Adjacent Slots:** Cannot place other modules directly beside Heater-Shaker
+⚠️ **Tall Labware:** Max 53mm height in left/right adjacent slots (prevents latch collision)
+⚠️ **8-Channel Pipettes:** Cannot pipette in left/right adjacent slots (only tip racks allowed)
+
+```python
+# ❌ INVALID - Magnetic module too close
+hs_mod = protocol.load_module('heaterShakerModuleV1', 1)
+mag_mod = protocol.load_module('magnetic module gen2', 2)  # Raises DeckConflictError
+
+# ✅ VALID - Adequate separation
+hs_mod = protocol.load_module('heaterShakerModuleV1', 1)
+mag_mod = protocol.load_module('magnetic module gen2', 4)
+```
+
+**Safety Warnings:**
+
+⚠️ **Manual Deactivation Required:** Robot does NOT automatically turn off heater/shaker at protocol end
+⚠️ **Separate Deactivation Calls:** Must call both `deactivate_heater()` and `deactivate_shaker()`
+⚠️ **Latch State:** Always verify latch is closed before shaking (prevents catastrophic labware ejection)
+⚠️ **Cooling Time:** Heater cools passively - plan for extended cooldown if needed
+
+**Error Types:**
+- `DeckConflictError` - Invalid module placement
+- `PipetteMovementRestrictedByHeaterShakerError` - Pipette access violation in adjacent slots
+
+**Best Practices:**
+1. Always open latch before pipetting operations
+2. Always close latch before shaking
+3. Use non-blocking temperature commands when pipetting can occur during heating
+4. Place Heater-Shaker with clearance from other modules and tall labware
+5. Explicitly deactivate heater and shaker at protocol end
+6. Use adapters for non-deep-well labware
+7. Test latch operation during dry runs
 
 #### 6. Advanced Liquid Handling
 
