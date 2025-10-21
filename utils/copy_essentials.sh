@@ -1,28 +1,34 @@
 #!/bin/bash
 # Copy essential OpenTrons cherry-pick files to target directory
-# Usage: ./copy_essentials.sh [target_directory]
+# Usage: ./copy_essentials.sh
 
-# Default target directory (placeholder - change as needed)
-DEFAULT_TARGET="/mnt/domling/Instrument_OT-2/protocols/cherrypick"
+# Hardcoded directories (edit these as needed)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_DIR="$(dirname "$SCRIPT_DIR")"
+TARGET_DIR="/mnt/domling/Instrument_OT-2/protocols/cherrypick"
 
-# Use provided target or default
-TARGET_DIR="${1:-$DEFAULT_TARGET}"
-
-# Files and directories to copy
+# Files and directories to copy (relative to SOURCE_DIR)
 ITEMS_TO_COPY=(
-    "../CSVs"
-    "../CherryPick_OT2.py"
-    "../helper_cherry_pick.py"
-    "../settings.toml"
-    "../simulate_protocol.sh"
-    "../labware_dict.toml"
-    "../pyproject.toml"
-    "../src/ot2_cherrypick_mcp/core/protocol_generator.py"
+    "CSVs"
+    "CherryPick_OT2.py"
+    "helper_cherry_pick.py"
+    "settings.toml"
+    "simulate_protocol.sh"
+    "labware_dict.toml"
+    "pyproject.toml"
+    "src/ot2_cherrypick_mcp/core/protocol_generator.py"
 )
 
 echo "=== OpenTrons Cherry-Pick File Copy Tool ==="
+echo "Source directory: $SOURCE_DIR"
 echo "Target directory: $TARGET_DIR"
 echo ""
+
+# Verify source directory exists
+if [ ! -d "$SOURCE_DIR" ]; then
+    echo "ERROR: Source directory does not exist: $SOURCE_DIR"
+    exit 1
+fi
 
 # Create target directory if it doesn't exist
 if [ ! -d "$TARGET_DIR" ]; then
@@ -36,22 +42,41 @@ fi
 # Copy each item
 echo "Copying files..."
 for item in "${ITEMS_TO_COPY[@]}"; do
-    if [ -e "$item" ]; then
-        if [ -d "$item" ]; then
+    SOURCE_PATH="$SOURCE_DIR/$item"
+
+    if [ -e "$SOURCE_PATH" ]; then
+        if [ -d "$SOURCE_PATH" ]; then
+            # Copy directory
             echo "  📁 Copying directory: $item"
-            cp -r "$item" "$TARGET_DIR/" || {
+            cp -r "$SOURCE_PATH" "$TARGET_DIR/" || {
                 echo "ERROR: Failed to copy directory $item"
                 exit 1
             }
         else
-            echo "  📄 Copying file: $item"
-            cp "$item" "$TARGET_DIR/" || {
-                echo "ERROR: Failed to copy file $item"
-                exit 1
-            }
+            # Copy file with folder structure
+            ITEM_DIR=$(dirname "$item")
+            if [ "$ITEM_DIR" != "." ]; then
+                # Create subdirectory structure in target
+                echo "  📁 Creating directory structure: $ITEM_DIR"
+                mkdir -p "$TARGET_DIR/$ITEM_DIR" || {
+                    echo "ERROR: Failed to create directory $ITEM_DIR"
+                    exit 1
+                }
+                echo "  📄 Copying file: $item"
+                cp "$SOURCE_PATH" "$TARGET_DIR/$item" || {
+                    echo "ERROR: Failed to copy file $item"
+                    exit 1
+                }
+            else
+                echo "  📄 Copying file: $item"
+                cp "$SOURCE_PATH" "$TARGET_DIR/" || {
+                    echo "ERROR: Failed to copy file $item"
+                    exit 1
+                }
+            fi
         fi
     else
-        echo "WARNING: $item not found, skipping"
+        echo "⚠️  WARNING: $item not found in source, skipping"
     fi
 done
 
