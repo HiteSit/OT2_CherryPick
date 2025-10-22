@@ -20,7 +20,9 @@ dependencies = [
     "tomli>=2.3.0,<3",
     "tomlkit>=0.13.3,<0.14",
     "fastmcp>=2.3.0",
-    "mcp>=1.8.0"
+    "mcp>=1.8.0",
+    "mols2grid>=2.0.0",
+    "jupyterlab>=4.4.9",
 ]
 
 [project.optional-dependencies]
