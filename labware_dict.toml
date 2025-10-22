@@ -83,9 +83,6 @@ category = "tip_rack"
 labware_id = "tip_rack_geb_1000ul"
 well_count = 96
 well_volume = 1000
-offset_x = 0.1
-offset_y = 0.4
-offset_z = -0.40
 
 [[labware]]
 category = "reservoir"
@@ -155,6 +152,9 @@ category = "tube_rack"
 labware_id = "tube_rack_48_1500ul"
 well_count = 48
 well_volume = 1500
-offset_x = 1.6
-offset_y = 1.3
-offset_z = 0.0
+
+[[labware]]
+category = "tube_rack"
+labware_id = "tube_rack_54_1500ul"
+well_count = 54
+well_volume = 1500

@@ -13,7 +13,7 @@ setup_environment() {
         "local")
             # Configure Windows paths - will be auto-converted to WSL format
             LABWARE_PATH_WIN="C:\Users\ricca\AppData\Roaming\Opentrons\labware"
-            TARGET_PROTOCOL_SRC_WIN="C:\Users\ricca\AppData\Roaming\Opentrons\protocols\672a532f-fe5f-4d27-8796-5336e4ff80e0\src"
+            TARGET_PROTOCOL_SRC_WIN="C:\Users\ricca\AppData\Roaming\Opentrons\protocols\78a4cef9-4296-4bb8-b0d7-073162f7c40f\src"
             ;;
         "remote")
             # Configure Windows paths - will be auto-converted to WSL format
