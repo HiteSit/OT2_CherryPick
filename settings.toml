@@ -7,7 +7,7 @@
 # General Protocol Settings
 [settings.general]
 tip_reuse = "always"            # Options: "always", "never", "per_source"
-mode = "single_X1"              # Options: "single_X1", "multi_X1", "multi"
+mode = "multi"                  # Options: "single_X1", "multi_X1", "multi"
 starting_tip_well = "H1"        # Starting well for multi_X1 mode (single tip from 8-channel)
 
 # Head Speed Configuration
@@ -28,11 +28,11 @@ speed = 400                     # Pipette movement speed (mm/min)
 # Pre-Aspirate Liquid Contact
 # Combines touch_liquid and pre_wet functionality from original protocols
 [settings.liquid_handling.pre_aspirate_contact]
-enabled = true                  # Enable liquid contact before aspiration
+enabled = false                 # Enable liquid contact before aspiration
 position_offset_percent = 20    # How much higher/safer from CSV position (%)
                                 # For "Source Height": adds 20% more height (safer)
                                 # For "Source Top": moves 20% closer to top (safer)
-aspirate_volume = 10            # µL to aspirate/dispense for tip conditioning
+aspirate_volume = 20            # µL to aspirate/dispense for tip conditioning
                                 # 0 = touch only (like standard/DMSO protocols)
                                 # >0 = pre-wet mode (like slippery protocol)
 
@@ -55,8 +55,36 @@ post_aspirate = 0               # Seconds to wait after aspiration
 # For complete liquid ejection from viscous samples
 [settings.liquid_handling.push_out]
 enabled = true                   # Enable push-out during dispense
-volume_ul = 100                  # Fixed push-out volume in µL (recommended: 3-10µL)
+volume_ul = 20                   # Fixed push-out volume in µL
                                  # Only applies when no mixing follows
+
+# Mixing Configuration
+# Controls WHERE and WHEN mixing occurs during transfers
+[settings.liquid_handling.mixing]
+location = "none"             # Options: "destination", "source", "none"
+                                # "destination": Mix after dispensing (default, current behavior)
+                                #                Use for: dilutions, reagent addition, compound screening
+                                # "source": Mix before aspirating (resuspends stock before sampling)
+                                #          Use for: cell suspensions, bead resuspension, glycerol stocks
+                                # "none": Disable mixing even if CSV specifies Mix Volume
+                                #        Use for: protocols where mixing causes issues (fragile samples)
+
+repetitions = 2                 # Number of mixing cycles (aspirate/dispense repetitions)
+                                # Typical: 3-5 for most applications
+                                # Lower (1-2): Gentle mixing for fragile samples
+                                # Higher (5-10): Thorough mixing for viscous or settling samples
+
+source_remixing = "once"        # Options: "once", "always" (only applies when location="source")
+                                # "once": Mix each unique source well only before first transfer
+                                #        Assumes source remains homogeneous between transfers (~seconds)
+                                #        Faster, recommended for most applications
+                                # "always": Re-mix source before every transfer from same well
+                                #          Use for: fast-settling suspensions (cells, beads with <10s settling time)
+
+# NOTE: CSV columns "Mix Volume" and "Mix Height" interpretation depends on location:
+#   - location = "source": Mix Volume/Height applied to SOURCE well before aspiration
+#   - location = "destination": Mix Volume/Height applied to DESTINATION well after dispense
+#   - location = "none": Mix Volume and Mix Height columns ignored entirely
 
 # =============================================================================
 # PRESET CONFIGURATIONS
@@ -71,6 +99,7 @@ pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_
 post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
 delays = { post_aspirate = 0 }
 push_out = { enabled = false }
+mixing = { location = "destination", repetitions = 3, source_remixing = "once" }
 
 # Viscous Liquids (like original cherry_pick_protocol_DMSO.py)
 # Contact + delays for settling + push-out for complete ejection
@@ -79,6 +108,7 @@ pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_
 post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
 delays = { post_aspirate = 2.0 }
 push_out = { enabled = true, volume_ul = 5 }
+mixing = { location = "destination", repetitions = 5, source_remixing = "once" }
 
 # Hydrophobic/Slippery Liquids (like original cherrypick_slipery.py)
 # Pre-wet tip conditioning + standard handling
@@ -87,6 +117,7 @@ pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_
 post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
 delays = { post_aspirate = 0 }
 push_out = { enabled = false }
+mixing = { location = "destination", repetitions = 3, source_remixing = "once" }
 
 # High Precision Mode
 # Minimal interventions, maximum precision
@@ -95,6 +126,7 @@ pre_aspirate_contact = { enabled = false }
 post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
 delays = { post_aspirate = 0 }
 push_out = { enabled = false }
+mixing = { location = "destination", repetitions = 3, source_remixing = "once" }
 
 # Aggressive Handling
 # All features enabled for challenging liquids
@@ -103,6 +135,16 @@ pre_aspirate_contact = { enabled = true, position_offset_percent = 30, aspirate_
 post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 15 }
 delays = { post_aspirate = 3.0 }
 push_out = { enabled = true, volume_ul = 5 }
+mixing = { location = "destination", repetitions = 7, source_remixing = "once" }
+
+# Cell Resuspension / Bead Mixing
+# Mix source wells before sampling to ensure homogeneous suspensions
+[settings.liquid_handling.presets.cell_resuspension]
+pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_volume = 0 }
+post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
+delays = { post_aspirate = 0 }
+push_out = { enabled = false }
+mixing = { location = "source", repetitions = 5, source_remixing = "once" }  # Mix at source before aspirating
 
 # =============================================================================
 # DECK LAYOUT CONFIGURATION
@@ -111,41 +153,31 @@ push_out = { enabled = true, volume_ul = 5 }
 # Deck layout configuration - specify which labware goes in which slots
 # Labware calibration offsets are now defined in labware_dict.toml for each labware type
 
- [[settings.working_plate]]
- type = "module"
- module_type = "heaterShaker"
- position_rack = "10"
- adapter_id = "opentrons_universal_flat_adapter"
- labware_id = ""
- target_temperature = 95              # 37°C (physiological temperature)
- target_shake_speed = 2000            # 300 RPM (gentle mixing)
- persist_after_protocol = true        # Keep running after protocol ends
+# [[settings.working_plate]]
+# type = "module"
+# module_type = "heaterShaker"
+# position_rack = "10"
+# adapter_id = "opentrons_universal_flat_adapter"
+# labware_id = ""
+# target_temperature = 95              # 37°C (physiological temperature)
+# target_shake_speed = 2000            # 300 RPM (gentle mixing)
+# persist_after_protocol = true        # Keep running after protocol ends
 
 [[settings.working_plate]]
 type = "reservoir"
-labware_id = "reservoir_horizontal"
+labware_id = "tube_rack_96_1500ul"
+position_rack = "4"
+
+[[settings.working_plate]]
+type = "reservoir"
+labware_id = "384_ppv_55ul"
 position_rack = "2"
 
 [[settings.working_plate]]
-type = "source"
-labware_id = "tube_rack_48_1500ul"
-position_rack = "3"
-
-[[settings.working_plate]]
-type = "destination"
-labware_id = "tube_rack_48_1500ul"
-position_rack = "5"
-
-[[settings.working_plate]]
-type = "destination"
-labware_id = "tube_rack_48_1500ul"
-position_rack = "6"
-
-[[settings.working_plate]]
 type = "tip"
-labware_id = "tip_rack_geb_1000ul"
-connection = "Pipette_1"
-position_rack = "1"
+labware_id = "opentrons_96_tiprack_300ul"
+connection = "Pipette_8"
+position_rack = "5"
 
 # =============================================================================
 # HARDWARE MODULES (OPTIONAL)
@@ -243,12 +275,19 @@ position_rack = "1"
 # - "Dest Top": Offset from well top in mm (e.g., -3, -7.5)
 #
 # Mixing positioning (optional, only used if Mix Volume > 0):
-# - "Mix Height": Offset from well bottom for mixing (e.g., 2.0)
+# - "Mix Height": Offset from well bottom for mixing (e.g., 2.0, 5.0)
+#                Context-dependent on [settings.liquid_handling.mixing].location:
+#                  - location="destination": Mix Height in DESTINATION well
+#                  - location="source": Mix Height in SOURCE well
 #                Default: 2.0mm if not specified
 
 # LIQUID HANDLING COLUMNS (all optional, defaults applied if missing):
-# - "Mix Volume": Volume in µL for post-dispense mixing (e.g., 20, 50)
+# - "Mix Volume": Volume in µL for mixing (e.g., 20, 50, 150)
 #                0 = no mixing, >0 = mix 3 times with specified volume
+#                WHERE mixing occurs depends on [settings.liquid_handling.mixing].location:
+#                  - location="destination": Mix AFTER dispensing (default behavior)
+#                  - location="source": Mix BEFORE aspirating (for cell suspensions, beads)
+#                  - location="none": Mix Volume ignored entirely
 #                Default: 0 (no mixing)
 #
 # - "Flow Aspirate": Aspirate rate multiplier (e.g., 0.5, 1.0, 1.5)
