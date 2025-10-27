@@ -1673,16 +1673,12 @@ dependencies = [
     { name = "mols2grid" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "pytest" },
     { name = "rdkit" },
     { name = "seaborn" },
     { name = "toml" },
     { name = "tomli" },
     { name = "tomlkit" },
-]
-
-[package.optional-dependencies]
-test = [
-    { name = "pytest" },
 ]
 
 [package.metadata]
@@ -1696,14 +1692,13 @@ requires-dist = [
     { name = "mols2grid", specifier = ">=2.0.0" },
     { name = "numpy", specifier = ">=1.20.0,<2" },
     { name = "pandas", specifier = ">=2.3.3,<3" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.4.2,<9" },
+    { name = "pytest", specifier = ">=8.4.2,<9" },
     { name = "rdkit", specifier = ">=2025.9.1,<2026" },
     { name = "seaborn", specifier = ">=0.13.2,<0.14" },
     { name = "toml", specifier = ">=0.10.2,<0.11" },
     { name = "tomli", specifier = ">=2.3.0,<3" },
     { name = "tomlkit", specifier = ">=0.13.3,<0.14" },
 ]
-provides-extras = ["test"]
 
 [[package]]
 name = "packaging"

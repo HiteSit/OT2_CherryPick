@@ -23,10 +23,6 @@ dependencies = [
     "mcp>=1.8.0",
     "mols2grid>=2.0.0",
     "jupyterlab>=4.4.9",
-]
-
-[project.optional-dependencies]
-test = [
     "pytest>=8.4.2,<9"
 ]
 

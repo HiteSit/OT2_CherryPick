@@ -165,19 +165,19 @@ mixing = { location = "source", repetitions = 5, source_remixing = "once" }  # M
 
 [[settings.working_plate]]
 type = "reservoir"
-labware_id = "tube_rack_96_1500ul"
-position_rack = "4"
+labware_id = "384_ppv_55ul"
+position_rack = "2"
 
 [[settings.working_plate]]
 type = "reservoir"
-labware_id = "384_ppv_55ul"
-position_rack = "2"
+labware_id = "tube_rack_96_1500ul"
+position_rack = "4"
 
 [[settings.working_plate]]
 type = "tip"
 labware_id = "opentrons_96_tiprack_300ul"
 connection = "Pipette_8"
-position_rack = "5"
+position_rack = "1"
 
 # =============================================================================
 # HARDWARE MODULES (OPTIONAL)
