@@ -31,6 +31,8 @@ class ProjectSetup:
         """Clone the repository reference files into a temporary project directory."""
 
         project_dir = tmp_path / "test_project"
+        if project_dir.exists():
+            shutil.rmtree(project_dir)
         project_dir.mkdir()
 
         # Copy template TOML files
