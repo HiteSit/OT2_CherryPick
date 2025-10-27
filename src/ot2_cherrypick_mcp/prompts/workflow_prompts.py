@@ -376,7 +376,7 @@ Deploy validated protocol to OT-2 robot for execution
 **Option C: Manual File Copy**
 - Locate: CherryPick_OT2.py in project directory
 - Copy to: Opentrons App protocols folder
-- Typical path: `C:\Users\USERNAME\AppData\Roaming\Opentrons\protocols\`
+- Typical path: `C:/Users/USERNAME/AppData/Roaming/Opentrons/protocols/`
 
 ### Step 4: Import in Opentrons App
 1. Open Opentrons App
