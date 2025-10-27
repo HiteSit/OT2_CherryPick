@@ -19,7 +19,7 @@ PROMPTS = [
 
             1. Initialize the project to create all necessary template files
             2. Update the tip reuse setting to 'never' in settings.toml
-            3. Add a pre-aspirate handling delay of 2.5 seconds
+            3. Add a post-aspirate handling delay of 2.5 seconds
             4. Generate a protocol from CSVs/example_basic.csv
             5. Simulate the generated protocol to validate it works correctly
 
@@ -33,7 +33,7 @@ PROMPTS = [
 
         1. Initialize the project to create all necessary template files. Notice that you need to work on a tmp file.
         2. Update the tip reuse setting to 'never' in settings.toml
-        3. Add a pre-aspirate handling delay of 2.5 seconds
+        3. Add a post-aspirate handling delay of 2.5 seconds
         4. Generate a protocol from CSVs/example_basic.csv
         5. Simulate the generated protocol to validate it works correctly
         6. Package everything into zip
