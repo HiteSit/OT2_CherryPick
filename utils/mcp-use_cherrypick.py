@@ -22,7 +22,14 @@ DICT_DATABASE = {
         5. Simulate the generated protocol to validate it works correctly
 
         IMPORTANT: Complete each step fully before moving to the next.
-        Report each step's outcome clearly."""
+        Report each step's outcome clearly.""",
+    "Archive_Workspace": """Confirm where the OT-2 workspace lives and package it:
+
+        1. Call the get_project_directory tool and report the path and auto_created flag.
+        2. Use export_project_archive with as_base64=true to produce an inline archive.
+        3. Confirm the archive path exists and summarize the artifacts that were included.
+
+        IMPORTANT: Execute these steps in order and describe the tool responses clearly."""
 }
 
 def remove_readonly(func, path, excinfo):
@@ -74,7 +81,7 @@ async def main():
 
     # Run comprehensive workflow: initialize → configure → generate → validate
     # NOTE: "ONE AT A TIME" forces sequential execution to avoid Mistral parallel tool call errors
-    result = await agent.run(DICT_DATABASE["General_Prompt"])
+    result = await agent.run(DICT_DATABASE["Archive_Workspace"])
 
     print("\n" + "="*80)
     print("RESULT:")
@@ -82,7 +89,7 @@ async def main():
     print(result)
     print("\n" + "="*80)
     print(f"Project directory: {project_dir}")
-    print("="*80)
+    print("=" * 80)
 
 if __name__ == "__main__":
     asyncio.run(main())

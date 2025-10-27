@@ -45,7 +45,8 @@ Initializes a new OT2 project directory with template configuration files and di
 - `logs/` - Directory for simulation logs
 
 **Behavior:**
-- Reads project path from `OT2_PROJECT_DIR` environment variable (must be set in MCP config)
+- Reads project path from `OT2_PROJECT_DIR` environment variable (if absent, the server
+  auto-creates a temporary workspace and exposes the path via `get_project_directory`)
 - Creates project directory if it doesn't exist
 - Copies template files from codebase installation to project directory
 - Overwrites existing files without creating backups
@@ -65,6 +66,40 @@ initialize_project()
 - When setting up a new experimental project
 - When project directory is missing required files
 - To reset a project to template defaults
+
+#### `get_project_directory`
+
+Returns the absolute path currently used as the OT-2 workspace together with a flag
+indicating whether it was auto-created for the session.
+
+**Returns:** Dict with:
+- `project_directory` (str) – Absolute path
+- `auto_created` (bool) – True if the server produced a temporary workspace
+- `message` (str) – Short status string clarifying the source
+
+**Example Use:**
+```python
+info = get_project_directory()
+print(info["project_directory"])
+```
+
+#### `export_project_archive`
+
+Creates a zip archive of the active project directory (excluding existing archives),
+stores it under `archives/`, and optionally returns a base64-encoded payload.
+
+**Parameters:**
+- `as_base64` (bool, default: False) – Return the zip contents inline
+
+**Returns:** Dict with:
+- `archive_path` (str) – Path to the created archive
+- `auto_created_workspace` (bool) – Mirrors the `auto_created` flag from the workspace
+- `archive_base64` (str, optional) – Present only when `as_base64=True`
+
+**Example Use:**
+```python
+export = export_project_archive(as_base64=True)
+```
 
 ---
 
@@ -500,6 +535,16 @@ Lists all CSV files in the CSVs/ directory.
 
 **Example Use:** Query to see what transfer definitions are available before selecting one for protocol generation.
 
+#### `files://archives`
+
+Lists generated project archive zip files stored under `archives/`.
+
+**Description:** "List of project archive zip files"
+
+**Returns:** Newline-separated list of archive filenames
+
+**Example Use:** Discover previous exports before downloading or pruning them.
+
 ---
 
 ### 3. Log Resources
@@ -554,6 +599,16 @@ Liquid Handling Configuration:
 ```
 
 **Example Use:** Query to understand current liquid handling behavior before applying presets.
+
+#### `status://project-directory`
+
+Reports the active project directory and whether it was auto-generated for the session.
+
+**Description:** "Active project directory path and whether it was auto-created"
+
+**Returns:** Text block with `path` and `auto_created` fields
+
+**Example Use:** Check where outputs are being written before exporting the workspace.
 
 ---
 

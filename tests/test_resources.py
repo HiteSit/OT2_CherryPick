@@ -65,6 +65,21 @@ def test_csv_file_resource_lists_files(tmp_path: Path, monkeypatch) -> None:
     resources = asyncio.run(app.get_resources())
     content = resources["files://csvs"].fn()
     assert "a.csv" in content.splitlines()[0]
+
+
+def test_archive_file_resource_lists_archives(tmp_path: Path, monkeypatch) -> None:
+    """Archive resource should list archive files if present."""
+    project_dir = _setup_project_dir(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+
+    archive_dir = project_dir / "archives"
+    archive_dir.mkdir()
+    (archive_dir / "snapshot.zip").write_text("", encoding="utf-8")
+
+    app = create_mcp_app()
+    resources = asyncio.run(app.get_resources())
+    content = resources["files://archives"].fn()
+    assert "snapshot.zip" in content.splitlines()[0]
 def test_last_simulation_resource(tmp_path: Path, monkeypatch) -> None:
     """Log resource should serve latest simulation entry."""
     project_dir = _setup_project_dir(tmp_path)
@@ -107,3 +122,16 @@ def test_status_resources(tmp_path: Path, monkeypatch) -> None:
 
     assert "plate_a" in deck
     assert "Liquid Handling Configuration" in liquid
+
+
+def test_project_directory_status(tmp_path: Path, monkeypatch) -> None:
+    """Project directory status resource reports path and auto flag."""
+    project_dir = _setup_project_dir(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+
+    app = create_mcp_app()
+    resources = asyncio.run(app.get_resources())
+    status = resources["status://project-directory"].fn()
+
+    assert "path" in status
+    assert "auto_created" in status

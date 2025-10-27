@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastmcp import FastMCP
 
 from ..utils.errors import ConfigurationError
+from ..utils.paths import project_directory_info
 from ..utils.toml import TomlHandler
 
 __all__ = ["register_status_resources"]
@@ -56,3 +57,13 @@ def register_status_resources(mcp: FastMCP) -> None:
             lines.append(f"- {key}: {value}")
 
         return "\n".join(lines)
+
+    @mcp.resource(
+        "status://project-directory",
+        description="Active project directory path and whether it was auto-created",
+    )
+    def project_directory_status() -> str:
+        info = project_directory_info()
+        root = info["path"]
+        auto = "yes" if info["auto_created"] else "no"
+        return "Project Directory:\n" f"- path: {root}\n" f"- auto_created: {auto}"

@@ -9,9 +9,15 @@ from typing import Dict
 
 from fastmcp import FastMCP
 
-from ..utils.paths import get_repo_root
+from ..core.archive import create_project_archive
+from ..utils.paths import get_repo_root, project_directory_info
 
-__all__ = ["register_project_tools", "initialize_project"]
+__all__ = [
+    "register_project_tools",
+    "initialize_project",
+    "get_active_project_directory",
+    "export_project_archive",
+]
 
 
 def initialize_project() -> Dict[str, object]:
@@ -107,6 +113,26 @@ def initialize_project() -> Dict[str, object]:
     }
 
 
+def get_active_project_directory() -> Dict[str, object]:
+    """Return information about the current project directory."""
+    info = project_directory_info()
+    path = info["path"]
+    return {
+        "project_directory": str(path),
+        "auto_created": bool(info["auto_created"]),
+        "message": (
+            "Temporary directory created for this session."
+            if info["auto_created"]
+            else "Using project directory provided by OT2_PROJECT_DIR."
+        ),
+    }
+
+
+def export_project_archive(*, as_base64: bool = False) -> Dict[str, object]:
+    """Archive the current project workspace."""
+    return create_project_archive(as_base64=as_base64)
+
+
 def register_project_tools(mcp: FastMCP) -> None:
     """Register project management tools with the MCP server."""
 
@@ -123,3 +149,26 @@ def register_project_tools(mcp: FastMCP) -> None:
         """Initialize the OT-2 project directory and return a status message."""
         result = initialize_project()
         return result["message"]
+
+    @mcp.tool(
+        name="get_project_directory",
+        description=(
+            "Return the path of the currently active OT-2 project directory. "
+            "If the server auto-created a temporary workspace, auto_created "
+            "will be True so you can decide whether to export or initialize it."
+        ),
+    )
+    def get_project_directory_tool() -> Dict[str, object]:
+        """Provide project directory details to the caller."""
+        return get_active_project_directory()
+
+    @mcp.tool(
+        name="export_project_archive",
+        description=(
+            "Create a zip archive of the current project workspace. Optionally set "
+            "as_base64=true to receive the archive contents inline."
+        ),
+    )
+    def export_project_archive_tool(as_base64: bool = False) -> Dict[str, object]:
+        """Generate an archive and return its location (and optional payload)."""
+        return export_project_archive(as_base64=as_base64)

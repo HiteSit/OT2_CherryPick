@@ -10,4 +10,5 @@ __all__ = [
     "simulation",
     "toml_handler",
     "validation",
+    "archive",
 ]

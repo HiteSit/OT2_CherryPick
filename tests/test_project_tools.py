@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
+import os
+import shutil
 from pathlib import Path
 
 import pytest
 
-from ot2_cherrypick_mcp.tools.project_tools import initialize_project
+from ot2_cherrypick_mcp.tools.project_tools import (
+    export_project_archive,
+    get_active_project_directory,
+    initialize_project,
+)
 
 
 def test_initialize_project_requires_env_var() -> None:
     """initialize_project raises ValueError if OT2_PROJECT_DIR is not set."""
-    import os
-
     # Ensure env var is not set
     original = os.environ.pop("OT2_PROJECT_DIR", None)
     try:
@@ -133,3 +137,33 @@ def test_initialize_project_returns_detailed_result(tmp_path: Path, monkeypatch)
     created_dirs_str = " ".join(result["created_directories"])
     assert "CSVs" in created_dirs_str
     assert "logs" in created_dirs_str
+
+
+def test_get_active_project_directory_auto_created(monkeypatch) -> None:
+    """get_active_project_directory falls back to a temp directory when env missing."""
+    monkeypatch.delenv("OT2_PROJECT_DIR", raising=False)
+    details = get_active_project_directory()
+    path = Path(details["project_directory"])
+    try:
+        assert path.exists()
+        assert details["auto_created"] is True
+        assert os.environ.get("OT2_PROJECT_DIR") == str(path)
+    finally:
+        shutil.rmtree(path, ignore_errors=True)
+
+
+def test_export_project_archive(tmp_path: Path, monkeypatch) -> None:
+    """export_project_archive creates a zip file in the archives directory."""
+    project_dir = tmp_path / "project"
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+    initialize_project()
+
+    info = export_project_archive()
+    archive = Path(info["archive_path"])
+    assert archive.exists()
+    assert archive.parent == project_dir / "archives"
+    assert info["auto_created_workspace"] is False
+
+    inline = export_project_archive(as_base64=True)
+    assert "archive_base64" in inline
+    assert isinstance(inline["archive_base64"], str)

@@ -9,6 +9,7 @@ from fastmcp import FastMCP
 from ..utils.paths import resolve_project_path
 
 DEFAULT_CSV_DIR = Path("CSVs")
+DEFAULT_ARCHIVE_DIR = Path("archives")
 
 __all__ = ["register_file_resources"]
 
@@ -22,4 +23,12 @@ def register_file_resources(mcp: FastMCP) -> None:
         if not csv_dir.exists():
             return ""
         files = sorted(path.name for path in csv_dir.glob("*.csv"))
+        return "\n".join(files)
+
+    @mcp.resource("files://archives", description="List of project archive zip files")
+    def list_archives() -> str:
+        archive_dir = resolve_project_path(DEFAULT_ARCHIVE_DIR)
+        if not archive_dir.exists():
+            return ""
+        files = sorted(path.name for path in archive_dir.glob("*.zip"))
         return "\n".join(files)
