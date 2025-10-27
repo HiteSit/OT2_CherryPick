@@ -43,17 +43,6 @@ def main() -> None:
     """Run the MCP server via STDIO transport."""
     configure_logging()
 
-    # Validate project directory is configured and exists
-    project_dir_env = os.getenv("OT2_PROJECT_DIR")
-    if not project_dir_env:
-        raise ValueError(
-            "OT2_PROJECT_DIR environment variable is required.\n"
-            "Add it to your MCP configuration's env section pointing to your project directory.\n"
-            "Example: \"OT2_PROJECT_DIR\": \"/path/to/my/project\""
-        )
-
-    from pathlib import Path
-
     from .utils.paths import get_project_root
 
     try:
