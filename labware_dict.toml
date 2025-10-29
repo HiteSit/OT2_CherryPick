@@ -119,6 +119,12 @@ offset_z = -0.30
 
 [[labware]]
 category = "plate"
+labware_id = "384_ppv_150ul"
+well_count = 384
+well_volume = 150
+
+[[labware]]
+category = "plate"
 labware_id = "384_ldv_12ul"
 well_count = 384
 well_volume = 12
