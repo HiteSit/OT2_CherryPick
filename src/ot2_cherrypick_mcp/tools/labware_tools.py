@@ -88,7 +88,33 @@ def register_labware_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="add_labware_definition",
-        description="Append a new labware entry to labware_dict.toml",
+        description="""Add labware to catalog with calibration offsets.
+
+EXAMPLE:
+add_labware_definition(
+    labware_id="custom_96_plate",
+    category="plate",
+    well_count=96,
+    well_volume=200,
+    offset_x=-0.5,
+    offset_y=0.8,
+    offset_z=-0.3
+)
+
+CALIBRATION OFFSETS:
+- offset_x: Negative = left, Positive = right (mm)
+- offset_y: Negative = front, Positive = back (mm)
+- offset_z: Negative = down, Positive = up (mm)
+
+Offsets compensate for:
+- Manufacturing tolerances (±0.1-0.5mm typical)
+- Deck positioning variations
+- Thermal expansion
+- Wear and tear
+
+Without offsets, tips may crash into edges or miss wells entirely.
+Determine offsets via "Labware Position Check" in Opentrons App.
+""",
     )
     def add_labware_definition_tool(  # pragma: no cover - exercised via tests
         labware_id: str,

@@ -45,22 +45,26 @@ def register_simulation_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="simulate_protocol",
-        description="""Run opentrons_simulate for the generated protocol.
+        description="""Validate protocol using opentrons_simulate.
 
-IMPORTANT: The labware_path parameter expects a DIRECTORY containing JSON labware files,
-NOT the labware_dict.toml configuration file.
+EXAMPLE:
+simulate_protocol(protocol_path="CherryPick_OT2.py")
 
-**Default behavior (RECOMMENDED):**
-- Omit labware_path parameter entirely (or pass None)
-- The simulator will use the LABWARE_PATH environment variable configured in the MCP server
-- This points to the Opentrons custom labware directory with JSON definitions
+Check logs://last-simulation for detailed output after running.
 
-**Only provide labware_path if:**
-- You need to override the default labware directory
-- You have a specific directory path containing .json labware files
+LABWARE PATH (IMPORTANT):
+- labware_path expects DIRECTORY with JSON files, NOT labware_dict.toml
+- Default: Uses LABWARE_PATH env variable (custom labware directory)
+- Only override if you have specific .json labware files elsewhere
 
-Example: simulate_protocol(protocol_path="CherryPick_OT2.py")  # Uses env LABWARE_PATH
-DO NOT: simulate_protocol(protocol_path="CherryPick_OT2.py", labware_path="labware_dict.toml")  # ERROR!
+COMMON SIMULATION ERRORS:
+- "Labware not found": Check labware_id in labware_dict.toml matches Opentrons library
+- "Slot conflict": Ensure unique position_rack values in working_plate array
+- "No tips available": Add tip racks or change tip_reuse strategy
+- "Module not found": Verify pipette definitions in labware_dict.toml
+- "Invalid well": CSV references non-existent well for labware type
+
+Returns simulation output (stdout/stderr) and success status.
 """,
     )
     def simulate_protocol_tool(  # pragma: no cover - executed via run_simulation tests

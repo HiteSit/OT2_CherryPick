@@ -36,7 +36,23 @@ def register_validation_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="validate_configuration",
-        description="Validate TOML and CSV inputs before generating protocols.",
+        description="""Pre-flight validation before protocol generation.
+
+EXAMPLE:
+validate_configuration(csv_path="CSVs/experiment.csv")
+
+CHECKS PERFORMED:
+- TOML syntax and structure (settings.toml, labware_dict.toml)
+- Labware references exist in catalog
+- Deck slot conflicts (unique position_rack values)
+- CSV column structure (required columns present)
+- Volume ranges within pipette capacity
+- Multi-channel mode compatibility (only 96/384-well plates)
+- Height specification consistency (not both Height and Top)
+
+Returns errors (must fix) and warnings (should review).
+Run before generate_protocol() to catch issues early.
+""",
     )
     def validate_configuration_tool(  # pragma: no cover - executed via run_validation tests
         csv_path: str,

@@ -37,9 +37,25 @@ def register_deployment_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="deploy_to_opentrons",
-        description=(
-            "Copy the generated protocol to a target path and optionally push it to the system clipboard."
-        ),
+        description="""Deploy protocol to target location or clipboard for Opentrons App.
+
+EXAMPLES:
+- Clipboard only: deploy_to_opentrons(copy_to_clipboard=True, clipboard_command="clip.exe")
+- File copy: deploy_to_opentrons(target_path="/path/to/opentrons/protocols/")
+- Both: deploy_to_opentrons(target_path="...", copy_to_clipboard=True)
+
+CLIPBOARD COMMANDS by platform:
+- Windows: "clip.exe"
+- macOS: "pbcopy"
+- Linux (X11): "xclip -selection clipboard"
+
+After deployment, protocol is ready to:
+1. Import into Opentrons App (paste from clipboard or it appears automatically)
+2. Run "Labware Position Check" for calibration
+3. Execute on OT-2 robot
+
+Returns deployment status and paths written.
+""",
     )
     def deploy_tool(  # pragma: no cover - executed via run_deployment tests
         protocol_path: str = str(DEFAULT_PROTOCOL_PATH),

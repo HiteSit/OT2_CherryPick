@@ -227,7 +227,26 @@ DECK POSITIONS (working_plate array items use [index] notation):
 
     @mcp.tool(
         name="apply_liquid_preset",
-        description="Apply a liquid handling preset defined under settings.liquid_handling.presets.",
+        description="""Apply liquid handling preset configuration for different liquid types.
+
+AVAILABLE PRESETS:
+- "standard": Default for aqueous buffers (water, PBS, media)
+- "viscous": DMSO, glycerol, oils (slower speeds, longer delays)
+- "slippery": Volatile solvents (reduced speed to prevent dripping)
+- "minimal": Bare minimum handling (no contact, no wicking)
+- "aggressive": Maximum mixing and contact (for difficult liquids)
+
+EXAMPLE:
+apply_liquid_preset(preset_name="viscous")
+
+Presets update multiple parameters atomically:
+- Flow rates (aspirate/dispense speeds)
+- Delays (post-aspirate wait times)
+- Contact/wicking behavior
+- Push-out volumes
+
+Check status://liquid-handling-config after applying to see active parameters.
+""",
     )
     def apply_liquid_preset_tool(  # pragma: no cover - exercised via apply_liquid_preset tests
         preset_name: str,

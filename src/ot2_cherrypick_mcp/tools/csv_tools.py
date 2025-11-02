@@ -122,7 +122,27 @@ def register_csv_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="generate_csv_template",
-        description="Create a CSV template in the CSVs/ directory for manual editing.",
+        description="""Generate CSV template with proper column structure for liquid transfers.
+
+EXAMPLE:
+generate_csv_template(
+    filename="cherry_pick_384.csv",
+    transfers=96,
+    source_labware="tube_rack_96_1500ul_4",
+    dest_labware="384_ppv_55ul_2",
+    default_volume=50.0,
+    source_height=2.0,
+    dest_top=-3.0
+)
+
+REQUIRED COLUMNS: Source Labware, Source Well, Volume (ul), Dest Labware, Dest Well
+HEIGHT COLUMNS: Use EITHER Height (from bottom) OR Top (from rim) - never both
+  - source_height: mm from bottom (e.g., 2.0)
+  - dest_top: mm from rim, negative goes down (e.g., -3.0)
+
+Template creates skeleton CSV that you then populate with specific well positions.
+Use files://csvs resource to list generated files.
+""",
     )
     def generate_csv_template_tool(  # pragma: no cover - intent tested via helper
         filename: str,
@@ -145,7 +165,19 @@ def register_csv_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="upload_csv_content",
-        description="Save provided CSV content to disk for later workflow steps.",
+        description="""Save CSV content to disk for protocol generation.
+
+EXAMPLE:
+upload_csv_content(
+    csv_content="Source Labware,Source Well,Volume (ul),...\\nrow1_data\\nrow2_data",
+    filename="my_transfers.csv",
+    output_dir="CSVs/"
+)
+
+Use when you have CSV data as string (from user, from computation, etc).
+Validates header contains required columns before saving.
+Saved file can then be used with generate_protocol(csv_path="CSVs/my_transfers.csv").
+""",
     )
     def upload_csv_content_tool(  # pragma: no cover - intent tested via helper
         csv_content: str,

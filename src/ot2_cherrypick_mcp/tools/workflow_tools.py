@@ -123,7 +123,31 @@ def register_workflow_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="full_workflow",
-        description="Validate configuration, generate protocol, and optionally simulate.",
+        description="""Execute complete protocol workflow: validate → generate → simulate → deploy.
+
+TYPICAL USAGE:
+full_workflow(
+    csv_path="CSVs/experiment.csv",
+    simulate=True,
+    deploy=False
+)
+
+STEPS PERFORMED:
+1. Validate configuration (CSV format, deck layout, labware references)
+2. Generate protocol (compile TOML + CSV → CherryPick_OT2.py)
+3. Simulate (optional, validates with opentrons_simulate)
+4. Deploy (optional, copy to target path or clipboard)
+
+Returns comprehensive results from all stages.
+Check logs://last-simulation for simulation details.
+
+PARAMETERS:
+- csv_path: Transfer map CSV file
+- simulate: Run opentrons_simulate (default: True)
+- deploy: Deploy after successful simulation (default: False)
+- deployment_target: Path to copy protocol file
+- copy_to_clipboard: Also copy to clipboard (default: False)
+""",
     )
     def full_workflow_tool(  # pragma: no cover - executed via run_full_workflow tests
         csv_path: str,

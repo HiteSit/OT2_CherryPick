@@ -10,7 +10,7 @@ from typing import Dict
 from fastmcp import FastMCP
 
 from ..core.archive import create_project_archive
-from ..utils.paths import get_repo_root, project_directory_info
+from ..utils.paths import get_project_root, get_repo_root, project_directory_info
 
 __all__ = [
     "register_project_tools",
@@ -22,37 +22,33 @@ __all__ = [
 
 def initialize_project() -> Dict[str, object]:
     """
-    Initialize a new OT2 project directory with template files.
+    Initialize project directory with full workspace structure.
 
-    Reads the project directory path from the OT2_PROJECT_DIR environment
-    variable and creates the necessary structure with configuration templates.
+    Note: Template files (settings.toml, labware_dict.toml, CherryPick_OT2.py)
+    are auto-copied on first tool access, so this function is OPTIONAL.
+    Use it when you want to explicitly set up a complete workspace with
+    example CSV files.
 
     Creates:
-        - settings.toml (from template)
-        - labware_dict.toml (from template)
-        - CherryPick_OT2.py (protocol template)
+        - settings.toml (from template, if not exists)
+        - labware_dict.toml (from template, if not exists)
+        - CherryPick_OT2.py (protocol template, if not exists)
         - CSVs/ directory with example files
         - logs/ directory (empty)
 
+    Works in both modes:
+        - With OT2_PROJECT_DIR set: Initializes persistent workspace
+        - Without OT2_PROJECT_DIR: Initializes temporary workspace
+
     Returns:
-        Dict with project initialization summary.
+        Dict with project initialization summary including workspace mode info.
 
     Raises:
-        ValueError: If OT2_PROJECT_DIR is not set.
         IOError: If template files cannot be copied.
     """
-    # Get project directory from environment
-    project_dir_str = os.getenv("OT2_PROJECT_DIR")
-    if not project_dir_str:
-        raise ValueError(
-            "OT2_PROJECT_DIR environment variable is required. "
-            "Set it in your MCP configuration before calling initialize_project."
-        )
-
-    project_dir = Path(project_dir_str)
-
-    # Create project directory if it doesn't exist
-    project_dir.mkdir(parents=True, exist_ok=True)
+    # Use get_project_root which handles both temp and persistent modes
+    # and auto-copies basic templates
+    project_dir = get_project_root()
 
     # Get repo root to find template files
     repo_root = get_repo_root()
@@ -77,19 +73,24 @@ def initialize_project() -> Dict[str, object]:
         shutil.copy2(src_path, dest_path)
         created_files.append(dest_name)
 
-    # Copy CSVs directory
+    # Copy CSVs directory (or files if directory already exists)
     src_csvs = repo_root / "CSVs"
     dest_csvs = project_dir / "CSVs"
 
     if src_csvs.exists() and src_csvs.is_dir():
-        if dest_csvs.exists():
-            created_dirs.append("CSVs/ (already exists, skipped)")
-        else:
-            shutil.copytree(src_csvs, dest_csvs)
-            csv_files = list(dest_csvs.glob("*.csv"))
-            created_dirs.append(f"CSVs/ ({len(csv_files)} files)")
+        dest_csvs.mkdir(exist_ok=True)  # Ensure directory exists
+
+        # Copy CSV files from source to destination
+        csv_count = 0
+        for csv_file in src_csvs.glob("*.csv"):
+            dest_file = dest_csvs / csv_file.name
+            if not dest_file.exists():  # Don't overwrite existing files
+                shutil.copy2(csv_file, dest_file)
+                csv_count += 1
+
+        created_dirs.append(f"CSVs/ ({csv_count} files copied)")
     else:
-        # Create empty CSVs directory if template doesn't exist
+        # Create empty CSVs directory if source doesn't exist
         dest_csvs.mkdir(exist_ok=True)
         created_dirs.append("CSVs/ (empty)")
 
@@ -100,15 +101,20 @@ def initialize_project() -> Dict[str, object]:
         (logs_dir / ".gitkeep").touch()
     created_dirs.append("logs/")
 
+    # Check if this is temp or persistent workspace
+    workspace_info = project_directory_info()
+    workspace_mode = "temporary" if workspace_info["auto_created"] else "persistent"
+
     return {
         "project_directory": str(project_dir),
+        "workspace_mode": workspace_mode,
         "created_files": created_files,
         "created_directories": created_dirs,
         "status": "success",
         "message": (
-            f"Project initialized at {project_dir}\n"
+            f"Project initialized at {project_dir} ({workspace_mode} workspace)\n"
             f"Created {len(created_files)} files and {len(created_dirs)} directories.\n"
-            f"You can now use other MCP tools to work with this project."
+            f"{'Use export_project_archive() to save before session ends.' if workspace_mode == 'temporary' else 'Files will persist across sessions.'}"
         ),
     }
 
@@ -139,10 +145,11 @@ def register_project_tools(mcp: FastMCP) -> None:
     @mcp.tool(
         name="initialize_project",
         description=(
-            "Create the OT-2 project structure by copying template TOML files, "
-            "the protocol stub, and the CSV/log directories. Reads "
-            "OT2_PROJECT_DIR from the environment and should be called before "
-            "other tools when the workspace is missing."
+            "OPTIONAL: Explicitly initialize project workspace with example CSVs. "
+            "Template files (settings.toml, labware_dict.toml, CherryPick_OT2.py) "
+            "auto-copy on first tool access, so initialization is not required. "
+            "Works in both temp (no OT2_PROJECT_DIR) and persistent modes. "
+            "Use to set up complete workspace with example files."
         ),
     )
     def initialize_project_tool() -> str:
