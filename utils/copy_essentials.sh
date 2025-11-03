@@ -13,10 +13,10 @@ ITEMS_TO_COPY=(
     "CherryPick_OT2.py"
     "helper_cherry_pick.py"
     "settings.toml"
-    "simulate_protocol.sh"
     "labware_dict.toml"
     "pyproject.toml"
     "src/ot2_cherrypick_mcp/core/protocol_generator.py"
+    "src/"
 )
 
 echo "=== OpenTrons Cherry-Pick File Copy Tool ==="
