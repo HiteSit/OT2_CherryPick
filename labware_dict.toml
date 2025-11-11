@@ -24,10 +24,15 @@ tip_connections = ["tip_rack_geb_1000ul"]
 # Each labware item specifies its category, properties, and optional calibration offsets
 # =============================================================================
 
-# LABWARE CALIBRATION OFFSETS
-# Each labware type can have optional calibration offsets to compensate for
-# manufacturing tolerances and positioning variations. Offsets are applied to
-# ALL instances of that labware type, regardless of deck position.
+# LABWARE CALIBRATION OFFSETS - ⚠️ NOT RECOMMENDED
+#
+# ⚠️ IMPORTANT: Calibration offsets are position-dependent (vary by deck slot),
+# NOT just labware-dependent. Defining offsets here applies them to ALL instances
+# of that labware type regardless of deck position, which can cause problems.
+#
+# RECOMMENDED APPROACH: Use the Opentrons App's "Labware Position Check" feature
+# during protocol setup. This allows position-specific calibration that the robot
+# saves and reuses automatically (v6.0.0+).
 #
 # OFFSET FIELDS (all optional, units in millimeters):
 # - offset_x: X-axis offset (positive = move right, negative = move left)
@@ -39,20 +44,17 @@ tip_connections = ["tip_rack_geb_1000ul"]
 # - Y-axis: Front(-) ←→ Back(+)
 # - Z-axis: Down(-) ←→ Up(+)
 #
-# USE CASES:
-# - Compensate for slight labware manufacturing variations
-# - Account for different labware manufacturers' tolerances
-# - Fine-tune positioning for specific experimental setups
-# - Eliminate need for manual Labware Position Check in Opentrons App
-# - Ensure consistent positioning across multiple protocol runs
+# WHY OFFSETS HERE ARE RISKY:
+# - Same labware in different deck slots may need different offsets
+# - Deck slots have manufacturing variations and uneven surfaces
+# - Applying one offset to all positions can cause misalignment
 #
-# ADVANTAGES OF LABWARE-BASED OFFSETS:
-# - Logical: Offsets are properties of labware types, not deck positions
-# - Reusable: Same labware type gets same calibration everywhere it's used
-# - Universal: Both settings-defined and CSV-referenced labware inherit offsets
-# - Maintainable: One place to define calibration for each labware type
+# WHEN OFFSETS HERE MIGHT BE ACCEPTABLE:
+# - You only use one instance of each labware type per protocol
+# - You've verified the offset works for all positions you use
+# - You need embedded offsets for automation purposes
 #
-# EXAMPLES:
+# EXAMPLE (use with caution):
 # [[labware]]
 # category = "tube_rack"
 # labware_id = "tube_rack_96_1500ul"
@@ -74,9 +76,6 @@ category = "tip_rack"
 labware_id = "opentrons_96_tiprack_300ul"
 well_count = 96
 well_volume = 300
-offset_x = 0.30
-offset_y = 0.10
-offset_z = -0.40
 
 [[labware]]
 category = "tip_rack"
@@ -89,18 +88,12 @@ category = "reservoir"
 labware_id = "reservoir_horizontal"
 well_count = 12
 well_volume = 15000
-offset_x = 0.0
-offset_y = 0.0
-offset_z = 0.0
 
 [[labware]]
 category = "plate"
 labware_id = "384_pp_standard_100ul"
 well_count = 384
 well_volume = 100
-offset_x = 0
-offset_y = 0.7
-offset_z = 0
 
 [[labware]]
 category = "plate"
@@ -113,9 +106,6 @@ category = "plate"
 labware_id = "384_ppv_55ul"
 well_count = 384
 well_volume = 55
-offset_x = -0.50
-offset_y = 0.80
-offset_z = -0.30
 
 [[labware]]
 category = "plate"
@@ -128,9 +118,6 @@ category = "plate"
 labware_id = "384_ldv_12ul"
 well_count = 384
 well_volume = 12
-offset_x = -0.2
-offset_y = 0.6
-offset_z = 0.4
 
 [[labware]]
 category = "tube_rack"
@@ -143,9 +130,6 @@ category = "tube_rack"
 labware_id = "tube_rack_96_1500ul"
 well_count = 96
 well_volume = 1500
-offset_x = -0.30
-offset_y = 0.90
-offset_z = 0.0
 
 [[labware]]
 category = "tube_rack"
