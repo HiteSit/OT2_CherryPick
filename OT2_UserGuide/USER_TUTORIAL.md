@@ -35,33 +35,6 @@ The system handles complex pipetting tasks like cherry-picking samples from mult
 
 ## How the System Works
 
-```mermaid
-flowchart TB
-    Start([You Want to Run a Protocol]) --> EditCSV[📝 Edit CSV File<br/>Define your transfers]
-    EditCSV --> EditSettings{Need to change<br/>deck layout?}
-
-    EditSettings -->|Yes| ModifySettings[🔧 Edit settings.toml<br/>Configure deck slots & pipettes]
-    EditSettings -->|No| RunScript
-    ModifySettings --> RunScript[🚀 Run simulate_protocol.sh]
-
-    RunScript --> Helper[⚙️ helper_cherry_pick.py<br/>Converts TOML+CSV → JSON]
-    Helper --> Embed[📦 Embeds JSON into<br/>CherryPick_OT2.py]
-    Embed --> Simulate[🧪 Simulates Protocol]
-
-    Simulate -->|Success| Ready[✅ Protocol Ready!<br/>Copy to OT-2]
-    Simulate -->|Errors| Fix[❌ Fix Errors<br/>Check CSV/TOML]
-    Fix --> EditCSV
-
-    Ready --> Transfer[📤 Transfer to Machine]
-    Transfer --> Run[🤖 Run on OT-2]
-
-    style Start fill:#e1f5e1
-    style Ready fill:#c7f0c7
-    style Fix fill:#ffe6e6
-    style Embed fill:#fff3cd
-    style RunScript fill:#d1ecf1
-```
-
 ### The Three File Types
 
 #### 🟢 **Files You'll Edit Often** (Every Protocol Run)
@@ -248,6 +221,12 @@ starting_tip_well = "H1"        # Starting tip for multi_X1 mode
 **Valid values:** Only `"A1"` or `"H1"` make sense due to the physical geometry of the pipette and tip rack:
 - `"H1"` (recommended): Uses the last/bottom tip - easier to see and access
 - `"A1"`: Uses the first/top tip
+
+**Physical deck position constraint:**
+Your choice between A1 and H1 depends on where your labware is positioned on the deck:
+- **Front row slots (1, 2, 3):** Use `"H1"` (back tip). When labware is in front slots, using the back tip (H1) ensures the pipette can reach all rows including the back rows (H) of that labware. Using A1 would prevent reaching the back rows.
+- **Back row slots (7, 8, 9):** Use `"A1"` (front tip). When labware is in back slots, using the front tip (A1) ensures the pipette can reach all rows including the front rows (A) of that labware. Using H1 would prevent reaching the front rows.
+- **Middle row slots (4, 5, 6):** Either setting works, but `"H1"` is generally recommended for better visibility.
 
 **When this setting matters:**
 - **`multi_X1` mode:** This setting determines which single tip is used for all transfers
@@ -933,23 +912,6 @@ Transferring...
 
 This automatically overwrites the protocol in your configured Opentrons directory.
 
-### What the Script Does
-
-```mermaid
-flowchart LR
-    A[simulate_protocol.sh] --> B[Load Configuration]
-    B --> C[Run helper_cherry_pick.py]
-    C --> D[Generate JSON]
-    D --> E[Embed in CherryPick_OT2.py]
-    E --> F[Run opentrons_simulate]
-    F --> G{Success?}
-    G -->|Yes| H[Copy to Clipboard]
-    G -->|No| I[Show Errors]
-    H --> J{--send-to-opentrons?}
-    J -->|Yes| K[Copy to OT-2 Directory]
-    J -->|No| L[Done]
-```
-
 ### Script Configuration
 
 At the top of `simulate_protocol.sh`, you'll find machine configuration:
@@ -961,6 +923,8 @@ MACHINE_CONFIG="local"
 **Available configurations:**
 - `"local"` - Your development machine
 - `"remote"` - The OT-2 control PC
+
+> **⚠️ Important:** When running the script on the OT-2 computer, make sure `MACHINE_CONFIG` is set to `"remote"`. This ensures the correct paths are used for the Opentrons App directories.
 
 Each configuration sets two key variables:
 
