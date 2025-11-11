@@ -10,9 +10,9 @@
 2. [How the System Works](#how-the-system-works)
 3. [Quick Start Guide](#quick-start-guide)
 4. [Understanding the Files](#understanding-the-files)
-5. [Creating Your Transfer CSV Files](#creating-your-transfer-csv-files)
-6. [Configuring settings.toml](#configuring-settingstoml)
-7. [Working with labware_dict.toml](#working-with-labware_dicttoml)
+5. [Configuring settings.toml](#configuring-settingstoml)
+6. [Working with labware_dict.toml](#working-with-labware_dicttoml)
+7. [Creating Your Transfer CSV Files](#creating-your-transfer-csv-files)
 8. [Running the Simulation Script](#running-the-simulation-script)
 9. [Transferring to the OT-2 Machine](#transferring-to-the-ot-2-machine)
 10. [Troubleshooting](#troubleshooting)
@@ -85,69 +85,61 @@ flowchart TB
 
 Before you begin, you need:
 
-1. **WSL (Windows Subsystem for Linux)** installed on your Windows machine (already installed on the OT-2 computer)
-2. **Conda environment** set up with Opentrons API
-3. **VS Code** text editor (recommended for editing configuration files)
-4. Basic familiarity with editing text files
+1. **WSL (Windows Subsystem for Linux)** installed on your Windows machine
+2. **UV package manager** (Python package manager - will be used to set up the environment automatically)
+3. **Text editor** for editing configuration files (Notepad, Notepad++, or any editor you prefer)
+4. Basic familiarity with editing text files and running terminal commands
 
 ### Setting Up Your Coding Environment
 
-Follow these steps to access and configure the project directory:
+Follow these steps to set up the cherry-pick protocol system on your computer:
 
-**Step 1: Navigate to the Project Directory**
-1. Locate the working directory containing the files transferred from the Domling folder
-2. Right-click the directory folder → Select **"Open with"** → Choose **"Terminal"**
+**Step 1: Obtain the Project Files**
 
-**Step 2: Open WSL**
+The essential project files are available on the shared network location:
+
+```
+\\158.194.103.28\domling\Instrument_OT-2\protocols\cherrypick
+```
+
+These files include:
+- `CSVs/` - Directory for transfer CSV files
+- `CherryPick_OT2.py` - Main protocol file
+- `helper_cherry_pick.py` - Configuration compiler
+- `simulate_protocol.sh` - Simulation script
+- `settings.toml` - Configuration file
+- `labware_dict.toml` - Labware definitions
+- `pyproject.toml` - Package manifest
+- `OT2_UserGuide/` - Documentation files (this guide!)
+- `src/` - Source code directory
+
+**Step 2: Copy Files to Your Working Location**
+
+1. Navigate to the network location in Windows File Explorer
+2. Copy **all** the project files to your desired working directory on your computer
+   - Example destination: `D:\OpenTrons\my_protocols\` or any location you prefer
+   - **Important:** Keep all files together in the same directory - the system expects this structure
+
+**Step 3: Open Terminal in Project Directory**
+
+1. In Windows File Explorer, navigate to your project directory (where you copied the files)
+2. Right-click inside the folder → Select **"Open in Terminal"**
 3. In the terminal window, type `wsl` and press Enter
 
-**Step 3: Launch VS Code**
-4. Type `code .` and press Enter to open the VS Code environment
+**Step 4: Initialize the Environment (First Time Only)**
 
-**Step 4: Understanding the VS Code Interface**
-
-The VS Code editor provides several key features:
-- **File Explorer** (right panel): Displays all files and directories in the project
-- **Text Editor** (center panel): Opens and edits configuration files (TOML, CSV, Python)
-- **Command Palette**: Access commands using `Ctrl+Shift+P`, which opens a text bar at the top starting with `>`
-
-**Step 5: Configure the Python Interpreter**
-5. Open the Command Palette (`Ctrl+Shift+P`)
-6. Type `select python...` and select **"Python: Select Interpreter"** from the autocomplete options
-7. Choose the interpreter named **"OT2"** from the list
-   - *Note: The interpreter may take 10-20 seconds to load*
-
-**Step 6: Open the Integrated Terminal**
-8. Open the integrated terminal by pressing `Ctrl+J`
-9. This terminal is where you'll run the simulation script and other commands
-
-### Your First Protocol
-
-Let's run your first cherry-pick protocol using an example file:
-
-**Step 1: Open WSL Terminal**
-- Press `Win + R`, type `wsl`, hit Enter
-
-**Step 2: Navigate to the project directory**
+Run this command to set up all dependencies automatically:
 ```bash
-cd /mnt/d/Amadteus_Main/OpenTron/cherrypick
+uv sync
 ```
 
-**Step 3: Run the simulation with an example CSV**
-```bash
-./simulate_protocol.sh CSVs/example_basic.csv
-```
+**What this does:**
+- UV reads the `pyproject.toml` file
+- Creates a local `.venv/` directory with Python environment
+- Installs all required packages (Opentrons API, etc.)
+- Sets up everything needed to run protocols
 
-**What happens:**
-1. The script reads your CSV and TOML configuration files
-2. Converts them into a self-contained Python protocol
-3. Simulates the protocol to check for errors
-4. Copies the protocol to your clipboard if successful
-
-**Step 4: Check the output**
-- You should see a simulation log showing all the transfers
-- If successful: "✓ Protocol copied to clipboard"
-- If errors: Read the error messages and check your files
+**Important:** This command only needs to be run **once** when you first set up the project. After that, you can skip directly to editing configuration files and running protocols.
 
 ---
 
@@ -188,193 +180,6 @@ This `get_values()` function contains a **single-line JSON string** with:
 
 ---
 
-## Creating Your Transfer CSV Files
-
-CSV files define **what the robot should do** - which samples to move, how much, and where.
-
-### Understanding Pipette Modes and CSV Structure
-
-Before creating CSV files, you need to understand that **CSV structure depends on your pipette mode**:
-
-**Single-Channel Mode** (`mode = "single_X1"`):
-- Uses a 1-channel pipette
-- Each CSV row = 1 individual transfer
-- Transfers happen one well at a time
-- Maximum flexibility for cherry-picking
-
-**Multi-Channel Single-Tip Mode** (`mode = "multi_X1"`):
-- Uses an 8-channel pipette with only 1 tip active
-- Each CSV row = 1 individual transfer
-- Useful when you have multi-channel hardware but need single-well precision
-- Transfers happen one well at a time
-
-**Multi-Channel Full Mode** (`mode = "multi"`):
-- Uses an 8-channel pipette with all 8 tips active
-- Each CSV row = 8 simultaneous transfers (entire column)
-- When you specify well `A1`, it transfers the entire column (A1-H1)
-- Only works with 96-well and 384-well plates
-
-> **💡 Key Point:** For `multi` mode, your CSV looks the same, but each row automatically transfers 8 wells at once. The well name in the CSV always refers to the row A position of the column you want to transfer.
-
-We'll explain how to configure these modes in the [Configuring settings.toml](#configuring-settingstoml) section.
-
-### Required Columns (Always Include These)
-
-| Column Name      | Description                    | Example Values          |
-| ---------------- | ------------------------------ | ----------------------- |
-| `Source Labware` | Name of source container       | `tube_rack_96_1500ul_4` |
-| `Source Well`    | Source well position           | `A1`, `H12`             |
-| `Volume (ul)`    | Transfer volume in microliters | `50`, `100.5`           |
-| `Dest Labware`   | Name of destination container  | `384_ppv_55ul_2`        |
-| `Dest Well`      | Destination well position      | `B1`, `P24`             |
-
-### Position Columns (Choose ONE for Source, ONE for Destination)
-
-**For Source Position:**
-
-| Column Name     | Description               | When to Use                 | Example Values      |
-| --------------- | ------------------------- | --------------------------- | ------------------- |
-| `Source Height` | Distance from bottom (mm) | When you know liquid depth  | `2`, `5.5`, `10`    |
-| `Source Top`    | Distance from top (mm)    | When avoiding foam/meniscus | `-5`, `-2.0`, `-10` |
-
-**For Destination Position:**
-
-| Column Name   | Description               | When to Use                  | Example Values |
-| ------------- | ------------------------- | ---------------------------- | -------------- |
-| `Dest Height` | Distance from bottom (mm) | Dispensing at specific depth | `1`, `2.5`     |
-| `Dest Top`    | Distance from top (mm)    | Avoiding splashing           | `-3`, `-7.5`   |
-
-> **⚠️ Important:** Use EITHER `Source Height` OR `Source Top` - never both! Same for destination.
-
-### Optional Advanced Columns
-
-| Column Name     | Default | Description                             | Example Values             |
-| --------------- | ------- | --------------------------------------- | -------------------------- |
-| `Mix Volume`    | `0`     | Volume to mix after dispense (µL)       | `20`, `50`                 |
-| `Mix Height`    | `2.0`   | Mixing height from bottom (mm)          | `1.5`, `3.0`               |
-| `Flow Aspirate` | `1.0`   | Aspiration speed multiplier             | `0.5` (slow), `1.5` (fast) |
-| `Flow Dispense` | `1.0`   | Dispense speed multiplier               | `0.8` (slow), `2.0` (fast) |
-| `Air Gap`       | `0`     | Air gap volume to prevent dripping (µL) | `5`, `10`, `20`            |
-| `Air Gap Rate`  | `1.0`   | Air gap aspiration speed                | `0.5`, `1.0`               |
-| `Tip Action`    | `auto`  | Override tip management                 | `new`, `keep`, `drop`      |
-
-### CSV Examples
-
-#### Example 1: Basic Transfer (Minimal Columns)
-
-| Source Labware        | Source Well | Volume (ul) | Dest Labware   | Dest Well | Source Height | Dest Top |
-| --------------------- | ----------- | ----------- | -------------- | --------- | ------------- | -------- |
-| tube_rack_96_1500ul_4 | A1          | 100         | 384_ppv_55ul_2 | B1        | 2             | -5       |
-| tube_rack_96_1500ul_4 | A2          | 50          | 384_ppv_55ul_2 | B2        | 2             | -5       |
-| tube_rack_96_1500ul_4 | A3          | 75          | 384_ppv_55ul_2 | B3        | 2             | -5       |
-
-**What this does:**
-- Transfers from tube rack to 384-well plate
-- Aspirates 2mm from bottom of source tubes
-- Dispenses 5mm below top of destination wells
-- Uses default flow rates and no mixing
-
-#### Example 2: Advanced Transfer (All Features)
-
-| Source Labware        | Source Well | Volume (ul) | Dest Labware   | Dest Well | Source Height | Dest Top | Mix Volume | Flow Aspirate | Flow Dispense | Air Gap | Tip Action |
-| --------------------- | ----------- | ----------- | -------------- | --------- | ------------- | -------- | ---------- | ------------- | ------------- | ------- | ---------- |
-| tube_rack_96_1500ul_4 | A1          | 30          | 384_ppv_55ul_2 | B1        | 2             | -5       | 0          | 1             | 1             | 20      | keep       |
-| tube_rack_96_1500ul_4 | A2          | 30          | 384_ppv_55ul_2 | B2        | 2             | -5       | 0          | 0.5           | 1.2           | 20      | keep       |
-| tube_rack_96_1500ul_4 | A3          | 30          | 384_ppv_55ul_2 | B3        | 3             | -8       | 20         | 1             | 1             | 20      | new        |
-
-**What this does:**
-- Row 1: Standard transfer with 20µL air gap, keep tip
-- Row 2: Slow aspiration (0.5x), fast dispense (1.2x), keep tip
-- Row 3: Aspirate 3mm from bottom, mix 20µL after dispense, get new tip
-
-#### Example 3: Multi-Channel Mode
-
-| Source Labware        | Source Well | Volume (ul) | Dest Labware   | Dest Well | Source Height | Dest Top | Air Gap | Tip Action |
-| --------------------- | ----------- | ----------- | -------------- | --------- | ------------- | -------- | ------- | ---------- |
-| tube_rack_96_1500ul_4 | A1          | 30          | 384_ppv_55ul_2 | A1        | 5             | -2       | 30      | keep       |
-| tube_rack_96_1500ul_4 | A2          | 30          | 384_ppv_55ul_2 | B1        | 5             | -2       | 30      | keep       |
-
-**What this does:**
-- In multi-channel mode, transfers entire columns at once
-- `A1` means column 1 (wells A1-H1)
-- Each row transfers 8 samples simultaneously
-
-### Labware Naming in CSV
-
-The `Source Labware` and `Dest Labware` columns use this pattern:
-
-```
-{labware_id}_{instance_number}
-```
-
-**Examples:**
-- `tube_rack_96_1500ul_4` → The labware defined in `labware_dict.toml` with ID `tube_rack_96_1500ul`, instance at deck slot **4**
-- `384_ppv_55ul_2` → The labware with ID `384_ppv_55ul`, instance at deck slot **2**
-
-The instance number **must match the `position_rack` in settings.toml**!
-
-#### Understanding Labware API Names
-
-The labware IDs you use (like `tube_rack_96_1500ul` or `384_ppv_55ul`) come from **JSON definition files** stored on the shared network location:
-
-```
-\\158.194.103.28\domling\Instrument_OT-2\labware_json_V2
-```
-
-**How labware names are determined:**
-- Each labware is defined by a JSON file in this directory
-- The **filename (without the .json extension)** is the labware API name
-- For example: `tube_rack_96_1500ul.json` → API name is `tube_rack_96_1500ul`
-- This API name is what you use in `labware_dict.toml` and reference in CSV files
-
-**Important note about labware definitions:**
-
-For the OT-2 machine to recognize custom labware, these JSON files must be loaded into the main Opentrons application. This is a **one-time setup task** performed by system administrators. Once labware is properly loaded, regular users don't need to worry about this step - the machine will have access to all defined labware automatically.
-
-For regular protocol operation, you simply need to ensure that:
-1. The labware you want to use has a JSON file in the network location (`\\158.194.103.28\domling\Instrument_OT-2\labware_json_V2`)
-2. It has been loaded into the Opentrons app (done once by admin)
-3. You define it in `labware_dict.toml`
-4. You reference it correctly in your CSV files
-
-### CSV File Constraints and Rules
-
-✅ **Do's:**
-- Use column headers exactly as shown (case-sensitive!)
-- Ensure all required columns are present
-- Use decimal points for fractional volumes: `50.5` not `50,5`
-- Keep well names uppercase: `A1` not `a1`
-- Include all transfers in order of execution
-
-❌ **Don'ts:**
-- Don't use both `Source Height` and `Source Top` for the same transfer
-- Don't reference labware not defined in `labware_dict.toml`
-- Don't use instance numbers not configured in `settings.toml`
-- Don't exceed pipette volume ranges
-- Don't use commas in numbers (use `1000` not `1,000`)
-- Don't leave empty rows in the middle of your CSV
-
-#### Why Height Consistency Matters for Labware
-
-When working with the same type of labware throughout your protocol, it's strongly recommended to use **consistent height values** for all transfers involving that labware. Here's why:
-
-**Physical consistency:** All wells in the same labware have identical geometry. If well A1 in your tube rack requires aspirating at 2mm from the bottom to avoid drawing air, then well A2, A3, B1, etc. will have the same optimal height. The liquid level might vary slightly between wells, but the safe aspiration height relative to the well bottom remains constant for that labware type.
-
-**Avoiding errors:** Using different heights for the same labware type often indicates either:
-- An inconsistency in your protocol design
-- Uncertainty about the correct height (which should be tested and standardized)
-- A mistake in data entry
-
-**Exception - varying liquid volumes:** The main exception is when you're working with significantly different liquid volumes in the same labware. For example, if some source tubes have 1500µL and others have only 200µL, you might use `Source Top` with different negative offsets to account for different meniscus levels. However, even in this case, using a single safe height that works for all volumes is usually preferable.
-
-**Best practice:** Test your labware with water to find the optimal aspiration/dispense heights, then use those same values consistently throughout your CSV. Document these standard heights for each labware type for future protocols. This approach:
-- Reduces errors from typos or inconsistencies
-- Makes your CSV easier to review and validate
-- Ensures reproducible pipetting across all wells
-- Simplifies troubleshooting when issues occur
-
----
-
 ## Configuring settings.toml
 
 The `settings.toml` file controls **how the robot operates** and **where labware is placed**.
@@ -386,6 +191,19 @@ The `settings.toml` file controls **how the robot operates** and **where labware
 [settings.liquid_handling]      # Advanced liquid handling parameters
 [[settings.working_plate]]      # Deck layout (one entry per labware)
 ```
+
+> **⚠️ IMPORTANT NOTE ABOUT LIQUID HANDLING PRESETS**
+>
+> The `settings.toml` file contains a section called `[settings.liquid_handling.presets]` with various preset configurations (standard, viscous, slippery, etc.). **These presets are NOT currently active features.** They exist in the configuration file for documentation purposes only and are not automatically applied by the system.
+>
+> The liquid handling parameters that ARE active and control robot behavior are:
+> - `[settings.liquid_handling.pre_aspirate_contact]`
+> - `[settings.liquid_handling.post_aspirate_wick]`
+> - `[settings.liquid_handling.delays]`
+> - `[settings.liquid_handling.push_out]`
+> - `[settings.liquid_handling.mixing]`
+>
+> You must manually edit these active sections to configure liquid handling behavior for your protocol.
 
 ### General Settings (Change These Often)
 
@@ -413,6 +231,30 @@ starting_tip_well = "H1"        # Starting tip for multi_X1 mode
 | `"multi"`     | 8-channel pipette, all 8 tips | Full column transfers (8 wells at once)    |
 
 > **💡 Tip:** Use `"multi_X1"` when you have an 8-channel pipette but want to cherry-pick individual wells!
+
+#### Starting Tip Well Configuration
+
+```toml
+starting_tip_well = "H1"        # Starting tip for multi_X1 mode
+```
+
+**What it does:** Specifies which tip position on the 8-channel pipette to use when operating in `multi_X1` mode.
+
+**Understanding tip positions from the pipette's perspective:**
+- An 8-channel pipette has 8 tips arranged vertically: positions A, B, C, D, E, F, G, H
+- **`A1`** = FIRST tip (position 1, topmost)
+- **`H1`** = LAST tip (position 8, bottommost)
+
+**Valid values:** Only `"A1"` or `"H1"` make sense due to the physical geometry of the pipette and tip rack:
+- `"H1"` (recommended): Uses the last/bottom tip - easier to see and access
+- `"A1"`: Uses the first/top tip
+
+**When this setting matters:**
+- **`multi_X1` mode:** This setting determines which single tip is used for all transfers
+- **`single_X1` mode:** Ignored (single-channel pipette has only 1 tip)
+- **`multi` mode:** Ignored (all 8 tips are used simultaneously)
+
+> **💡 Note:** The code will simply ignore this setting in `single_X1` and `multi` modes, so you don't need to change it when switching between modes.
 
 ### Head Speed Configuration
 
@@ -685,17 +527,6 @@ well_volume = 1500
 
 Labware calibration offsets are **three-dimensional position adjustments** that fine-tune where the pipette moves relative to each labware. This is one of the most important settings in the system.
 
-```toml
-[[labware]]
-category = "plate"
-labware_id = "384_ppv_55ul"
-well_count = 384
-well_volume = 55
-offset_x = -0.50        # Move 0.5mm to the left
-offset_y = 0.80         # Move 0.8mm toward back
-offset_z = -0.30        # Move 0.3mm down
-```
-
 **Coordinate System:**
 - **X-axis**: Negative = left, Positive = right
 - **Y-axis**: Negative = front, Positive = back
@@ -716,40 +547,65 @@ These tiny misalignments (often less than 1mm) cause the pipette to miss well ce
 - Incomplete aspiration from wells
 - Cross-contamination between adjacent wells
 
-#### The Two Methods for Calibration
+#### ⚠️ CRITICAL: Offsets are Position-Dependent
 
-You have **two mutually exclusive options** for providing calibration offsets:
+**Important discovery:** Calibration offsets depend on **BOTH the labware type AND the deck slot position**. The same labware placed in different deck slots may require different calibration offsets due to:
+- Deck slot manufacturing variations
+- Uneven deck surface
+- Mechanical tolerances in different deck positions
 
-**Method 1: Define Offsets in labware_dict.toml (Recommended)**
+This means:
+- Slot 1 might need `offset_x = -0.3` for a specific plate
+- Slot 2 might need `offset_x = +0.2` for the SAME plate type
 
-Add `offset_x`, `offset_y`, `offset_z` values to each labware definition. These offsets:
-- Apply automatically to all instances of that labware type
-- Are embedded in the protocol file
-- Don't require operator intervention during protocol setup
-- Work consistently across multiple protocol runs
-- Are version-controlled with your TOML configuration
+#### How to Calibrate: The Recommended Method
 
-**Method 2: Calibrate Through Opentrons App During Protocol Setup**
+**Recommended: Use Opentrons App Labware Position Check**
 
-If offsets are NOT provided in the TOML file, the operator must:
+The best way to handle calibration is through the Opentrons App during protocol setup:
+
 1. Load the protocol in the Opentrons App
 2. Run **Labware Position Check** for each labware piece during setup
 3. Manually jog the pipette to the correct position for each labware
 4. Save the calibration offsets interactively
-
-#### How the Opentrons System Stores Calibration Data
 
 When you perform Labware Position Check in the Opentrons App, the software:
 
 1. **Saves offset data on the robot** - Offsets are stored in the robot's internal database
 2. **Associates offsets with specific conditions** - Each offset is tied to:
    - Specific labware definition (labware type/ID)
-   - Specific deck slot position
+   - **Specific deck slot position** (this is key!)
    - Specific robot (offsets from one OT-2 don't transfer to another)
 3. **Reuses offsets across protocols** - Starting with Opentrons software v6.0.0+, the robot can apply previously saved offsets automatically if you're using:
    - The same labware type
    - In the same deck slot
    - On the same robot
+
+This method ensures each labware instance gets the correct calibration for its specific position.
+
+#### Alternative: Define Offsets in labware_dict.toml (⚠️ USE WITH CAUTION)
+
+While technically possible, defining offsets in `labware_dict.toml` is **NOT recommended** because:
+
+```toml
+[[labware]]
+category = "plate"
+labware_id = "384_ppv_55ul"
+well_count = 384
+well_volume = 55
+offset_x = -0.50        # Move 0.5mm to the left
+offset_y = 0.80         # Move 0.8mm toward back
+offset_z = -0.30        # Move 0.3mm down
+```
+
+**The danger:** These offsets apply to **ALL instances** of that labware type, regardless of deck position. If you have the same labware in multiple slots, they all get the same offset, which may be incorrect for some positions.
+
+**When this might be acceptable:**
+- You only use one instance of each labware type per protocol
+- You've verified the offset works for all positions you use
+- You need embedded offsets for automation purposes
+
+**For most users:** Skip offsets in `labware_dict.toml` and rely on the Opentrons App's position-aware calibration system instead.
 
 ### Adding New Labware
 
@@ -798,15 +654,255 @@ position_rack = "4"
 
 ---
 
+## Creating Your Transfer CSV Files
+
+CSV files define **what the robot should do** - which samples to move, how much, and where.
+
+Now that you've configured your deck layout in `settings.toml` and defined your labware in `labware_dict.toml`, you're ready to create the CSV file that specifies your liquid transfers.
+
+### Understanding Pipette Modes and CSV Structure
+
+Before creating CSV files, you need to understand that **CSV structure depends on your pipette mode** (configured in `settings.toml`):
+
+**Single-Channel Mode** (`mode = "single_X1"`):
+- Uses a 1-channel pipette
+- Each CSV row = 1 individual transfer
+- Transfers happen one well at a time
+- Maximum flexibility for cherry-picking
+
+**Multi-Channel Single-Tip Mode** (`mode = "multi_X1"`):
+- Uses an 8-channel pipette with only 1 tip active
+- Each CSV row = 1 individual transfer
+- Useful when you have multi-channel hardware but need single-well precision
+- Transfers happen one well at a time
+
+**Multi-Channel Full Mode** (`mode = "multi"`):
+- Uses an 8-channel pipette with all 8 tips active
+- Each CSV row = 8 simultaneous transfers (entire column)
+- When you specify well `A1`, it transfers the entire column (A1-H1)
+- Only works with 96-well and 384-well plates
+
+> **💡 Key Point:** For `multi` mode, your CSV looks the same, but each row automatically transfers 8 wells at once. The well name in the CSV always refers to the row A position of the column you want to transfer.
+
+### Required Columns (Always Include These)
+
+| Column Name      | Description                    | Example Values          |
+| ---------------- | ------------------------------ | ----------------------- |
+| `Source Labware` | Name of source container       | `tube_rack_96_1500ul_4` |
+| `Source Well`    | Source well position           | `A1`, `H12`             |
+| `Volume (ul)`    | Transfer volume in microliters | `50`, `100.5`           |
+| `Dest Labware`   | Name of destination container  | `384_ppv_55ul_2`        |
+| `Dest Well`      | Destination well position      | `B1`, `P24`             |
+
+### Position Columns (Choose ONE for Source, ONE for Destination)
+
+**For Source Position:**
+
+| Column Name     | Description               | When to Use                 | Example Values      |
+| --------------- | ------------------------- | --------------------------- | ------------------- |
+| `Source Height` | Distance from bottom (mm) | When you know liquid depth  | `2`, `5.5`, `10`    |
+| `Source Top`    | Distance from top (mm)    | When avoiding foam/meniscus | `-5`, `-2.0`, `-10` |
+
+**For Destination Position:**
+
+| Column Name   | Description               | When to Use                  | Example Values |
+| ------------- | ------------------------- | ---------------------------- | -------------- |
+| `Dest Height` | Distance from bottom (mm) | Dispensing at specific depth | `1`, `2.5`     |
+| `Dest Top`    | Distance from top (mm)    | Avoiding splashing           | `-3`, `-7.5`   |
+
+> **⚠️ Important:** Use EITHER `Source Height` OR `Source Top` - never both! Same for destination.
+
+### Optional Advanced Columns
+
+| Column Name     | Default | Description                             | Example Values             |
+| --------------- | ------- | --------------------------------------- | -------------------------- |
+| `Mix Volume`    | `0`     | Volume to mix after dispense (µL)       | `20`, `50`                 |
+| `Mix Height`    | `2.0`   | Mixing height from bottom (mm)          | `1.5`, `3.0`               |
+| `Flow Aspirate` | `1.0`   | Aspiration speed multiplier             | `0.5` (slow), `1.5` (fast) |
+| `Flow Dispense` | `1.0`   | Dispense speed multiplier               | `0.8` (slow), `2.0` (fast) |
+| `Air Gap`       | `0`     | Air gap volume to prevent dripping (µL) | `5`, `10`, `20`            |
+| `Air Gap Rate`  | `1.0`   | Air gap aspiration speed                | `0.5`, `1.0`               |
+| `Tip Action`    | `auto`  | Override tip management                 | `new`, `keep`, `drop`      |
+
+### CSV Examples
+
+#### Example 1: Basic Transfer (Minimal Columns)
+
+| Source Labware        | Source Well | Volume (ul) | Dest Labware   | Dest Well | Source Height | Dest Top |
+| --------------------- | ----------- | ----------- | -------------- | --------- | ------------- | -------- |
+| tube_rack_96_1500ul_4 | A1          | 100         | 384_ppv_55ul_2 | B1        | 2             | -5       |
+| tube_rack_96_1500ul_4 | A2          | 50          | 384_ppv_55ul_2 | B2        | 2             | -5       |
+| tube_rack_96_1500ul_4 | A3          | 75          | 384_ppv_55ul_2 | B3        | 2             | -5       |
+
+**What this does:**
+- Transfers from tube rack to 384-well plate
+- Aspirates 2mm from bottom of source tubes
+- Dispenses 5mm below top of destination wells
+- Uses default flow rates and no mixing
+
+#### Example 2: Advanced Transfer (All Features)
+
+| Source Labware        | Source Well | Volume (ul) | Dest Labware   | Dest Well | Source Height | Dest Top | Mix Volume | Flow Aspirate | Flow Dispense | Air Gap | Tip Action |
+| --------------------- | ----------- | ----------- | -------------- | --------- | ------------- | -------- | ---------- | ------------- | ------------- | ------- | ---------- |
+| tube_rack_96_1500ul_4 | A1          | 30          | 384_ppv_55ul_2 | B1        | 2             | -5       | 0          | 1             | 1             | 20      | keep       |
+| tube_rack_96_1500ul_4 | A2          | 30          | 384_ppv_55ul_2 | B2        | 2             | -5       | 0          | 0.5           | 1.2           | 20      | keep       |
+| tube_rack_96_1500ul_4 | A3          | 30          | 384_ppv_55ul_2 | B3        | 3             | -8       | 20         | 1             | 1             | 20      | new        |
+
+**What this does:**
+- Row 1: Standard transfer with 20µL air gap, keep tip
+- Row 2: Slow aspiration (0.5x), fast dispense (1.2x), keep tip
+- Row 3: Aspirate 3mm from bottom, mix 20µL after dispense, get new tip
+
+#### Example 3: Multi-Channel Mode
+
+| Source Labware        | Source Well | Volume (ul) | Dest Labware   | Dest Well | Source Height | Dest Top | Air Gap | Tip Action |
+| --------------------- | ----------- | ----------- | -------------- | --------- | ------------- | -------- | ------- | ---------- |
+| tube_rack_96_1500ul_4 | A1          | 30          | 384_ppv_55ul_2 | A1        | 5             | -2       | 30      | keep       |
+| tube_rack_96_1500ul_4 | A2          | 30          | 384_ppv_55ul_2 | B1        | 5             | -2       | 30      | keep       |
+
+**What this does:**
+- In multi-channel mode, transfers entire columns at once
+- `A1` means column 1 (wells A1-H1)
+- Each row transfers 8 samples simultaneously
+
+### Labware Naming in CSV
+
+The `Source Labware` and `Dest Labware` columns use this pattern:
+
+```
+{labware_id}_{instance_number}
+```
+
+**Examples:**
+- `tube_rack_96_1500ul_4` → The labware defined in `labware_dict.toml` with ID `tube_rack_96_1500ul`, instance at deck slot **4**
+- `384_ppv_55ul_2` → The labware with ID `384_ppv_55ul`, instance at deck slot **2**
+
+The instance number **must match the `position_rack` in settings.toml**!
+
+#### Understanding Labware API Names
+
+The labware IDs you use (like `tube_rack_96_1500ul` or `384_ppv_55ul`) come from **JSON definition files** stored on the shared network location:
+
+```
+\\158.194.103.28\domling\Instrument_OT-2\labware_json_V2
+```
+
+**How labware names are determined:**
+- Each labware is defined by a JSON file in this directory
+- The **filename (without the .json extension)** is the labware API name
+- For example: `tube_rack_96_1500ul.json` → API name is `tube_rack_96_1500ul`
+- This API name is what you use in `labware_dict.toml` and reference in CSV files
+
+**Important note about labware definitions:**
+
+For the OT-2 machine to recognize custom labware, these JSON files must be loaded into the main Opentrons application. This is a **one-time setup task** performed by system administrators. Once labware is properly loaded, regular users don't need to worry about this step - the machine will have access to all defined labware automatically.
+
+For regular protocol operation, you simply need to ensure that:
+1. The labware you want to use has a JSON file in the network location (`\\158.194.103.28\domling\Instrument_OT-2\labware_json_V2`)
+2. It has been loaded into the Opentrons app (done once by admin)
+3. You define it in `labware_dict.toml`
+4. You reference it correctly in your CSV files
+
+### CSV File Constraints and Rules
+
+✅ **Do's:**
+- Use column headers exactly as shown (case-sensitive!)
+- Ensure all required columns are present
+- Use decimal points for fractional volumes: `50.5` not `50,5`
+- Keep well names uppercase: `A1` not `a1`
+- Include all transfers in order of execution
+
+❌ **Don'ts:**
+- Don't use both `Source Height` and `Source Top` for the same transfer
+- Don't reference labware not defined in `labware_dict.toml`
+- Don't use instance numbers not configured in `settings.toml`
+- Don't exceed pipette volume ranges
+- Don't use commas in numbers (use `1000` not `1,000`)
+- Don't leave empty rows in the middle of your CSV
+
+#### Why Height Consistency Matters for Labware
+
+When working with the same type of labware throughout your protocol, it's strongly recommended to use **consistent height values** for all transfers involving that labware. Here's why:
+
+**Physical consistency:** All wells in the same labware have identical geometry. If well A1 in your tube rack requires aspirating at 2mm from the bottom to avoid drawing air, then well A2, A3, B1, etc. will have the same optimal height. The liquid level might vary slightly between wells, but the safe aspiration height relative to the well bottom remains constant for that labware type.
+
+**Avoiding errors:** Using different heights for the same labware type often indicates either:
+- An inconsistency in your protocol design
+- Uncertainty about the correct height (which should be tested and standardized)
+- A mistake in data entry
+
+**Exception - varying liquid volumes:** The main exception is when you're working with significantly different liquid volumes in the same labware. For example, if some source tubes have 1500µL and others have only 200µL, you might use `Source Top` with different negative offsets to account for different meniscus levels. However, even in this case, using a single safe height that works for all volumes is usually preferable.
+
+**Best practice:** Test your labware with water to find the optimal aspiration/dispense heights, then use those same values consistently throughout your CSV. Document these standard heights for each labware type for future protocols. This approach:
+- Reduces errors from typos or inconsistencies
+- Makes your CSV easier to review and validate
+- Ensures reproducible pipetting across all wells
+- Simplifies troubleshooting when issues occur
+
+---
+
 ## Running the Simulation Script
+
+Now that you've configured your settings, labware, and created your CSV file, you're ready to run the protocol simulation!
 
 The `simulate_protocol.sh` script is your **main control center**. It does everything automatically:
 
-1. Reads TOML and CSV files
-2. Runs `helper_cherry_pick.py` to generate embedded JSON
-3. Updates `CherryPick_OT2.py` with new configuration
-4. Simulates the protocol
-5. Copies result to clipboard if successful
+1. Reads your CSV file, `settings.toml`, and `labware_dict.toml`
+2. Runs `helper_cherry_pick.py` to convert everything into JSON format
+3. Embeds the JSON configuration into `CherryPick_OT2.py`
+4. Simulates the protocol using the Opentrons API to check for errors
+5. If successful, copies the ready-to-run protocol to your clipboard
+
+### Running Your First Protocol
+
+**Step 1: Open Terminal in Your Project Directory**
+
+1. In Windows File Explorer, navigate to your project directory (where you copied the files)
+2. Right-click inside the folder → Select **"Open in Terminal"**
+3. Type `wsl` and press Enter
+
+**Step 2: Run the Simulation**
+
+The core command is `simulate_protocol.sh` followed by the path to your CSV file:
+
+```bash
+./simulate_protocol.sh CSVs/example_basic.csv
+```
+
+**Understanding the Command:**
+- `./simulate_protocol.sh` - The main simulation script
+- `CSVs/example_basic.csv` - Path to your CSV transfer file
+- You can use any CSV file in the `CSVs/` directory or create your own
+
+**Step 3: Check the Simulation Output**
+
+You should see output like:
+```
+=== Step 1: Updating protocol with helper ===
+Loading labware definitions...
+Loading settings...
+Loading CSV data...
+
+=== Step 2: Running protocol simulation ===
+Loading labware at slots...
+Picking up tip...
+Transferring...
+
+✓ Simulation successful!
+✓ Protocol copied to clipboard
+```
+
+**Success Indicators:**
+- ✓ No error messages
+- ✓ All transfers listed correctly
+- ✓ "Simulation successful" message
+- ✓ Protocol copied to clipboard
+
+**If You See Errors:**
+- Read the error messages carefully
+- Common issues: missing labware, wrong well names, volume out of range
+- Check your CSV file and TOML configuration files
+- See the Troubleshooting section below for solutions
 
 ### Basic Usage
 
@@ -851,7 +947,7 @@ MACHINE_CONFIG="local"
 - `"local"` - Your development machine
 - `"remote"` - The OT-2 control PC
 
-Each configuration sets four key variables:
+Each configuration sets two key variables:
 
 #### 1. LABWARE_PATH_WIN
 **Windows-style path** to custom labware JSON files:
@@ -886,17 +982,7 @@ C:\Users\{username}\AppData\Roaming\Opentrons\protocols\{UUID}\src
 - `{UUID}` - Unique identifier generated by Opentrons App for each protocol
 - `\src` - Subdirectory containing the actual Python protocol file
 
-#### 3. ENV_EXE
-Path to your conda/mamba executable (in WSL format):
-```bash
-export ENV_EXE="/home/hitesit/mambaforge/bin/conda"
-```
-
-#### 4. ENV_NAME
-Name of your conda environment:
-```bash
-export ENV_NAME="cheminf_3_11"
-```
+**Note:** With the UV-based setup, the script automatically uses the local `.venv/` environment created by `uv sync`, so no additional environment configuration is needed.
 
 ### How to Configure TARGET_PROTOCOL_SRC_WIN for --send-to-opentrons
 
@@ -945,8 +1031,6 @@ setup_environment() {
             # Configure Windows paths - will be auto-converted to WSL format
             LABWARE_PATH_WIN="C:\Users\ricca\AppData\Roaming\Opentrons\labware"
             TARGET_PROTOCOL_SRC_WIN="C:\Users\ricca\AppData\Roaming\Opentrons\protocols\YOUR-UUID-HERE\src"
-            export ENV_EXE="/home/hitesit/mambaforge/bin/conda"
-            export ENV_NAME="cheminf_3_11"
             ;;
 ```
 
@@ -1144,12 +1228,13 @@ Then:
 > *[Author: Please add common WSL issues and solutions:]*
 > - Command not found errors
 > - Permission denied errors
-> - Conda environment activation failures
-> - Path translation issues
+> - UV sync failures or missing packages
+> - Path translation issues (Windows ↔ WSL)
 > - File not found despite correct path
 > - Clipboard copy failures
 > - Slow WSL performance
 > - Network/connectivity issues
+> - `uv sync` taking too long or timing out
 
 ---
 

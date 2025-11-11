@@ -106,7 +106,7 @@ tube_rack_96_1500ul_4,A2,30,384_ppv_55ul_2,B2,2,-2,20
 tip_reuse = "never"
 mode = "single_X1"
 
-# Use viscous preset
+# Manual configuration for viscous liquids
 [settings.liquid_handling.pre_aspirate_contact]
 enabled = true
 position_offset_percent = 20
