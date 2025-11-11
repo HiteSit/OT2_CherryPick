@@ -598,14 +598,29 @@ offset_y = 0.80         # Move 0.8mm toward back
 offset_z = -0.30        # Move 0.3mm down
 ```
 
-**The danger:** These offsets apply to **ALL instances** of that labware type, regardless of deck position. If you have the same labware in multiple slots, they all get the same offset, which may be incorrect for some positions.
+**The dangers:**
+
+1. **Position-independent:** These offsets apply to **ALL instances** of that labware type, regardless of deck position. If you have the same labware in multiple slots, they all get the same offset, which may be incorrect for some positions.
+
+2. **⚠️ CRITICAL: TOML offsets always override machine calibration**
+   - **The TOML file always takes precedence** over any calibration you do on the machine
+   - If offsets are defined in `labware_dict.toml`, the protocol embeds them and uses them unconditionally
+   - **You cannot override these offsets** by running Labware Position Check in the Opentrons App
+   - The machine will ignore its saved calibration data and use the TOML values instead
+   - This means **if the TOML offset is wrong, you're stuck with it** until you edit the file and regenerate the protocol
+
+**Why this is dangerous:**
+- You might calibrate perfectly on the machine, but the protocol will still use the wrong TOML offset
+- Troubleshooting becomes difficult because machine calibration appears to have no effect
+- Users may waste time recalibrating when the real problem is the hardcoded TOML value
 
 **When this might be acceptable:**
 - You only use one instance of each labware type per protocol
 - You've verified the offset works for all positions you use
 - You need embedded offsets for automation purposes
+- You understand that this disables manual calibration overrides
 
-**For most users:** Skip offsets in `labware_dict.toml` and rely on the Opentrons App's position-aware calibration system instead.
+**For most users:** Skip offsets in `labware_dict.toml` and rely on the Opentrons App's position-aware calibration system instead. This keeps control where it belongs - with the machine operator who can see and adjust positioning in real-time.
 
 ### Adding New Labware
 
@@ -1131,167 +1146,9 @@ Then:
 
 ## Troubleshooting
 
-### Common Simulation Errors
-
-#### Error: "No such file or directory: CSVs/your_file.csv"
-**Cause:** CSV file not found
-**Fix:** Check filename spelling and path
-
-#### Error: "Labware 'unknown_labware' not found"
-**Cause:** CSV references labware not in `labware_dict.toml`
-**Fix:** Add labware definition or fix CSV reference
-
-#### Error: "Slot X is already occupied"
-**Cause:** Two labware assigned to same deck slot
-**Fix:** Change `position_rack` in `settings.toml`
-
-#### Error: "Volume 500 exceeds pipette maximum 300"
-**Cause:** Transfer volume too large for pipette
-**Fix:** Reduce volume or use larger pipette
-
-#### Error: "Well 'Z99' does not exist"
-**Cause:** Invalid well name in CSV
-**Fix:** Check well names match labware format (A1-H12 for 96-well)
-
-### Protocol Simulation Fails
-
-#### Error: "KeyError: 'Source Height'"
-**Cause:** CSV missing required height column
-**Fix:** Add either `Source Height` or `Source Top` column to CSV
-
-#### Error: "Both 'Source Height' and 'Source Top' specified"
-**Cause:** CSV has both height columns for same transfer
-**Fix:** Remove one of the columns, keep only one
-
-#### Error: "Labware 'tube_rack_96_1500ul_4' not found in settings"
-**Cause:** CSV references instance not defined in `settings.toml`
-**Fix:** Add `[[settings.working_plate]]` entry with `position_rack = "4"`
-
-#### Error: "Invalid well name 'I1' for 96-well plate"
-**Cause:** Well name exceeds plate dimensions (96-well is A-H, not A-I)
-**Fix:** Check CSV well names match plate type
-
-### CSV Validation Errors
-
-#### Error: "Volume exceeds pipette range"
-**Cause:** Transfer volume outside pipette min/max
-**Fix:**
-- Check pipette `volume_range` in `labware_dict.toml`
-- Adjust CSV volumes to fit range
-- Use different pipette if needed
-
-#### Error: "Mix volume exceeds transfer volume"
-**Cause:** Trying to mix more than you dispensed
-**Fix:** Set `Mix Volume` ≤ `Volume (ul)`
-
-### TOML Syntax Errors
-
-#### Error: "Expected '=' after key"
-**Cause:** TOML syntax error (missing `=`, wrong quotes, etc.)
-**Fix:**
-- Check for matching quotes: `"string"`
-- Ensure `=` between key and value
-- Use `[[double brackets]]` for array entries
-- Use `[single brackets]` for tables
-
-#### Error: "Duplicate key"
-**Cause:** Same key defined twice in same section
-**Fix:** Remove duplicate or merge into single entry
-
-### Runtime Issues on OT-2
-
-#### Robot moves to wrong position
-**Cause:** Labware not calibrated or offsets needed
-**Fix:**
-1. Run Labware Position Check in Opentrons App
-2. Calibrate labware
-3. Or add offsets to `labware_dict.toml`
-
-#### Pipette crashes into labware
-**Cause:** Height values incorrect
-**Fix:**
-- Use `Source Top` with negative values instead of `Source Height`
-- Reduce heights in CSV
-- Check labware definition is correct
-
-#### Tip pickup fails
-**Cause:** Tip rack not properly calibrated
-**Fix:**
-1. Calibrate tip rack in Opentrons App
-2. Check `position_rack` slot is correct
-3. Ensure tip rack is firmly seated
-
-### WSL and Environment Issues
-
-> **📝 PLACEHOLDER: WSL Troubleshooting**
+> **📝 PLACEHOLDER: Troubleshooting Section**
 >
-> *[Author: Please add common WSL issues and solutions:]*
-> - Command not found errors
-> - Permission denied errors
-> - UV sync failures or missing packages
-> - Path translation issues (Windows ↔ WSL)
-> - File not found despite correct path
-> - Clipboard copy failures
-> - Slow WSL performance
-> - Network/connectivity issues
-> - `uv sync` taking too long or timing out
-
----
-
-## Quick Reference Card
-
-### File Change Frequency
-
-| File                | Change Frequency         | Purpose                      |
-| ------------------- | ------------------------ | ---------------------------- |
-| `CSVs/*.csv`        | 🟢 Every run              | Define transfers             |
-| `settings.toml`     | 🟢 Often                  | Deck layout, liquid handling |
-| `labware_dict.toml` | 🟡 Rarely                 | Labware catalog              |
-| `CherryPick_OT2.py` | 🔵 Never (auto-generated) | Final protocol               |
-
-### Essential Commands
-
-```bash
-# Simulate protocol
-./simulate_protocol.sh CSVs/your_file.csv
-
-# Simulate and transfer to OT-2
-./simulate_protocol.sh CSVs/your_file.csv --send-to-opentrons
-
-# Navigate to project (from WSL)
-cd /mnt/d/Amadteus_Main/OpenTron/cherrypick
-
-# Edit files (use your favorite editor)
-nano CSVs/my_protocol.csv
-nano settings.toml
-```
-
-### CSV Required Columns
-
-```csv
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top
-```
-
-### Deck Slot Numbers
-
-```
- 10  11  [Trash]
-  7   8   9
-  4   5   6
-  1   2   3
-```
-
-### Pipette Modes
-
-- `"single_X1"` → 1 tip, 1 transfer
-- `"multi_X1"` → 1 tip from 8-channel
-- `"multi"` → 8 tips, 8 transfers
-
-### Tip Reuse Options
-
-- `"always"` → 1 tip for all
-- `"never"` → New tip each time
-- `"per_source"` → New tip per source plate
+> This section will be populated with common error messages and solutions as users encounter issues during protocol development and execution.
 
 ---
 
@@ -1313,13 +1170,3 @@ For more detailed information and practical examples, please refer to:
   - Simulation verification
   - Transfer to OT-2 machine
   - Troubleshooting tips
-
----
-
-## Document Version
-
-**Version:** 1.0
-**Last Updated:** 2025-10-03
-**Author:** CherryPick Development Team
-
-For questions, issues, or contributions, please refer to the project repository.
