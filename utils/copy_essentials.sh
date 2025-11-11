@@ -17,6 +17,7 @@ ITEMS_TO_COPY=(
     "pyproject.toml"
     "src/ot2_cherrypick_mcp/core/protocol_generator.py"
     "src/"
+    "OT2_UserGuide/"
 )
 
 echo "=== OpenTrons Cherry-Pick File Copy Tool ==="
