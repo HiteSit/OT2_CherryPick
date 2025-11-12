@@ -643,40 +643,67 @@ All available labware definitions are stored in the **shared network directory**
 
 **This is your source of truth for all labware.** Do not search online - all labware that can be used with your OT-2 system is in this directory.
 
-**Step 1: Find the labware in the network directory**
+**Step 1: Find the labware JSON file in the network directory**
 - Open the network location: `\\158.194.103.28\domling\Instrument_OT-2\labware_json_V2`
 - Browse the JSON files to find your labware
-- The filename (without `.json`) is the labware API name
-- For example: `tube_rack_96_1500ul.json` → Use `tube_rack_96_1500ul`
+- The filename (without `.json`) is the **labware API name** (important for later steps)
+- For example: `tube_rack_96_1500ul.json` → API name is `tube_rack_96_1500ul`
 
-**Step 2: Add to labware_dict.toml**
+**Step 2: Import the JSON file into Opentrons App (⚠️ CRITICAL STEP)**
+
+**This step is mandatory** - the OT-2 robot cannot use labware that hasn't been imported into the Opentrons App.
+
+1. Open the Opentrons App on Windows
+2. Navigate to **Labware** section in the left sidebar
+3. Click the **Import** button in the top-right corner
+4. Browse to the network location: `\\158.194.103.28\domling\Instrument_OT-2\labware_json_V2`
+5. Select the labware JSON file(s) you need
+6. Click **Open** to import
+
+![Opentrons App Import Button](figures/opentrons_import_labware.png)
+
+**Important notes:**
+- This is a **one-time setup per labware type** on each OT-2 computer
+- Once imported, the labware is available for all protocols on that machine
+- If you switch to a different OT-2 computer, you must import the labware again
+- The imported labware is stored in: `C:\Users\{Username}\AppData\Roaming\Opentrons\labware`
+
+**Step 3: Add to labware_dict.toml**
+
+Now that the labware is imported into the Opentrons App, define it in your protocol configuration:
+
 ```toml
 [[labware]]
 category = "tube_rack"
-labware_id = "tube_rack_96_1500ul"
+labware_id = "tube_rack_96_1500ul"    # Must match JSON filename (without .json)
 well_count = 96
 well_volume = 1500
-# Add calibration offsets if needed
+# Add calibration offsets if needed (see calibration section above)
 # offset_x = 0.0
 # offset_y = 0.0
 # offset_z = 0.0
 ```
 
-**Step 3: Use in settings.toml**
+**Step 4: Use in settings.toml**
+
+Configure where this labware will be placed on the deck:
+
 ```toml
 [[settings.working_plate]]
 type = "source"
-labware_id = "tube_rack_96_1500ul"
+labware_id = "tube_rack_96_1500ul"    # References the labware_id from labware_dict.toml
 position_rack = "4"
 ```
 
-**Step 4: Reference in CSV**
+**Step 5: Reference in CSV**
+
+Use the naming convention `{labware_id}_{position_rack}`:
 
 | Source Labware        | Source Well | Volume (ul) | ... |
 | --------------------- | ----------- | ----------- | --- |
 | tube_rack_96_1500ul_4 | A1          | 100         | ... |
 
-**Important:** If the labware you need is not in the network directory, contact your system administrator. New labware definitions must be added to the shared directory and loaded into the Opentrons App before they can be used.
+**⚠️ Common Mistake:** Editing `labware_dict.toml` alone is NOT enough. The labware JSON file MUST be imported into the Opentrons App (Step 2) or the robot will show an error: "Labware definition not found."
 
 ---
 

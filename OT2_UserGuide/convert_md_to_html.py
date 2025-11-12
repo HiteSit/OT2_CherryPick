@@ -2,6 +2,7 @@
 """
 Convert all Markdown files in the docs directory to HTML.
 Creates HTML files with the same basename as the source .md files.
+Embeds images as base64 data URIs for self-contained HTML files.
 
 Requires: markdown library
 Install with: pip install markdown
@@ -11,6 +12,71 @@ import os
 import sys
 from pathlib import Path
 import markdown
+import base64
+import mimetypes
+import re
+
+
+def embed_images_as_base64(html_content, base_dir):
+    """
+    Find all image references in HTML and replace with base64 data URIs.
+
+    Args:
+        html_content: HTML string with image tags
+        base_dir: Directory containing the HTML file (for resolving relative paths)
+
+    Returns:
+        HTML string with embedded base64 images
+    """
+    # Find all <img> tags with src attribute
+    img_pattern = r'<img\s+([^>]*?)src=["\']([^"\']+)["\']([^>]*?)>'
+
+    def replace_image(match):
+        before_src = match.group(1)
+        img_path = match.group(2)
+        after_src = match.group(3)
+
+        # Skip if already a data URI
+        if img_path.startswith('data:'):
+            return match.group(0)
+
+        # Skip absolute URLs
+        if img_path.startswith(('http://', 'https://')):
+            return match.group(0)
+
+        # Resolve relative path
+        full_img_path = base_dir / img_path
+
+        if not full_img_path.exists():
+            print(f"    ⚠️  Warning: Image not found: {img_path}")
+            return match.group(0)
+
+        try:
+            # Read image file
+            with open(full_img_path, 'rb') as img_file:
+                img_data = img_file.read()
+
+            # Encode to base64
+            img_base64 = base64.b64encode(img_data).decode('utf-8')
+
+            # Determine MIME type
+            mime_type, _ = mimetypes.guess_type(full_img_path)
+            if not mime_type:
+                mime_type = 'image/png'  # Default fallback
+
+            # Create data URI
+            data_uri = f"data:{mime_type};base64,{img_base64}"
+
+            print(f"    ✓ Embedded image: {img_path} ({len(img_data)} bytes)")
+
+            # Return modified img tag
+            return f'<img {before_src}src="{data_uri}"{after_src}>'
+
+        except Exception as e:
+            print(f"    ⚠️  Error embedding {img_path}: {e}")
+            return match.group(0)
+
+    return re.sub(img_pattern, replace_image, html_content)
 
 
 def convert_md_to_html(md_file_path):
@@ -32,6 +98,10 @@ def convert_md_to_html(md_file_path):
         md_content,
         extensions=['tables', 'fenced_code', 'codehilite', 'toc']
     )
+
+    # Embed images as base64 data URIs
+    base_dir = md_file_path.parent
+    html_content = embed_images_as_base64(html_content, base_dir)
 
     # Create a complete HTML document with styling
     full_html = f"""<!DOCTYPE html>
@@ -130,6 +200,14 @@ def convert_md_to_html(md_file_path):
             border: none;
             border-top: 2px solid #e0e0e0;
             margin: 30px 0;
+        }}
+        img {{
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 4px;
         }}
     </style>
     <script type="module">
