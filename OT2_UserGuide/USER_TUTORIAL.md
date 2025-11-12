@@ -165,18 +165,7 @@ The `settings.toml` file controls **how the robot operates** and **where labware
 [[settings.working_plate]]      # Deck layout (one entry per labware)
 ```
 
-> **⚠️ IMPORTANT NOTE ABOUT LIQUID HANDLING PRESETS**
->
-> The `settings.toml` file contains a section called `[settings.liquid_handling.presets]` with various preset configurations (standard, viscous, slippery, etc.). **These presets are NOT currently active features.** They exist in the configuration file for documentation purposes only and are not automatically applied by the system.
->
-> The liquid handling parameters that ARE active and control robot behavior are:
-> - `[settings.liquid_handling.pre_aspirate_contact]`
-> - `[settings.liquid_handling.post_aspirate_wick]`
-> - `[settings.liquid_handling.delays]`
-> - `[settings.liquid_handling.push_out]`
-> - `[settings.liquid_handling.mixing]`
->
-> You must manually edit these active sections to configure liquid handling behavior for your protocol.
+**💡 Liquid Handling Presets:** The `settings.toml` file includes a `[settings.liquid_handling.presets]` section with example configurations (standard, viscous, slippery, etc.). These are reference templates only—manually copy values to the active sections (`pre_aspirate_contact`, `post_aspirate_wick`, `delays`, `push_out`, `mixing`) to use them.
 
 ### General Settings (Change These Often)
 
@@ -428,6 +417,65 @@ position_rack = "5"
 In your CSV, reference these as:
 - `tube_rack_96_1500ul_1` (slot 1)
 - `tube_rack_96_1500ul_4` (slot 4)
+
+### Heater-Shaker Module (Optional Advanced Feature)
+
+The heater-shaker module provides temperature control (37-95°C) and orbital shaking (200-3000 RPM) during protocol execution for maintaining reaction conditions.
+
+**⚠️ CRITICAL SAFETY REQUIREMENT:**
+**If the heater-shaker module is physically present on the deck, it MUST be declared in settings.toml even if you're not using it for heating/shaking.** The robot needs to know the module occupies that deck slot to avoid collision. Set both `target_temperature = 0` and `target_shake_speed = 0` to keep it inactive.
+
+**Key characteristics:**
+- **Background-only operation**: Labware on module CANNOT be referenced in CSV files (latch stays closed, no pipette access)
+- **Use cases**: Maintaining samples at temperature, continuous mixing during transfers
+- **Timing**: Shaking initialization blocks ~5-10 seconds; temperature ramps in background (non-blocking)
+
+#### Configuration Fields
+
+```toml
+[[settings.working_plate]]
+type = "module"
+module_type = "heaterShaker"
+position_rack = "7"                  # Deck slot (1,3,4,6,7,10 recommended)
+adapter_id = "opentrons_96_flat_bottom_adapter"
+labware_id = "nest_96_wellplate_200ul_flat"
+target_temperature = 37              # 0 = disabled, 37-95 = active (°C)
+target_shake_speed = 300             # 0 = disabled, 200-3000 = active (RPM)
+persist_after_protocol = true        # Keep running after protocol ends?
+```
+
+**⚠️ Important:** Both `target_temperature` and `target_shake_speed` MUST be explicitly set. Even to disable, write `= 0`.
+
+#### Common Configurations
+
+**Heating + shaking (persistent):**
+```toml
+target_temperature = 37
+target_shake_speed = 300
+persist_after_protocol = true
+```
+
+**Heating only:**
+```toml
+target_temperature = 42
+target_shake_speed = 0               # Must explicitly disable
+persist_after_protocol = false
+```
+
+**Shaking only:**
+```toml
+target_temperature = 0               # Must explicitly disable
+target_shake_speed = 500
+persist_after_protocol = true
+```
+
+**Module physically present but inactive (REQUIRED for collision avoidance):**
+```toml
+target_temperature = 0               # No heating
+target_shake_speed = 0               # No shaking
+persist_after_protocol = false       # Nothing to deactivate
+```
+**Use case:** Module is installed on deck—even if not using temperature/shaking, it MUST be declared so robot knows the slot is occupied.
 
 ---
 

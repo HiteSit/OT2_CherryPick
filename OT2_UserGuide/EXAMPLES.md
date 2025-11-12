@@ -13,6 +13,7 @@
 5. [Use Case 5: Variable Volume Cherry-Picking](#use-case-5-variable-volume-cherry-picking)
 6. [Use Case 6: Cell Suspension / Bead Resuspension](#use-case-6-cell-suspension--bead-resuspension)
 7. [Use Case 7: Large Volume Transfers (Automatic Splitting)](#use-case-7-large-volume-transfers-automatic-splitting)
+8. [Use Case 8: Temperature-Controlled Transfer with Heater-Shaker](#use-case-8-temperature-controlled-transfer-with-heater-shaker)
 
 ---
 
@@ -304,6 +305,64 @@ If you add `Air Gap = 20` to the CSV:
 - Transfer 1 (1500µL): Split into [750µL, 750µL] to stay within 980µL effective max
 
 **Note:** The splitting algorithm is automatic - just specify the desired volume in CSV. The system handles chunking based on pipette limits.
+
+---
+
+## Use Case 8: Temperature-Controlled Transfer with Heater-Shaker
+
+**Scenario:** Transfer samples while maintaining a separate plate at 37°C with gentle shaking on heater-shaker module.
+
+**settings.toml:**
+```toml
+[settings.general]
+tip_reuse = "always"
+mode = "single_X1"
+
+# Heater-shaker module maintains reaction plate at 37°C during transfers
+[[settings.working_plate]]
+type = "module"
+module_type = "heaterShaker"
+position_rack = "7"
+adapter_id = "opentrons_96_flat_bottom_adapter"
+labware_id = "nest_96_wellplate_200ul_flat"
+target_temperature = 37
+target_shake_speed = 300
+persist_after_protocol = true       # Keep running after protocol completes
+
+[[settings.working_plate]]
+type = "source"
+labware_id = "tube_rack_96_1500ul"
+position_rack = "4"
+
+[[settings.working_plate]]
+type = "destination"
+labware_id = "384_ppv_55ul"
+position_rack = "2"
+
+[[settings.working_plate]]
+type = "tip"
+labware_id = "opentrons_96_tiprack_300ul"
+connection = "Pipette_8"
+position_rack = "5"
+```
+
+**CSV:**
+```csv
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top
+tube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-2
+tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-2
+```
+
+**What happens:**
+1. Heater-shaker module initializes in slot 7 (~5-10 second startup)
+2. Temperature ramps to 37°C in background (non-blocking)
+3. Shaking starts at 300 RPM
+4. Transfers execute normally (pipette cannot access heater-shaker labware)
+5. Protocol ends, heater-shaker continues running (persist = true)
+
+**Note:** The plate on the heater-shaker is NOT referenced in the CSV—it operates in background only for environmental control.
+
+**⚠️ Safety reminder:** If the heater-shaker module is physically installed on your deck, it MUST be declared in settings.toml even if you're not using it for a specific protocol (set both temperature and shake speed to 0). This prevents collision—the robot needs to know the slot is occupied.
 
 ---
 
