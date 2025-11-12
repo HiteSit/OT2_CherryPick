@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EXAMPLES</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: #f8f8f2;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+            padding: 10px 20px;
+            background-color: #f0f7fb;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 5px 0;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+    </style>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <div class="content">
+<h1 id="cherrypick-ot-2-protocol-examples">CherryPick OT-2 Protocol Examples</h1>
+<p><strong>Common Use Cases and Complete Protocol Examples</strong></p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#use-case-1-simple-cherry-picking-96-well-to-384-well">Use Case 1: Simple Cherry-Picking</a></li>
+<li><a href="#use-case-2-multiple-source-plates-with-mixing">Use Case 2: Multiple Source Plates with Mixing</a></li>
+<li><a href="#use-case-3-viscous-liquid-handling-dmso">Use Case 3: Viscous Liquid Handling</a></li>
+<li><a href="#use-case-4-multi-channel-column-transfers">Use Case 4: Multi-Channel Column Transfers</a></li>
+<li><a href="#use-case-5-variable-volume-cherry-picking">Use Case 5: Variable Volume Cherry-Picking</a></li>
+<li><a href="#use-case-6-cell-suspension--bead-resuspension">Use Case 6: Cell Suspension / Bead Resuspension</a></li>
+<li><a href="#use-case-7-large-volume-transfers-automatic-splitting">Use Case 7: Large Volume Transfers (Automatic Splitting)</a></li>
+<li><a href="#use-case-8-temperature-controlled-transfer-with-heater-shaker">Use Case 8: Temperature-Controlled Transfer with Heater-Shaker</a></li>
+</ol>
+<hr />
+<h2 id="use-case-1-simple-cherry-picking-96-well-to-384-well">Use Case 1: Simple Cherry-Picking (96-well to 384-well)</h2>
+<p><strong>Scenario:</strong> Transfer 50µL from 24 source tubes to specific wells in a 384-well plate.</p>
+<p><strong>settings.toml:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="k">[settings.general]</span>
+<span class="n">tip_reuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;per_source&quot;</span>
+<span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;single_X1&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;source&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tube_rack_96_1500ul&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;4&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;destination&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;384_ppv_55ul&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tip&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;opentrons_96_tiprack_300ul&quot;</span>
+<span class="n">connection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Pipette_8&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;5&quot;</span>
+</code></pre></div>
+
+<p><strong>CSV:</strong></p>
+<div class="codehilite"><pre><span></span><code>Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top
+tube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-5
+tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,B1,2,-5
+tube_rack_96_1500ul_4,A3,50,384_ppv_55ul_2,C1,2,-5
+...
+</code></pre></div>
+
+<p><strong>Run:</strong></p>
+<div class="codehilite"><pre><span></span><code>./simulate_protocol.sh<span class="w"> </span>CSVs/cherry_pick_24.csv
+</code></pre></div>
+
+<hr />
+<h2 id="use-case-2-multiple-source-plates-with-mixing">Use Case 2: Multiple Source Plates with Mixing</h2>
+<p><strong>Scenario:</strong> Transfer samples from 2 tube racks, mix after dispense.</p>
+<p><strong>settings.toml:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;source&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tube_rack_96_1500ul&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;source&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tube_rack_96_1500ul&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;4&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;destination&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;384_ppv_55ul&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tip&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;opentrons_96_tiprack_300ul&quot;</span>
+<span class="n">connection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Pipette_8&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;5&quot;</span>
+</code></pre></div>
+
+<p><strong>CSV:</strong></p>
+<div class="codehilite"><pre><span></span><code>Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mix Volume
+tube_rack_96_1500ul_1,A1,30,384_ppv_55ul_2,A1,2,-2,20
+tube_rack_96_1500ul_1,A2,30,384_ppv_55ul_2,A2,2,-2,20
+tube_rack_96_1500ul_4,A1,30,384_ppv_55ul_2,B1,2,-2,20
+tube_rack_96_1500ul_4,A2,30,384_ppv_55ul_2,B2,2,-2,20
+</code></pre></div>
+
+<hr />
+<h2 id="use-case-3-viscous-liquid-handling-dmso">Use Case 3: Viscous Liquid Handling (DMSO)</h2>
+<p><strong>Scenario:</strong> Transfer DMSO stock solutions with slow aspiration and push-out.</p>
+<p><strong>settings.toml:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="k">[settings.general]</span>
+<span class="n">tip_reuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;never&quot;</span>
+<span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;single_X1&quot;</span>
+
+<span class="c1"># Manual configuration for viscous liquids</span>
+<span class="k">[settings.liquid_handling.pre_aspirate_contact]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">position_offset_percent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span>
+<span class="n">aspirate_volume</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+
+<span class="k">[settings.liquid_handling.post_aspirate_wick]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">radius</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.8</span>
+<span class="n">v_offset_mm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">-1.5</span>
+<span class="n">speed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span>
+
+<span class="k">[settings.liquid_handling.delays]</span>
+<span class="n">post_aspirate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="w">                 </span><span class="c1"># Wait 2 seconds for liquid to settle</span>
+
+<span class="k">[settings.liquid_handling.push_out]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">volume_ul</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="w">                       </span><span class="c1"># Force out remaining liquid</span>
+</code></pre></div>
+
+<p><strong>CSV:</strong></p>
+<div class="codehilite"><pre><span></span><code>Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Top,Dest Top,Flow Aspirate,Flow Dispense
+tube_rack_96_1500ul_4,A1,10,384_ppv_55ul_2,A1,-2,-3,0.3,0.5
+tube_rack_96_1500ul_4,A2,10,384_ppv_55ul_2,A2,-2,-3,0.3,0.5
+</code></pre></div>
+
+<p><strong>Note:</strong> Slow flow rates (0.3, 0.5) prevent shearing viscous liquids.</p>
+<hr />
+<h2 id="use-case-4-multi-channel-column-transfers">Use Case 4: Multi-Channel Column Transfers</h2>
+<p><strong>Scenario:</strong> Transfer entire columns from one 96-well plate to another.</p>
+<p><strong>settings.toml:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="k">[settings.general]</span>
+<span class="n">tip_reuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;per_source&quot;</span>
+<span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;multi&quot;</span><span class="w">                      </span><span class="c1"># Full 8-channel mode</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;source&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;corning_96_wellplate_360ul_flat&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;destination&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;corning_96_wellplate_360ul_flat&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tip&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;opentrons_96_tiprack_300ul&quot;</span>
+<span class="n">connection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Pipette_8&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;5&quot;</span>
+</code></pre></div>
+
+<p><strong>CSV:</strong></p>
+<div class="codehilite"><pre><span></span><code>Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Height
+corning_96_wellplate_360ul_flat_1,A1,100,corning_96_wellplate_360ul_flat_2,A1,1,1
+corning_96_wellplate_360ul_flat_1,A2,100,corning_96_wellplate_360ul_flat_2,A2,1,1
+corning_96_wellplate_360ul_flat_1,A3,100,corning_96_wellplate_360ul_flat_2,A3,1,1
+</code></pre></div>
+
+<p><strong>Note:</strong> In <code>multi</code> mode, each row transfers 8 wells (A1-H1, A2-H2, etc.).</p>
+<hr />
+<h2 id="use-case-5-variable-volume-cherry-picking">Use Case 5: Variable Volume Cherry-Picking</h2>
+<p><strong>Scenario:</strong> Different volumes for each transfer, custom heights.</p>
+<p><strong>CSV:</strong></p>
+<div class="codehilite"><pre><span></span><code>Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Air Gap,Tip Action
+tube_rack_96_1500ul_4,A1,25,384_ppv_55ul_2,A1,3,-4,10,new
+tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,B1,5,-4,10,new
+tube_rack_96_1500ul_4,A3,75,384_ppv_55ul_2,C1,7,-4,10,new
+tube_rack_96_1500ul_4,A4,100,384_ppv_55ul_2,D1,10,-4,10,new
+</code></pre></div>
+
+<p><strong>Note:</strong> Source height increases with volume (more liquid = higher position).</p>
+<hr />
+<h2 id="use-case-6-cell-suspension-bead-resuspension">Use Case 6: Cell Suspension / Bead Resuspension</h2>
+<p><strong>Scenario:</strong> Transfer cell suspensions that settle quickly. Mix source wells before aspirating to ensure homogeneous samples.</p>
+<p><strong>settings.toml:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="k">[settings.general]</span>
+<span class="n">tip_reuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;never&quot;</span>
+<span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;single_X1&quot;</span>
+
+<span class="k">[settings.liquid_handling.mixing]</span>
+<span class="n">location</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;source&quot;</span><span class="w">              </span><span class="c1"># Mix BEFORE aspirating (not after dispense)</span>
+<span class="n">repetitions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="w">                  </span><span class="c1"># Thorough mixing for settled suspensions</span>
+<span class="n">source_remixing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;once&quot;</span><span class="w">         </span><span class="c1"># Mix each source well only once (faster)</span>
+
+<span class="k">[settings.liquid_handling.pre_aspirate_contact]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">position_offset_percent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span>
+<span class="n">aspirate_volume</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+
+<span class="k">[settings.liquid_handling.post_aspirate_wick]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">radius</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.8</span>
+<span class="n">v_offset_mm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">-1.5</span>
+<span class="n">speed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;source&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tube_rack_96_1500ul&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;destination&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;corning_96_wellplate_360ul_flat&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tip&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;opentrons_96_tiprack_300ul&quot;</span>
+<span class="n">connection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Pipette_8&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;5&quot;</span>
+</code></pre></div>
+
+<p><strong>CSV:</strong></p>
+<div class="codehilite"><pre><span></span><code>Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mix Volume,Mix Height
+tube_rack_96_1500ul_1,A1,100,corning_96_wellplate_360ul_flat_2,A1,5,-2,150,3
+tube_rack_96_1500ul_1,A1,100,corning_96_wellplate_360ul_flat_2,A2,5,-2,150,3
+tube_rack_96_1500ul_1,A2,100,corning_96_wellplate_360ul_flat_2,A3,5,-2,150,3
+tube_rack_96_1500ul_1,A2,100,corning_96_wellplate_360ul_flat_2,A4,5,-2,150,3
+</code></pre></div>
+
+<p><strong>What happens:</strong>
+1. Well A1 is mixed ONCE before first transfer (150µL, 5 times, at 3mm from bottom)
+2. First transfer: aspirate from A1 → dispense to dest A1
+3. Second transfer: aspirate from A1 again (NO remixing, source_remixing="once") → dispense to dest A2
+4. Well A2 is mixed ONCE before its first transfer
+5. Subsequent transfers from A2 proceed without remixing</p>
+<p><strong>Key setting:</strong> <code>location = "source"</code> moves mixing from destination (default) to source wells.</p>
+<hr />
+<h2 id="use-case-7-large-volume-transfers-automatic-splitting">Use Case 7: Large Volume Transfers (Automatic Splitting)</h2>
+<p><strong>Scenario:</strong> Transfer 1500µL using a pipette with 1000µL maximum capacity. The system automatically splits into multiple sub-transfers.</p>
+<p><strong>settings.toml:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="k">[settings.general]</span>
+<span class="n">tip_reuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;always&quot;</span>
+<span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;single_X1&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;source&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tube_rack_96_2000ul&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;destination&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tube_rack_96_2000ul&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;4&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tip&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tip_rack_geb_1000ul&quot;</span>
+<span class="n">connection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Pipette_1&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;5&quot;</span>
+</code></pre></div>
+
+<p><strong>CSV:</strong></p>
+<div class="codehilite"><pre><span></span><code>Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Height
+tube_rack_96_2000ul_1,A1,1500,tube_rack_96_2000ul_4,A1,5,2
+tube_rack_96_2000ul_1,A2,1800,tube_rack_96_2000ul_4,A2,8,2
+tube_rack_96_2000ul_1,A3,2500,tube_rack_96_2000ul_4,A3,12,2
+</code></pre></div>
+
+<p><strong>What happens automatically:</strong>
+- <strong>Transfer 1 (1500µL):</strong> Split into [1000µL, 500µL] - two sub-transfers
+- <strong>Transfer 2 (1800µL):</strong> Split into [900µL, 900µL] - smart redistribution (NOT [1000, 800] because 800 is too close to 1000, wastes aspiration cycles)
+- <strong>Transfer 3 (2500µL):</strong> Split into [833.3µL, 833.3µL, 833.3µL] - three even chunks</p>
+<p><strong>With air gap (20µL):</strong>
+If you add <code>Air Gap = 20</code> to the CSV:
+- Effective capacity becomes 1000 - 20 = 980µL per chunk
+- Transfer 1 (1500µL): Split into [750µL, 750µL] to stay within 980µL effective max</p>
+<p><strong>Note:</strong> The splitting algorithm is automatic - just specify the desired volume in CSV. The system handles chunking based on pipette limits.</p>
+<hr />
+<h2 id="use-case-8-temperature-controlled-transfer-with-heater-shaker">Use Case 8: Temperature-Controlled Transfer with Heater-Shaker</h2>
+<p><strong>Scenario:</strong> Transfer samples while maintaining a separate plate at 37°C with gentle shaking on heater-shaker module.</p>
+<p><strong>settings.toml:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="k">[settings.general]</span>
+<span class="n">tip_reuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;always&quot;</span>
+<span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;single_X1&quot;</span>
+
+<span class="c1"># Heater-shaker module maintains reaction plate at 37°C during transfers</span>
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;module&quot;</span>
+<span class="n">module_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;heaterShaker&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;7&quot;</span>
+<span class="n">adapter_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;opentrons_96_flat_bottom_adapter&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;nest_96_wellplate_200ul_flat&quot;</span>
+<span class="n">target_temperature</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">37</span>
+<span class="n">target_shake_speed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">300</span>
+<span class="n">persist_after_protocol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w">       </span><span class="c1"># Keep running after protocol completes</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;source&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tube_rack_96_1500ul&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;4&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;destination&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;384_ppv_55ul&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2&quot;</span>
+
+<span class="k">[[settings.working_plate]]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tip&quot;</span>
+<span class="n">labware_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;opentrons_96_tiprack_300ul&quot;</span>
+<span class="n">connection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Pipette_8&quot;</span>
+<span class="n">position_rack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;5&quot;</span>
+</code></pre></div>
+
+<p><strong>CSV:</strong></p>
+<div class="codehilite"><pre><span></span><code>Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top
+tube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-2
+tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-2
+</code></pre></div>
+
+<p><strong>What happens:</strong>
+1. Heater-shaker module initializes in slot 7 (~5-10 second startup)
+2. Temperature ramps to 37°C in background (non-blocking)
+3. Shaking starts at 300 RPM
+4. Transfers execute normally (pipette cannot access heater-shaker labware)
+5. Protocol ends, heater-shaker continues running (persist = true)</p>
+<p><strong>Note:</strong> The plate on the heater-shaker is NOT referenced in the CSV—it operates in background only for environmental control.</p>
+<p><strong>⚠️ Safety reminder:</strong> If the heater-shaker module is physically installed on your deck, it MUST be declared in settings.toml even if you're not using it for a specific protocol (set both temperature and shake speed to 0). This prevents collision—the robot needs to know the slot is occupied.</p>
+<hr />
+<p><strong><a href="USER_TUTORIAL.md">← Back to Main Tutorial</a></strong> | <strong><a href="APPENDIX.md">See Complete Workflow Example →</a></strong></p>
+    </div>
+</body>
+</html>
