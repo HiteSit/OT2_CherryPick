@@ -23,7 +23,10 @@ dependencies = [
     "mcp>=1.8.0",
     "mols2grid>=2.0.0",
     "jupyterlab>=4.4.9",
-    "pytest>=8.4.2,<9"
+    "pytest>=8.4.2,<9",
+    "fastapi>=0.121.1",
+    "uvicorn>=0.38.0",
+    "markdown>=3.10",
 ]
 
 [project.scripts]
