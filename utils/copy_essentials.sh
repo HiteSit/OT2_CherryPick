@@ -17,7 +17,7 @@ ITEMS_TO_COPY=(
     "pyproject.toml"
     "simulate_protocol.sh"
     "src/ot2_cherrypick_mcp/core/protocol_generator.py"
-    "src/"
+    "src/ot2_cherrypick_mcp"
     "guide/*.html"
 )
 
