@@ -18,7 +18,7 @@ ITEMS_TO_COPY=(
     "simulate_protocol.sh"
     "src/ot2_cherrypick_mcp/core/protocol_generator.py"
     "src/"
-    "OT2_UserGuide/*.html"
+    "guide/*.html"
 )
 
 echo "=== OpenTrons Cherry-Pick File Copy Tool ==="
