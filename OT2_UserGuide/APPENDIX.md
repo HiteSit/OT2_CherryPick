@@ -96,8 +96,10 @@ position_rack = "5"
 **Configuration explanation:**
 - **Mode**: `multi_X1` = Using 8-channel pipette with single tip for cherry-picking
 - **Tip reuse**: `always` = Use one tip for entire protocol
-- **Starting tip**: `H1` = Start from bottom-right corner of tip rack
+- **Starting tip**: `H1` = Use back tip (position 8). Works well for slot 4 (middle row) - either H1 or A1 would work here.
 - **Deck layout**: Source at slot 4, destination at slot 2, tips at slot 5
+
+> **💡 Note:** For front row slots (1-3), use H1; for back row slots (7-9), use A1. See USER_TUTORIAL.md for details on deck position constraints.
 
 ---
 
@@ -279,9 +281,3 @@ Protocol copied to clipboard ✓
 ---
 
 **[← Back to Main Tutorial](USER_TUTORIAL.md)** | **[See More Examples →](EXAMPLES.md)**
-
-## Document Version
-
-**Version:** 1.0
-**Last Updated:** 2025-10-03
-**Author:** CherryPick Development Team

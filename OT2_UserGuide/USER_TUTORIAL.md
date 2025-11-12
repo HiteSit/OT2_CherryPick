@@ -263,35 +263,36 @@ position_offset_percent = 20    # Safety margin (%)
 aspirate_volume = 0             # Pre-wet volume (µL)
 ```
 
-**What it does:** Before aspirating your target volume, the pipette can first touch the liquid surface and optionally perform a small aspirate-dispense cycle.
+**What it does:** Before aspirating your target volume, the pipette first touches the liquid surface and optionally performs a small aspirate-dispense cycle to prime the tip.
 
-**Scientific rationale:**
-- **Pre-wetting (aspirate_volume > 0):** Increases humidity inside the tip and coats the inner surface with liquid. This is critical for liquids with high surface tension or hydrophobic properties. The first aspiration into a dry tip is often less accurate due to evaporation and surface adhesion effects. Pre-wetting "primes" the tip by saturating the air cushion inside.
-- **Liquid contact (enabled = true, aspirate_volume = 0):** Simply touching the liquid surface helps the pipette detect the liquid level and ensures the tip is properly positioned before drawing liquid.
+**Rationale:** Priming the tip before the actual transfer improves accuracy and consistency, especially for the first aspiration into a dry tip.
+
+**Parameters explained:**
+- **enabled:** Turn pre-aspirate contact on/off
+- **position_offset_percent:** Safety margin for the contact position. The robot moves to a safer position than the CSV-specified aspiration height:
+  - For `Source Height` (bottom positioning): Adds 20% more height. Example: CSV specifies 2mm from bottom → contact at 2.4mm (20% higher, safer)
+  - For `Source Top` (top positioning): Moves 20% closer to top. Example: CSV specifies -5mm from top → contact at -4mm (20% less deep, safer)
+- **aspirate_volume:** Volume in µL to aspirate and dispense back for tip conditioning. Set to 0 for position touch only (no pre-wet)
 
 #### Post-Aspirate Tip Wicking
 
 ```toml
 [settings.liquid_handling.post_aspirate_wick]
 enabled = true                  # Remove droplets after aspiration?
-radius = 1                      # Touch radius (mm)
+radius = 1                      # Touch radius (fraction of well radius)
 v_offset_mm = -1.5              # Distance from top (mm)
 speed = 20                      # Touch speed (mm/s)
 ```
 
 **What it does:** After aspirating liquid, the pipette tip touches the inside wall of the well to remove any droplets hanging from the outside of the tip.
 
-**Scientific rationale:** External droplets on the tip can cause:
-- **Inaccurate volume delivery** - liquid not inside the tip won't be dispensed correctly
-- **Cross-contamination** - droplets can fall off during movement
-- **Dripping** - surface droplets may drip during transport
-
-The wicking motion is similar to how you'd touch a manual pipette tip to the well edge to remove excess liquid.
+**Rationale:** Removes external droplets that can cause inaccurate volume delivery, cross-contamination, or dripping during transport.
 
 **Parameters explained:**
-- **radius:** How far from center to touch (larger = closer to wall)
-- **v_offset_mm:** Height relative to well top (negative = below rim)
-- **speed:** How fast to perform the touch (slower = more gentle)
+- **enabled:** Turn tip wicking on/off
+- **radius:** How far from center to touch, as a fraction of the well radius (0.0 = center, 1.0 = wall edge). Default 0.8 touches near the wall without hitting it.
+- **v_offset_mm:** Height relative to well top in millimeters (negative = below rim). Default -1.5mm positions the touch point slightly below the well's top edge.
+- **speed:** Touch speed in mm/s. Default 20 mm/s provides gentle contact.
 
 #### Post-Aspirate Delays
 
@@ -300,52 +301,35 @@ The wicking motion is similar to how you'd touch a manual pipette tip to the wel
 post_aspirate = 0               # Wait time after aspiration (seconds)
 ```
 
-**What it does:** Pauses after aspirating liquid to allow the liquid column inside the tip to stabilize.
+**What it does:** Pauses after aspirating liquid to allow the liquid column inside the tip to stabilize before moving.
 
-**Scientific rationale:** When you aspirate liquid, especially viscous liquids, the liquid continues flowing into the tip for a brief moment after the plunger stops moving. This is due to:
-- **Viscous flow lag:** Thick liquids move slower and take time to stabilize
-- **Surface tension effects:** Liquid is "pulling itself" into the tip
-- **Air pressure equilibration:** Pressure inside the tip needs to stabilize
-
-Waiting 1-2 seconds ensures the full intended volume has been aspirated before the tip leaves the liquid.
+**Rationale:** Viscous liquids continue flowing into the tip briefly after the plunger stops. Waiting ensures the full intended volume has been aspirated and stabilized.
 
 **When to use:**
-- **Viscous liquids (glycerol, DMSO, high-concentration proteins):** Use 2-3 seconds
-- **Very small volumes (< 5µL):** Use 1 second to ensure complete aspiration
-- **High-accuracy requirements:** Even 0.5-1 second can improve reproducibility
-
-**Recommended values:**
-- Water/buffers: 0 seconds (default)
-- DMSO/glycerol: 2-3 seconds
-- Oils/very viscous: 3-5 seconds
+- **Viscous liquids:** DMSO, glycerol, oils (2-5 seconds)
+- **Very small volumes:** < 5µL transfers (1 second)
+- **Standard aqueous solutions:** 0 seconds (no delay needed)
 
 #### Push-Out Volume
 
 ```toml
 [settings.liquid_handling.push_out]
 enabled = true                  # Force out remaining liquid?
-volume_ul = 5                   # Extra volume to push (µL)
+volume_ul = 5                   # Extra air volume to push (µL)
 ```
 
-**What it does:** After dispensing the target volume, the pipette pushes out an additional fixed volume of air to expel any liquid remaining in the tip.
+**What it does:** After dispensing the target volume, the pipette pushes out an additional volume of air to expel any liquid remaining in the tip.
 
-**Scientific rationale:** This mimics the "second stop" on a manual pipette. Viscous liquids and small volumes tend to stick inside the tip rather than being fully dispensed. The push-out:
-- **Expels residual droplets** that cling to the tip interior
-- **Ensures complete delivery** of the intended volume
-- **Compensates for surface tension** holding liquid in the tip
+**Rationale:** Mimics the "second stop" on a manual pipette. Forces out residual droplets that cling to the tip interior, ensuring complete delivery of the intended volume.
 
-**Important:** Push-out is NOT used when mixing follows the dispense, as mixing already agitates the liquid sufficiently.
+**Parameters explained:**
+- **enabled:** Turn push-out on/off
+- **volume_ul:** Fixed air volume in µL to push after dispense. Default 5µL works for most applications. Range: 3-10µL (higher values risk splashing)
 
 **When to enable:**
-- **Viscous liquids** (DMSO, glycerol, concentrated solutions)
-- **Small volumes** where every microliter matters
-- **Dead-end dispenses** with no subsequent mixing
-- **Complete reagent delivery** is critical
-
-**Recommended volume settings:**
-- **3-5µL:** Good for most applications (default: 5µL)
-- **8-10µL:** Very viscous liquids or complete cleanout
-- Don't exceed 10µL unless necessary (can cause splashing)
+- Viscous liquids (DMSO, glycerol, oils)
+- Small volumes where every microliter matters
+- Complete reagent delivery is critical
 
 ### Deck Layout Configuration (Most Important!)
 
