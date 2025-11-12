@@ -153,15 +153,15 @@ mixing = { location = "source", repetitions = 5, source_remixing = "once" }  # M
 # Deck layout configuration - specify which labware goes in which slots
 # Labware calibration offsets are now defined in labware_dict.toml for each labware type
 
-# [[settings.working_plate]]
-# type = "module"
-# module_type = "heaterShaker"
-# position_rack = "10"
-# adapter_id = "opentrons_universal_flat_adapter"
-# labware_id = ""
-# target_temperature = 95              # 37°C (physiological temperature)
-# target_shake_speed = 2000            # 300 RPM (gentle mixing)
-# persist_after_protocol = true        # Keep running after protocol ends
+[[settings.working_plate]]
+type = "module"
+module_type = "heaterShaker"
+position_rack = "10"
+adapter_id = "opentrons_universal_flat_adapter"
+labware_id = ""
+target_temperature = 0
+target_shake_speed = 0
+persist_after_protocol = true        # Keep running after protocol ends
 
 [[settings.working_plate]]
 type = "reservoir"
