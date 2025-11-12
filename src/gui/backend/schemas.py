@@ -54,6 +54,10 @@ class ProtocolGenerationRequest(BaseModel):
     run_simulation: bool = Field(
         False, description="If true, run opentrons_simulate after generating the protocol"
     )
+    use_shell_runner: bool = Field(
+        False,
+        description="If true, execute simulate_protocol.sh (takes precedence over built-in simulation)",
+    )
     send_to_opentrons: bool = Field(
         False,
         description="If true, deploy the protocol to the provided target path after generation.",
@@ -69,7 +73,7 @@ class ProtocolGenerationRequest(BaseModel):
 
     @model_validator(mode="after")
     def _validate_target(cls, values: "ProtocolGenerationRequest") -> "ProtocolGenerationRequest":  # noqa: D417
-        if values.send_to_opentrons and not values.target_path:
+        if values.send_to_opentrons and not values.target_path and not values.use_shell_runner:
             raise ValueError("target_path is required when send_to_opentrons is true.")
         return values
 
@@ -82,6 +86,7 @@ class ProtocolGenerationResponse(BaseModel):
     generated: Dict[str, Any]
     simulation: Optional[Dict[str, Any]] = None
     deployment: Optional[Dict[str, Any]] = None
+    logs: List[str] = Field(default_factory=list)
 
 
 class CSVListResponse(BaseModel):

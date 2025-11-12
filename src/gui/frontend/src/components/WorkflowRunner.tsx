@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Alert, Button, Group, Loader, Select, Stack, Switch, Text, TextInput, Title } from '@mantine/core'
+import { Alert, Button, Group, Loader, Paper, Select, Stack, Switch, Text, Textarea, TextInput, Title } from '@mantine/core'
 import { IconAlertTriangle, IconCheck } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
 import { useCsvListQuery, useWorkflowRunner } from '../api/hooks'
@@ -29,6 +29,7 @@ export function WorkflowRunner() {
       {
         csv: selectedCsv,
         run_simulation: runSimulation,
+        use_shell_runner: runSimulation,
         send_to_opentrons: sendToOpentrons,
         target_path: sendToOpentrons ? targetPath : undefined,
         copy_to_clipboard: copyToClipboard,
@@ -103,29 +104,69 @@ export function WorkflowRunner() {
       </Button>
 
       {workflow.data && (
-        <Alert variant="light" color="teal" icon={<IconCheck size={16} />}>
-          <Stack gap="xs">
-            <Text>
-              Protocol saved to <Text span fw={700}>{workflow.data.generated.protocol_file}</Text>
-            </Text>
-            {workflow.data.deployment && workflow.data.deployment.copies.length > 0 && (
+        <Stack gap="md">
+          <Alert variant="light" color="teal" icon={<IconCheck size={16} />}>
+            <Stack gap="xs">
               <Text>
-                Deployed copies:
-                <br />
-                {workflow.data.deployment.copies.map((copy) => (
-                  <Text key={copy} size="sm">
-                    {copy}
-                  </Text>
-                ))}
+                Protocol saved to <Text span fw={700}>{workflow.data.generated.protocol_file}</Text>
               </Text>
-            )}
-            {workflow.data.simulation && (
-              <Text size="sm" c="dimmed">
-                Simulation status: {workflow.data.simulation.returncode === 0 ? 'Success' : 'Check logs'}
-              </Text>
-            )}
-          </Stack>
-        </Alert>
+              {workflow.data.deployment && workflow.data.deployment.copies.length > 0 && (
+                <Text>
+                  Deployed copies:
+                  <br />
+                  {workflow.data.deployment.copies.map((copy) => (
+                    <Text key={copy} size="sm">
+                      {copy}
+                    </Text>
+                  ))}
+                </Text>
+              )}
+            </Stack>
+          </Alert>
+
+          {workflow.data.simulation && (
+            <Paper withBorder radius="md" p="md">
+              <Stack gap="xs">
+                <Title order={5}>Simulation output</Title>
+                {workflow.data.simulation.stdout && (
+                  <Textarea
+                    label="stdout"
+                    value={workflow.data.simulation.stdout}
+                    minRows={6}
+                    readOnly
+                    styles={{ input: { fontFamily: 'monospace' } }}
+                  />
+                )}
+                {workflow.data.simulation.stderr && (
+                  <Textarea
+                    label="stderr"
+                    value={workflow.data.simulation.stderr}
+                    minRows={4}
+                    readOnly
+                    styles={{ input: { fontFamily: 'monospace' } }}
+                  />
+                )}
+                {workflow.data.simulation.success === false && workflow.data.simulation.error && (
+                  <Alert color="red" variant="light" icon={<IconAlertTriangle size={16} />}>
+                    {workflow.data.simulation.error}
+                  </Alert>
+                )}
+              </Stack>
+            </Paper>
+          )}
+
+          {!!workflow.data.logs?.length && (
+            <Paper withBorder radius="md" p="md">
+              <Title order={5}>Log</Title>
+              <Textarea
+                value={workflow.data.logs.join('\n')}
+                minRows={8}
+                readOnly
+                styles={{ input: { fontFamily: 'monospace' } }}
+              />
+            </Paper>
+          )}
+        </Stack>
       )}
 
       {workflow.isError && workflow.error && (

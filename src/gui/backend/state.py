@@ -4,8 +4,10 @@ File-backed configuration state manager for the GUI backend.
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
+import subprocess
 import tomllib
 from pathlib import Path
 from typing import Any, Iterable, List
@@ -15,7 +17,8 @@ from fastapi import HTTPException, status
 
 from ot2_cherrypick_mcp.core.deployment import deploy_protocol
 from ot2_cherrypick_mcp.core.protocol_generator import generate_protocol
-from ot2_cherrypick_mcp.core.simulation import simulate_protocol
+from ot2_cherrypick_mcp.core.simulation import DEFAULT_LOG_FILE, simulate_protocol
+from ot2_cherrypick_mcp.utils.errors import SimulationError
 from ot2_cherrypick_mcp.utils.paths import get_repo_root
 
 
@@ -31,7 +34,7 @@ class FileStateStore:
         if workspace_name is None:
             workspace_name = os.getenv("OT2_GUI_WORKSPACE", "gui_state")
         self.repo_root = get_repo_root()
-        self.workspace_dir = self.repo_root / "projects" / workspace_name
+        self.workspace_dir = self.repo_root / workspace_name
         self.workspace_dir.mkdir(parents=True, exist_ok=True)
 
         self.settings_path = self.workspace_dir / "settings.toml"
@@ -136,12 +139,23 @@ class FileStateStore:
     # Workflow helpers
     # ------------------------------------------------------------------ #
 
-    def run_generate_protocol(self, csv_path: Path | str, protocol_path: Path | str | None = None) -> dict[str, Any]:
+    def run_generate_protocol(
+        self,
+        csv_path: Path | str,
+        protocol_path: Path | str | None = None,
+    ) -> tuple[dict[str, Any], list[str]]:
         csv_file = Path(csv_path)
         if not csv_file.exists():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"CSV file missing: {csv_file}")
 
         protocol_file = Path(protocol_path) if protocol_path else self.protocol_output
+
+        log_lines = [
+            "=== Step 1: Updating protocol with helper ===",
+            f"Labware TOML: {self.labware_path}",
+            f"Settings TOML: {self.settings_path}",
+            f"CSV file: {csv_file}",
+        ]
 
         try:
             result = generate_protocol(
@@ -154,15 +168,53 @@ class FileStateStore:
         except Exception as exc:  # pragma: no cover - bubbled up to API
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
 
-        return result
+        log_lines.append("✓ Protocol generated successfully")
+        log_lines.append(f"Output: {result['protocol_file']}")
+        return result, log_lines
 
-    def run_simulation(self, protocol_path: Path | str | None = None) -> dict[str, Any]:
+    def run_simulation(
+        self,
+        protocol_path: Path | str | None = None,
+    ) -> tuple[dict[str, Any], list[str]]:
         protocol_file = Path(protocol_path) if protocol_path else self.protocol_output
+        log_lines = [
+            "=== Step 2: Running protocol simulation ===",
+            f"Protocol: {protocol_file}",
+        ]
         try:
             result = simulate_protocol(str(protocol_file))
-        except Exception as exc:  # pragma: no cover - bubbled up to API
+            result["success"] = True
+            stdout = (result.get("stdout") or "").strip()
+            stderr = (result.get("stderr") or "").strip()
+            if stdout:
+                log_lines.append("--- opentrons_simulate stdout ---")
+                log_lines.append(stdout)
+            if stderr:
+                log_lines.append("--- opentrons_simulate stderr ---")
+                log_lines.append(stderr)
+            log_lines.append("✓ Simulation completed successfully")
+            return result, log_lines
+        except SimulationError as exc:
+            payload = self._read_simulation_log()
+            stdout = payload.get("stdout", "")
+            stderr = payload.get("stderr", "")
+            result = {
+                "success": False,
+                "error": str(exc),
+                "stdout": stdout,
+                "stderr": stderr,
+                "returncode": payload.get("returncode"),
+            }
+            if stdout:
+                log_lines.append("--- opentrons_simulate stdout ---")
+                log_lines.append(stdout)
+            if stderr:
+                log_lines.append("--- opentrons_simulate stderr ---")
+                log_lines.append(stderr)
+            log_lines.append(f"✗ Simulation failed: {exc}")
+            return result, log_lines
+        except Exception as exc:  # pragma: no cover - defensive
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
-        return result
 
     def deploy_protocol(
         self,
@@ -170,8 +222,12 @@ class FileStateStore:
         *,
         target_path: Path | str | None = None,
         copy_to_clipboard: bool = False,
-    ) -> dict[str, Any]:
+    ) -> tuple[dict[str, Any], list[str]]:
         protocol_file = Path(protocol_path) if protocol_path else self.protocol_output
+        log_lines = [
+            "=== Step 3: Deployment ===",
+            f"Source protocol: {protocol_file}",
+        ]
         try:
             result = deploy_protocol(
                 str(protocol_file),
@@ -180,7 +236,52 @@ class FileStateStore:
             )
         except Exception as exc:  # pragma: no cover - bubbled up to API
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
-        return result
+        if result.get("copies"):
+            log_lines.append(f"Copied to: {', '.join(result['copies'])}")
+        if copy_to_clipboard:
+            if result.get("clipboard"):
+                log_lines.append("Clipboard updated.")
+            else:
+                log_lines.append("Clipboard update requested but returned no result.")
+        log_lines.append("✓ Deployment complete")
+        return result, log_lines
+
+    def run_shell_script(self, csv_path: Path, send_to_opentrons: bool) -> tuple[dict[str, Any], list[str]]:
+        command = ["bash", "simulate_protocol.sh", str(csv_path)]
+        if send_to_opentrons:
+            command.append("--send-to-opentrons")
+
+        backups = self._sync_repo_configs()
+        log_lines = ["=== simulate_protocol.sh ===", f"Command: {' '.join(command)}"]
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        finally:
+            self._restore_repo_configs(backups)
+
+        stdout = completed.stdout or ""
+        stderr = completed.stderr or ""
+        if stdout:
+            log_lines.append("--- stdout ---")
+            log_lines.extend(stdout.splitlines())
+        if stderr:
+            log_lines.append("--- stderr ---")
+            log_lines.extend(stderr.splitlines())
+        log_lines.append(f"Return code: {completed.returncode}")
+
+        result = {
+            "command": command,
+            "stdout": stdout,
+            "stderr": stderr,
+            "returncode": completed.returncode,
+            "success": completed.returncode == 0,
+        }
+        return result, log_lines
 
     # ------------------------------------------------------------------ #
     # Internal helpers
@@ -282,6 +383,37 @@ class FileStateStore:
                 detail="CSV name must be a simple filename ending with .csv",
             )
         return self.csv_dir / candidate.name
+
+    def _read_simulation_log(self) -> dict[str, Any]:
+        log_path = Path(DEFAULT_LOG_FILE)
+        if not log_path.is_absolute():
+            log_path = self.repo_root / log_path
+        if log_path.exists():
+            try:
+                return json.loads(log_path.read_text(encoding="utf-8"))
+            except Exception:  # pragma: no cover - best effort
+                return {}
+        return {}
+
+    def _sync_repo_configs(self) -> dict[str, str | None]:
+        backups: dict[str, str | None] = {}
+        for filename, workspace_path in (
+            ("settings.toml", self.settings_path),
+            ("labware_dict.toml", self.labware_path),
+        ):
+            dest = self.repo_root / filename
+            backups[filename] = dest.read_text(encoding="utf-8") if dest.exists() else None
+            shutil.copy2(workspace_path, dest)
+        return backups
+
+    def _restore_repo_configs(self, backups: dict[str, str | None]) -> None:
+        for filename, content in backups.items():
+            dest = self.repo_root / filename
+            if content is None:
+                if dest.exists():
+                    dest.unlink()
+            else:
+                dest.write_text(content, encoding="utf-8")
 
 
 __all__ = ["FileStateStore"]

@@ -85,9 +85,19 @@ export interface CsvUploadPayload {
 export interface WorkflowRequest {
   csv: string
   run_simulation?: boolean
+  use_shell_runner?: boolean
   send_to_opentrons?: boolean
   target_path?: string
   copy_to_clipboard?: boolean
+}
+
+export interface SimulationResult {
+  success?: boolean
+  stdout?: string
+  stderr?: string
+  returncode?: number
+  error?: string
+  command?: string[]
 }
 
 export interface WorkflowResponse {
@@ -96,14 +106,11 @@ export interface WorkflowResponse {
     json_size: number
     message: string
   }
-  simulation?: {
-    stdout: string
-    stderr: string
-    returncode: number
-  } | null
+  simulation?: SimulationResult | null
   deployment?: {
     protocol_file: string
     copies: string[]
     clipboard?: Record<string, unknown> | null
   } | null
+  logs: string[]
 }
