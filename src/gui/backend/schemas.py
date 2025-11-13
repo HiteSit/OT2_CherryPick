@@ -30,7 +30,6 @@ class CSVUploadPayload(BaseModel):
     """
     Payload for creating/updating CSV transfer maps inside the workspace.
     """
-
     name: str = Field(..., description="Filename ending with .csv")
     content: str = Field(..., description="Raw CSV content")
 
@@ -40,6 +39,13 @@ class CSVUploadPayload(BaseModel):
         if "/" in value or "\\" in value:
             raise ValueError("CSV name must not contain directory separators")
         return value
+
+
+class WorkingPlateEntryPayload(BaseModel):
+    type: str = Field(..., description="Type of entry (source/destination/reservoir/tip/module)")
+    labware_id: Optional[str] = Field(None, description="Labware identifier")
+    position_rack: Optional[str] = Field(None, description="Deck slot")
+    connection: Optional[str] = Field(None, description="Pipette connection or module link")
 
 
 class ProtocolGenerationRequest(BaseModel):
@@ -98,6 +104,7 @@ __all__ = [
     "CSVUploadPayload",
     "DocumentPayload",
     "PatchPayload",
+    "WorkingPlateEntryPayload",
     "ProtocolGenerationRequest",
     "ProtocolGenerationResponse",
 ]

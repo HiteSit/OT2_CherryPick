@@ -33,3 +33,22 @@ def test_labware_roundtrip(client):
     reset_response = client.post("/labware/reset")
     assert reset_response.status_code == 200
     assert reset_response.json()["labware"][0]["well_volume"] == original["labware"][0]["well_volume"]
+
+
+def test_add_and_remove_working_plate_entry(client):
+    add_payload = {
+        "type": "source",
+        "labware_id": "tube_rack_96_1500ul",
+        "position_rack": "5",
+        "connection": "Pipette_8",
+    }
+    add_response = client.post("/settings/working-plate", json=add_payload)
+    assert add_response.status_code == 200
+    entries = add_response.json()["settings"]["working_plate"]
+    assert entries[-1]["labware_id"] == "tube_rack_96_1500ul"
+
+    index = len(entries) - 1
+    delete_response = client.delete(f"/settings/working-plate/{index}")
+    assert delete_response.status_code == 200
+    updated = delete_response.json()["settings"]["working_plate"]
+    assert len(updated) == len(entries) - 1

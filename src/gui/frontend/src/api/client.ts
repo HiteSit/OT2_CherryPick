@@ -37,6 +37,21 @@ export const fetchRawSettings = async (): Promise<string> => {
   return data
 }
 
+export const addWorkingPlateEntry = async (payload: {
+  type: string
+  labware_id?: string
+  position_rack?: string
+  connection?: string
+}): Promise<SettingsDocument> => {
+  const { data } = await api.post<SettingsDocument>('/settings/working-plate', payload)
+  return data
+}
+
+export const deleteWorkingPlateEntry = async (index: number): Promise<SettingsDocument> => {
+  const { data } = await api.delete<SettingsDocument>(`/settings/working-plate/${index}`)
+  return data
+}
+
 export const fetchLabware = async (): Promise<LabwareDocument> => {
   const { data } = await api.get<LabwareDocument>('/labware')
   return data

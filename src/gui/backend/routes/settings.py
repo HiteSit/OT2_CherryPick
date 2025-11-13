@@ -4,11 +4,11 @@ Settings endpoints.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import PlainTextResponse
 
 from ..dependencies import get_state_store
-from ..schemas import DocumentPayload, PatchPayload
+from ..schemas import DocumentPayload, PatchPayload, WorkingPlateEntryPayload
 from ..state import FileStateStore
 
 router = APIRouter(prefix="/settings", tags=["settings"])
@@ -49,3 +49,23 @@ def reset_settings(store: FileStateStore = Depends(get_state_store)) -> dict[str
     """Restore the settings file from repository defaults."""
 
     return store.reset_settings()
+
+
+@router.post("/working-plate")
+def add_working_plate_entry(
+    payload: WorkingPlateEntryPayload,
+    store: FileStateStore = Depends(get_state_store),
+) -> dict[str, object]:
+    """Append a new working plate entry."""
+
+    return store.add_working_plate_entry(payload.model_dump(exclude_none=True))
+
+
+@router.delete("/working-plate/{index}")
+def remove_working_plate_entry(
+    index: int = Path(..., ge=0),
+    store: FileStateStore = Depends(get_state_store),
+) -> dict[str, object]:
+    """Remove a working plate entry by index."""
+
+    return store.remove_working_plate_entry(index)

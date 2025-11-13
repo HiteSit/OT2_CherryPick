@@ -17,7 +17,15 @@ import {
 import { notifications } from '@mantine/notifications'
 import { IconRefresh } from '@tabler/icons-react'
 import * as TOML from '@ltd/j-toml'
-import { useLabwareQuery, usePatchSetting, useRawSettingsQuery, useReplaceSettings, useSettingsQuery } from '../api/hooks'
+import {
+  useAddWorkingPlateEntry,
+  useDeleteWorkingPlateEntry,
+  useLabwareQuery,
+  usePatchSetting,
+  useRawSettingsQuery,
+  useReplaceSettings,
+  useSettingsQuery,
+} from '../api/hooks'
 import type { LabwareEntry } from '../api/types'
 import { SectionCard } from './SectionCard'
 import { WorkingPlateTable } from './WorkingPlateTable'
@@ -56,6 +64,8 @@ export function SettingsEditor() {
   const { options: labwareOptions } = useLabwareOptions()
   const patchMutation = usePatchSetting()
   const replaceMutation = useReplaceSettings()
+  const addWorkingPlateMutation = useAddWorkingPlateEntry()
+  const deleteWorkingPlateMutation = useDeleteWorkingPlateEntry()
   const [rawContent, setRawContent] = useState('')
 
   useEffect(() => {
@@ -94,6 +104,31 @@ export function SettingsEditor() {
         message: error instanceof Error ? error.message : 'Unable to parse TOML content.',
       })
     }
+  }
+
+  const handleAddWorkingPlate = () => {
+    const defaultLabware = labwareOptions[0]?.labware_id
+    addWorkingPlateMutation.mutate(
+      {
+        type: 'source',
+        labware_id: defaultLabware,
+        position_rack: '1',
+        connection: 'Pipette_8',
+      },
+      {
+        onSuccess: () => notifications.show({ color: 'teal', title: 'Working plate added', message: 'New entry appended.' }),
+        onError: (error: unknown) =>
+          notifications.show({ color: 'red', title: 'Unable to add entry', message: String(error) }),
+      },
+    )
+  }
+
+  const handleRemoveWorkingPlate = (index: number) => {
+    deleteWorkingPlateMutation.mutate(index, {
+      onSuccess: () => notifications.show({ color: 'teal', title: 'Removed', message: 'Working plate entry deleted.' }),
+      onError: (error: unknown) =>
+        notifications.show({ color: 'red', title: 'Unable to remove entry', message: String(error) }),
+    })
   }
 
   if (isLoading || !data) {
@@ -292,9 +327,30 @@ export function SettingsEditor() {
 
       <SectionCard
         title="Deck Layout"
-        description={<Text c="dimmed">Assign each working plate to a labware definition from your catalog.</Text>}
+        description={
+          <Grid align="center">
+            <Grid.Col span={{ base: 12, md: 8 }}>
+              <Text c="dimmed">Assign each working plate to a labware definition from your catalog.</Text>
+            </Grid.Col>
+            <Grid.Col span={{ base: 12, md: 4 }} style={{ textAlign: 'right' }}>
+              <Button
+                size="xs"
+                onClick={handleAddWorkingPlate}
+                loading={addWorkingPlateMutation.isPending}
+                disabled={!labwareOptions.length}
+              >
+                Add labware
+              </Button>
+            </Grid.Col>
+          </Grid>
+        }
       >
-        <WorkingPlateTable entries={workingPlate} labware={labwareOptions} onUpdate={handleWorkingPlateUpdate} />
+        <WorkingPlateTable
+          entries={workingPlate}
+          labware={labwareOptions}
+          onUpdate={handleWorkingPlateUpdate}
+          onRemove={(index) => handleRemoveWorkingPlate(index)}
+        />
       </SectionCard>
 
       <Paper withBorder radius="md" p="md">

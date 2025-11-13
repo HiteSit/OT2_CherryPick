@@ -1,10 +1,12 @@
-import { NumberInput, Select, Table, TextInput } from '@mantine/core'
+import { ActionIcon, NumberInput, Select, Table, TextInput, Tooltip } from '@mantine/core'
+import { IconTrash } from '@tabler/icons-react'
 import type { LabwareEntry, WorkingPlateEntry } from '../api/types'
 
 interface WorkingPlateTableProps {
   entries: WorkingPlateEntry[]
   labware: LabwareEntry[]
   onUpdate: (index: number, field: keyof WorkingPlateEntry, value: string) => void
+  onRemove?: (index: number) => void
 }
 
 const typeOptions = [
@@ -15,7 +17,7 @@ const typeOptions = [
   { value: 'module', label: 'Module' },
 ]
 
-export function WorkingPlateTable({ entries, labware, onUpdate }: WorkingPlateTableProps) {
+export function WorkingPlateTable({ entries, labware, onUpdate, onRemove }: WorkingPlateTableProps) {
   const labwareOptions = labware.map((lw) => ({
     value: lw.labware_id,
     label: `${lw.labware_id} (${lw.category})`,
@@ -29,6 +31,7 @@ export function WorkingPlateTable({ entries, labware, onUpdate }: WorkingPlateTa
           <Table.Th>Labware</Table.Th>
           <Table.Th>Deck Slot</Table.Th>
           <Table.Th>Connection</Table.Th>
+          <Table.Th style={{ width: 40 }} />
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
@@ -70,6 +73,15 @@ export function WorkingPlateTable({ entries, labware, onUpdate }: WorkingPlateTa
                 placeholder="Pipette"
                 onChange={(event) => onUpdate(index, 'connection', event.currentTarget.value)}
               />
+            </Table.Td>
+            <Table.Td>
+              {onRemove && (
+                <Tooltip label="Remove labware">
+                  <ActionIcon color="red" variant="light" onClick={() => onRemove(index)}>
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </Tooltip>
+              )}
             </Table.Td>
           </Table.Tr>
         ))}

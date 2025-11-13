@@ -2,11 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { PatchPayload } from './client'
 import {
   deleteCsv,
+  deleteWorkingPlateEntry,
   fetchCsvContent,
   fetchCsvList,
   fetchLabware,
   fetchRawSettings,
   fetchSettings,
+  addWorkingPlateEntry,
   patchSetting,
   replaceSettings,
   runWorkflow,
@@ -90,6 +92,26 @@ export const useDeleteCsv = () => {
     onSuccess: (_, name) => {
       queryClient.invalidateQueries({ queryKey: ['csvs'] })
       queryClient.removeQueries({ queryKey: ['csvs', name] })
+    },
+  })
+}
+
+export const useAddWorkingPlateEntry = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: addWorkingPlateEntry,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings'] })
+    },
+  })
+}
+
+export const useDeleteWorkingPlateEntry = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (index: number) => deleteWorkingPlateEntry(index),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings'] })
     },
   })
 }

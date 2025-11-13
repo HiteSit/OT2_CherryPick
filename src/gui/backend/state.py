@@ -65,6 +65,25 @@ class FileStateStore:
         self._write_doc(self.settings_path, doc)
         return self._doc_to_plain(doc)
 
+    def add_working_plate_entry(self, payload: dict[str, Any]) -> dict[str, Any]:
+        current = self.get_settings()
+        plates = current.setdefault("settings", {}).setdefault("working_plate", [])
+        if not isinstance(plates, list):
+            plates = []
+            current["settings"]["working_plate"] = plates
+        plates.append(payload)
+        return self.write_settings(current)
+
+    def remove_working_plate_entry(self, index: int) -> dict[str, Any]:
+        current = self.get_settings()
+        plate_list = current.get("settings", {}).get("working_plate")
+        if not isinstance(plate_list, list):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No working_plate entries to remove.")
+        if index < 0 or index >= len(plate_list):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Working plate index out of range.")
+        del plate_list[index]
+        return self.write_settings(current)
+
     def reset_settings(self) -> dict[str, Any]:
         self._bootstrap_file(self.repo_root / "settings.toml", self.settings_path, force=True)
         return self.get_settings()
