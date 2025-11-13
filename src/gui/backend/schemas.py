@@ -48,6 +48,10 @@ class WorkingPlateEntryPayload(BaseModel):
     connection: Optional[str] = Field(None, description="Pipette connection or module link")
 
 
+class WorkingPlateMovePayload(BaseModel):
+    target_index: int = Field(..., ge=0, description="Destination index for the working plate entry")
+
+
 class ProtocolGenerationRequest(BaseModel):
     """
     Request body for running protocol generation (and optionally simulation).
@@ -105,6 +109,7 @@ __all__ = [
     "DocumentPayload",
     "PatchPayload",
     "WorkingPlateEntryPayload",
+    "WorkingPlateMovePayload",
     "ProtocolGenerationRequest",
     "ProtocolGenerationResponse",
 ]

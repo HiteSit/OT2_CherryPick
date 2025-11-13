@@ -21,6 +21,7 @@ import {
   useAddWorkingPlateEntry,
   useDeleteWorkingPlateEntry,
   useLabwareQuery,
+  useMoveWorkingPlateEntry,
   usePatchSetting,
   useRawSettingsQuery,
   useReplaceSettings,
@@ -66,6 +67,7 @@ export function SettingsEditor() {
   const replaceMutation = useReplaceSettings()
   const addWorkingPlateMutation = useAddWorkingPlateEntry()
   const deleteWorkingPlateMutation = useDeleteWorkingPlateEntry()
+  const moveWorkingPlateMutation = useMoveWorkingPlateEntry()
   const [rawContent, setRawContent] = useState('')
 
   useEffect(() => {
@@ -86,7 +88,11 @@ export function SettingsEditor() {
     )
   }
 
-  const handleWorkingPlateUpdate = (index: number, field: keyof (typeof workingPlate)[number], value: string) => {
+  const handleWorkingPlateUpdate = (
+    index: number,
+    field: keyof (typeof workingPlate)[number],
+    value: string | null,
+  ) => {
     handlePatch(`settings.working_plate[${index}].${field.toString()}`, value)
   }
 
@@ -129,6 +135,17 @@ export function SettingsEditor() {
       onError: (error: unknown) =>
         notifications.show({ color: 'red', title: 'Unable to remove entry', message: String(error) }),
     })
+  }
+
+  const handleMoveWorkingPlate = (index: number, direction: 'up' | 'down') => {
+    const target = direction === 'up' ? index - 1 : index + 1
+    moveWorkingPlateMutation.mutate(
+      { index, target },
+      {
+        onError: (error: unknown) =>
+          notifications.show({ color: 'red', title: 'Unable to move entry', message: String(error) }),
+      },
+    )
   }
 
   if (isLoading || !data) {
@@ -350,6 +367,7 @@ export function SettingsEditor() {
           labware={labwareOptions}
           onUpdate={handleWorkingPlateUpdate}
           onRemove={(index) => handleRemoveWorkingPlate(index)}
+          onMove={handleMoveWorkingPlate}
         />
       </SectionCard>
 

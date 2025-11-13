@@ -52,6 +52,13 @@ export const deleteWorkingPlateEntry = async (index: number): Promise<SettingsDo
   return data
 }
 
+export const moveWorkingPlateEntry = async (index: number, targetIndex: number): Promise<SettingsDocument> => {
+  const { data } = await api.post<SettingsDocument>(`/settings/working-plate/${index}/move`, {
+    target_index: targetIndex,
+  })
+  return data
+}
+
 export const fetchLabware = async (): Promise<LabwareDocument> => {
   const { data } = await api.get<LabwareDocument>('/labware')
   return data

@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import PlainTextResponse
 
 from ..dependencies import get_state_store
-from ..schemas import DocumentPayload, PatchPayload, WorkingPlateEntryPayload
+from ..schemas import DocumentPayload, PatchPayload, WorkingPlateEntryPayload, WorkingPlateMovePayload
 from ..state import FileStateStore
 
 router = APIRouter(prefix="/settings", tags=["settings"])
@@ -69,3 +69,14 @@ def remove_working_plate_entry(
     """Remove a working plate entry by index."""
 
     return store.remove_working_plate_entry(index)
+
+
+@router.post("/working-plate/{index}/move")
+def move_working_plate_entry(
+    payload: WorkingPlateMovePayload,
+    index: int = Path(..., ge=0),
+    store: FileStateStore = Depends(get_state_store),
+) -> dict[str, object]:
+    """Reorder working plate entries."""
+
+    return store.move_working_plate_entry(index, payload.target_index)

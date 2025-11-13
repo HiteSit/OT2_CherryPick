@@ -9,6 +9,7 @@ import {
   fetchRawSettings,
   fetchSettings,
   addWorkingPlateEntry,
+  moveWorkingPlateEntry,
   patchSetting,
   replaceSettings,
   runWorkflow,
@@ -110,6 +111,16 @@ export const useDeleteWorkingPlateEntry = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (index: number) => deleteWorkingPlateEntry(index),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings'] })
+    },
+  })
+}
+
+export const useMoveWorkingPlateEntry = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ index, target }: { index: number; target: number }) => moveWorkingPlateEntry(index, target),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] })
     },

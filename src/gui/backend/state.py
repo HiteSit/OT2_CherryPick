@@ -85,6 +85,18 @@ class FileStateStore:
         del plate_list[index]
         return self.write_settings(current)
 
+    def move_working_plate_entry(self, index: int, target_index: int) -> dict[str, Any]:
+        current = self.get_settings()
+        plate_list = current.get("settings", {}).get("working_plate")
+        if not isinstance(plate_list, list):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No working_plate entries to move.")
+        if index < 0 or index >= len(plate_list):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Working plate index out of range.")
+        target = max(0, min(target_index, len(plate_list) - 1))
+        entry = plate_list.pop(index)
+        plate_list.insert(target, entry)
+        return self.write_settings(current)
+
     def reset_settings(self) -> dict[str, Any]:
         self._bootstrap_file(self.repo_root / "settings.toml", self.settings_path, force=True)
         return self.get_settings()
@@ -337,13 +349,20 @@ class FileStateStore:
             if not isinstance(cursor, list):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="List index used on non-list item.")
             try:
-                cursor[last_key] = value
+                if value is None:
+                    cursor.pop(last_key)
+                else:
+                    cursor[last_key] = value
             except IndexError as exc:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST, detail=f"Index {last_key} out of range."
                 ) from exc
         else:
-            cursor[last_key] = value
+            if value is None:
+                if isinstance(cursor, dict) and last_key in cursor:
+                    del cursor[last_key]
+            else:
+                cursor[last_key] = value
 
     def _descend(self, cursor: Any, key: str | int) -> Any:
         if isinstance(key, int):
