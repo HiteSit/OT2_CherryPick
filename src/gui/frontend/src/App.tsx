@@ -21,13 +21,17 @@ function App() {
           <Tabs defaultValue="settings" keepMounted={false}>
             <Tabs.List>
               <Tabs.Tab value="settings">Settings</Tabs.Tab>
+              <Tabs.Tab value="csvs">CSV Manager</Tabs.Tab>
               <Tabs.Tab value="workflow">Workflow</Tabs.Tab>
               <Tabs.Tab value="labware">Labware</Tabs.Tab>
-              <Tabs.Tab value="csvs">CSV Manager</Tabs.Tab>
             </Tabs.List>
 
             <Tabs.Panel value="settings" pt="md">
               <SettingsEditor />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="csvs" pt="md">
+              <CsvManager />
             </Tabs.Panel>
 
             <Tabs.Panel value="workflow" pt="md">
@@ -36,10 +40,6 @@ function App() {
 
             <Tabs.Panel value="labware" pt="md">
               <LabwareSummary />
-            </Tabs.Panel>
-
-            <Tabs.Panel value="csvs" pt="md">
-              <CsvManager />
             </Tabs.Panel>
           </Tabs>
         </Container>
