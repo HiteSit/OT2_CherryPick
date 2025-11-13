@@ -42,10 +42,11 @@ class FileStateStore:
         self.csv_dir = self.workspace_dir / "CSVs"
         self.csv_dir.mkdir(parents=True, exist_ok=True)
 
-        self.protocol_output = self.repo_root / "CherryPick_OT2.py"
+        self.protocol_output = self.workspace_dir / "CherryPick_OT2.py"
 
         self._bootstrap_file(self.repo_root / "settings.toml", self.settings_path)
         self._bootstrap_file(self.repo_root / "labware_dict.toml", self.labware_path)
+        self._bootstrap_file(self.repo_root / "CherryPick_OT2.py", self.protocol_output)
 
     # ------------------------------------------------------------------ #
     # Public accessors
@@ -419,6 +420,7 @@ class FileStateStore:
         for filename, workspace_path in (
             ("settings.toml", self.settings_path),
             ("labware_dict.toml", self.labware_path),
+            ("CherryPick_OT2.py", self.protocol_output),
         ):
             dest = self.repo_root / filename
             backups[filename] = dest.read_text(encoding="utf-8") if dest.exists() else None
@@ -426,6 +428,11 @@ class FileStateStore:
         return backups
 
     def _restore_repo_configs(self, backups: dict[str, str | None]) -> None:
+        # Preserve the script's CherryPick output by copying it back into workspace before restore
+        protocol_src = self.repo_root / "CherryPick_OT2.py"
+        if protocol_src.exists():
+            shutil.copy2(protocol_src, self.protocol_output)
+
         for filename, content in backups.items():
             dest = self.repo_root / filename
             if content is None:
