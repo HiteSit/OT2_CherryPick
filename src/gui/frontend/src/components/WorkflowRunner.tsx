@@ -126,24 +126,26 @@ export function WorkflowRunner() {
 
           {workflow.data.simulation && (
             <Paper withBorder radius="md" p="md">
-              <Stack gap="xs">
+              <Stack gap="sm">
                 <Title order={5}>Simulation output</Title>
                 {workflow.data.simulation.stdout && (
                   <Textarea
                     label="stdout"
                     value={workflow.data.simulation.stdout}
-                    minRows={6}
+                    minRows={12}
                     readOnly
-                    styles={{ input: { fontFamily: 'monospace' } }}
+                    autosize
+                    styles={{ input: { fontFamily: 'monospace', fontSize: '0.85rem' } }}
                   />
                 )}
                 {workflow.data.simulation.stderr && (
                   <Textarea
                     label="stderr"
                     value={workflow.data.simulation.stderr}
-                    minRows={4}
+                    minRows={10}
                     readOnly
-                    styles={{ input: { fontFamily: 'monospace' } }}
+                    autosize
+                    styles={{ input: { fontFamily: 'monospace', fontSize: '0.85rem' } }}
                   />
                 )}
                 {workflow.data.simulation.success === false && workflow.data.simulation.error && (
@@ -160,9 +162,10 @@ export function WorkflowRunner() {
               <Title order={5}>Log</Title>
               <Textarea
                 value={workflow.data.logs.join('\n')}
-                minRows={8}
+                minRows={15}
                 readOnly
-                styles={{ input: { fontFamily: 'monospace' } }}
+                autosize
+                styles={{ input: { fontFamily: 'monospace', fontSize: '0.85rem' } }}
               />
             </Paper>
           )}
