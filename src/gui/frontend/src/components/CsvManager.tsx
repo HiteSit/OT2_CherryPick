@@ -8,6 +8,7 @@ import {
   Paper,
   Select,
   Stack,
+  Tabs,
   Text,
   TextInput,
   Textarea,
@@ -210,72 +211,125 @@ export function CsvManager() {
             value={activeName}
             onChange={(event) => setActiveName(event.currentTarget.value)}
           />
-          {csvContentQuery.isFetching && activeName ? (
-            <Group gap="xs">
-              <Loader size="sm" />
-              <Text c="dimmed">Loading CSV content...</Text>
-            </Group>
-          ) : (
-            <Textarea
-              label="CSV content"
-              minRows={12}
-              autosize
-              value={editorContent}
-              onChange={(event) => {
-                setEditorContent(event.currentTarget.value)
-                setGridDirty(false)
-              }}
-              styles={{ input: { fontFamily: 'monospace', fontSize: '0.85rem' } }}
-              placeholder="Source Labware,Source Well,Volume (ul),..."
-            />
-          )}
-          <Group gap="xs">
-            <Button
-              leftSection={<IconDeviceFloppy size={16} />}
-              onClick={handleSave}
-              loading={uploadMutation.isPending}
-            >
-              Save CSV
-            </Button>
-            <Button
-              color="red"
-              variant="light"
-              leftSection={<IconTrash size={16} />}
-              disabled={!activeName}
-              loading={deleteMutation.isPending}
-              onClick={handleDelete}
-            >
-              Delete
-            </Button>
-            <Tooltip label="Reload grid from text">
-              <ActionIcon variant="default" onClick={syncGridFromText} aria-label="Sync grid from text">
-                <IconRefresh size={16} />
-              </ActionIcon>
-            </Tooltip>
-            <Tooltip label="Rebuild CSV text from grid">
-              <ActionIcon variant="default" onClick={syncTextFromGrid} aria-label="Sync text from grid">
-                <IconDeviceFloppy size={16} />
-              </ActionIcon>
-            </Tooltip>
-          </Group>
-        </Stack>
-      </Paper>
+          <Tabs defaultValue="text">
+            <Tabs.List>
+              <Tabs.Tab value="text">CSV Text</Tabs.Tab>
+              <Tabs.Tab value="grid">Spreadsheet</Tabs.Tab>
+            </Tabs.List>
 
-      <Paper withBorder radius="md" p="md">
-        <Group justify="space-between" mb="sm">
-          <Text fw={500}>Spreadsheet view</Text>
-          <Group gap="xs">
-            <Button size="xs" leftSection={<IconPlus size={14} />} onClick={addRow}>
-              Add row
-            </Button>
-            <Button size="xs" variant="default" leftSection={<IconPlus size={14} />} onClick={addColumn}>
-              Add column
-            </Button>
-          </Group>
-        </Group>
-        <div style={{ overflow: 'auto' }}>
-          <Spreadsheet data={sheetData} onChange={handleSheetChange} />
-        </div>
+            <Tabs.Panel value="text" pt="md">
+              {csvContentQuery.isFetching && activeName ? (
+                <Group gap="xs">
+                  <Loader size="sm" />
+                  <Text c="dimmed">Loading CSV content...</Text>
+                </Group>
+              ) : (
+                <Textarea
+                  label="CSV content"
+                  minRows={12}
+                  autosize
+                  value={editorContent}
+                  onChange={(event) => {
+                    setEditorContent(event.currentTarget.value)
+                    setGridDirty(false)
+                  }}
+                  styles={{ input: { fontFamily: 'monospace', fontSize: '0.85rem' } }}
+                  placeholder="Source Labware,Source Well,Volume (ul),..."
+                />
+              )}
+              <Group gap="xs" mt="sm">
+                <Button leftSection={<IconDeviceFloppy size={16} />} onClick={handleSave} loading={uploadMutation.isPending}>
+                  Save CSV
+                </Button>
+                <Button
+                  color="red"
+                  variant="light"
+                  leftSection={<IconTrash size={16} />}
+                  disabled={!activeName}
+                  loading={deleteMutation.isPending}
+                  onClick={handleDelete}
+                >
+                  Delete
+                </Button>
+                <Tooltip label="Rebuild CSV text from spreadsheet">
+                  <ActionIcon variant="default" onClick={syncTextFromGrid} aria-label="Sync text from grid">
+                    <IconRefresh size={16} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
+            </Tabs.Panel>
+
+            <Tabs.Panel value="grid" pt="md">
+              <Paper withBorder radius="md" p="md">
+                <Group justify="space-between" mb="sm">
+                  <Text fw={500}>Spreadsheet view</Text>
+                  <Group gap="xs">
+                    <Button size="xs" leftSection={<IconPlus size={14} />} onClick={addRow}>
+                      Add row
+                    </Button>
+                    <Button size="xs" variant="default" leftSection={<IconPlus size={14} />} onClick={addColumn}>
+                      Add column
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="light"
+                      color="red"
+                      onClick={() => {
+                        setSheetData((prev) => {
+                          if (prev.length <= 1) return prev
+                          return prev.slice(0, -1)
+                        })
+                        setGridDirty(true)
+                      }}
+                      disabled={sheetData.length <= 1}
+                    >
+                      Remove row
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="light"
+                      color="red"
+                      onClick={() => {
+                        setSheetData((prev) => {
+                          const columnCount = prev[0]?.length ?? 0
+                          if (columnCount <= 1) return prev
+                          return prev.map((row) => row.slice(0, -1))
+                        })
+                        setGridDirty(true)
+                      }}
+                      disabled={(sheetData[0]?.length ?? 0) <= 1}
+                    >
+                      Remove column
+                    </Button>
+                  </Group>
+                </Group>
+                <div style={{ overflow: 'auto' }}>
+                  <Spreadsheet data={sheetData} onChange={handleSheetChange} />
+                </div>
+                <Group gap="xs" mt="sm">
+                  <Button leftSection={<IconDeviceFloppy size={16} />} onClick={handleSave} loading={uploadMutation.isPending}>
+                    Save CSV
+                  </Button>
+                  <Button
+                    color="red"
+                    variant="light"
+                    leftSection={<IconTrash size={16} />}
+                    disabled={!activeName}
+                    loading={deleteMutation.isPending}
+                    onClick={handleDelete}
+                  >
+                    Delete
+                  </Button>
+                  <Tooltip label="Reload spreadsheet from text">
+                    <ActionIcon variant="default" onClick={syncGridFromText} aria-label="Sync grid from text">
+                      <IconRefresh size={16} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Group>
+              </Paper>
+            </Tabs.Panel>
+          </Tabs>
+        </Stack>
       </Paper>
     </Stack>
   )
