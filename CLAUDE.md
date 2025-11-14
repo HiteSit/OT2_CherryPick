@@ -464,6 +464,122 @@ response = await agent.run("Apply viscous preset and generate protocol from CSVs
 
 Test suite: `tests/test_mcp_integration.py`
 
+## Shell Script vs GUI Workflow
+
+The system supports **two independent execution paths** for protocol generation and simulation:
+
+### Shell Script Workflow (`simulate_protocol.sh`)
+
+**Purpose:** Quick manual CLI validation, CI/CD pipelines, standalone operation
+
+**Execution:**
+```bash
+./simulate_protocol.sh CSVs/example_basic.csv
+./simulate_protocol.sh CSVs/example_basic.csv --send-to-opentrons
+```
+
+**Characteristics:**
+- Works directly with **repo root** configuration files (`settings.toml`, `labware_dict.toml`, `CSVs/`)
+- Bash wrapper that calls: `helper_cherry_pick.py` → `opentrons_simulate` → `clip.exe`
+- **Always** copies protocol to clipboard on simulation success (not configurable)
+- Deployment via direct `cp` command to target directory
+- Machine configuration hardcoded in script (`MACHINE_CONFIG="local"` or `"remote"`)
+- Requires manual editing of script to change labware/protocol paths
+
+**When to use:**
+- Quick one-off protocol validation
+- Automated testing in CI/CD
+- Working directly with repo root configs (no workspace isolation)
+
+### GUI Workflow (Python-Native Path)
+
+**Purpose:** Interactive experimentation, multi-config testing, iterative development
+
+**Execution:**
+- Web UI at http://localhost:5173 (Vite + React frontend)
+- FastAPI backend at http://localhost:8000
+- Click "Run Workflow" button in Workflow tab
+
+**Characteristics:**
+- Works with **workspace-isolated** configs (`gui_state/settings.toml`, `gui_state/labware_dict.toml`, `gui_state/CSVs/`)
+- Pure Python execution (no bash subprocess) - direct function calls to:
+  - `run_generate_protocol()` → calls `helper_cherry_pick.generate_protocol()`
+  - `run_simulation()` → calls MCP `simulate_protocol()` from `core/simulation.py`
+  - `deploy_protocol()` → calls MCP `deploy_protocol()` from `core/deployment.py`
+- **Configurable** clipboard behavior (checkbox to enable/disable)
+- **Auto-converts** Windows paths to WSL format (e.g., `C:\Users\...` → `/mnt/c/Users/...`)
+- Deployment with intelligent path handling (directory or file, Windows or WSL paths accepted)
+- No workspace sync overhead (edits stay in `gui_state/` until explicitly deployed)
+
+**When to use:**
+- Experimenting with different configurations without touching repo files
+- Testing multiple CSV variations quickly
+- Visual feedback and progress tracking
+- Selective clipboard/deployment options
+
+### Critical Shared Configuration: Shell Settings
+
+Both workflows rely on the **same shell settings** stored in `gui_state/shell_settings.json`:
+
+```json
+{
+  "target_protocol_src_win": "C:\\Users\\ricca\\AppData\\Roaming\\Opentrons\\protocols\\78a4cef9-4296-4bb8-b0d7-073162f7c40f\\src",
+  "labware_path_win": "C:\\Users\\ricca\\AppData\\Roaming\\Opentrons\\labware"
+}
+```
+
+**Why these are critical:**
+
+1. **`labware_path_win`** (REQUIRED for simulation):
+   - `opentrons_simulate` needs path to custom labware JSON definitions
+   - Without this, simulation fails with "labware not found" errors
+   - Both shell script and Python-native path convert this to WSL format: `/mnt/c/Users/ricca/AppData/Roaming/Opentrons/labware`
+   - Passed as: `opentrons_simulate --custom-labware <wsl_path> protocol.py`
+
+2. **`target_protocol_src_win`** (REQUIRED when using "Send to Opentrons"):
+   - Points to Opentrons App protocol directory for deployment
+   - UUID part identifies specific protocol in Opentrons App
+   - Both shell script and GUI workflow deploy here when enabled
+   - Example: `C:\Users\you\AppData\Roaming\Opentrons\protocols\78a4cef9-4296-4bb8-b0d7-073162f7c40f\src`
+
+**Configuring in GUI:**
+
+Navigate to **Workflow tab** → Enable "Send to Opentrons" checkbox → Configure paths in **"Shell runner Windows folders"** section:
+
+**Required fields:**
+1. **Custom labware folder (Windows):**
+   - Path to Opentrons custom labware JSON files
+   - Example: `C:\Users\you\AppData\Roaming\Opentrons\labware`
+   - **CRITICAL:** Simulation will fail without this!
+   - Used by both GUI workflow and shell script
+
+2. **Opentrons protocol folder (Windows):**
+   - Path to target Opentrons App protocol directory (with `/src` at end)
+   - Example: `C:\Users\you\AppData\Roaming\Opentrons\protocols\<UUID>\src`
+   - **Required when "Send to Opentrons" is enabled**
+   - Automatically used for deployment (no separate "Target path" field needed)
+
+**How to configure:**
+- Click "Browse…" buttons to use folder picker dialog (easiest)
+- Or manually type Windows paths
+- Click "Save as default" to persist settings to `shell_settings.json`
+
+**Important:** This section is **required for both shell script AND GUI workflows** - not just for shell script usage!
+
+### Workflow Comparison Table
+
+| Feature | Shell Script | GUI (Python-Native) |
+|---------|-------------|---------------------|
+| **Config Location** | Repo root | `gui_state/` workspace |
+| **Execution** | Bash subprocess | Direct Python calls |
+| **Clipboard** | Always on success | Configurable checkbox |
+| **Path Handling** | Manual `wslpath` conversion | Auto Windows→WSL conversion |
+| **Deployment** | `cp` command | Python `deploy_protocol()` |
+| **Labware Path** | From `shell_settings.json` | From `shell_settings.json` |
+| **Error Handling** | String parsing stdout/stderr | Structured exceptions |
+| **Progress Tracking** | Terminal echo | Real-time UI updates |
+| **Use Case** | CLI, CI/CD, quick validation | Interactive experimentation |
+
 ## Development Workflow
 
 ### Environment Setup
