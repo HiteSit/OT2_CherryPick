@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
+  Accordion,
   ActionIcon,
   Button,
   Grid,
@@ -371,37 +372,40 @@ export function SettingsEditor() {
         />
       </SectionCard>
 
-      <Paper withBorder radius="md" p="md">
-        <Stack>
-          <Title order={4}>Advanced: Edit Raw settings.toml</Title>
-          <Text c="dimmed" size="sm">
-            Use this editor for parameters not covered above. Changes are validated locally before sending to the API.
-          </Text>
-          <Textarea
-            value={rawContent}
-            onChange={(event) => setRawContent(event.currentTarget.value)}
-            autosize
-            minRows={10}
-            styles={{ input: { fontFamily: 'monospace' } }}
-          />
-          <Stack gap="xs" align="flex-start">
-            <Tooltip label="Revert to last saved version">
-              <ActionIcon
-                variant="default"
-                onClick={() => rawQuery.refetch()}
-                disabled={rawQuery.isFetching}
-                aria-label="Reload settings"
-              >
-                <IconRefresh size={18} />
-              </ActionIcon>
-            </Tooltip>
-            <Button loading={replaceMutation.isPending} onClick={handleRawSave}>
-              Apply changes
-            </Button>
-          </Stack>
-        </Stack>
-      </Paper>
+      <Accordion variant="contained">
+        <Accordion.Item value="raw-settings">
+          <Accordion.Control>Advanced: Edit raw settings.toml</Accordion.Control>
+          <Accordion.Panel>
+            <Stack gap="sm">
+              <Text c="dimmed" size="sm">
+                Use this editor for parameters not covered above. Changes are validated locally before sending to the API.
+              </Text>
+              <Textarea
+                value={rawContent}
+                onChange={(event) => setRawContent(event.currentTarget.value)}
+                autosize
+                minRows={10}
+                styles={{ input: { fontFamily: 'monospace' } }}
+              />
+              <Stack gap="xs" align="flex-start">
+                <Tooltip label="Revert to last saved version">
+                  <ActionIcon
+                    variant="default"
+                    onClick={() => rawQuery.refetch()}
+                    disabled={rawQuery.isFetching}
+                    aria-label="Reload settings"
+                  >
+                    <IconRefresh size={18} />
+                  </ActionIcon>
+                </Tooltip>
+                <Button loading={replaceMutation.isPending} onClick={handleRawSave}>
+                  Apply changes
+                </Button>
+              </Stack>
+            </Stack>
+          </Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
     </Stack>
   )
 }
-
