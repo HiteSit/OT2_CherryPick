@@ -9,7 +9,8 @@ services:
     image: ot2cherrypick/backend:latest
     container_name: ot2-cherrypick-backend
     environment:
-      OT2_GUI_WORKSPACE: ${OT2_GUI_WORKSPACE:-gui_state}
+      OT2_GUI_WORKSPACE: ${OT2_GUI_WORKSPACE}
+      OT2_PROJECT_DIR: ${OT2_PROJECT_DIR}
       PYTHONUNBUFFERED: "1"
       # Mount labware from host Windows directory (read-only)
       # This allows opentrons_simulate to find custom labware
