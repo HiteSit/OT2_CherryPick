@@ -6,13 +6,11 @@ import {
   Grid,
   Loader,
   NumberInput,
-  Paper,
   Select,
   Stack,
   Switch,
   Text,
   Textarea,
-  Title,
   Tooltip,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'

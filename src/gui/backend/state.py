@@ -436,6 +436,12 @@ class FileStateStore:
         return selected
 
     def _resolve_labware_path(self) -> str | None:
+        # First, check environment variable (Docker volume mount)
+        env_path = os.getenv("LABWARE_PATH")
+        if env_path:
+            return env_path.strip()
+
+        # Fallback to shell_settings.json
         data = self._load_shell_settings()
         raw = (data.get("labware_path_win") or "").strip()
         if not raw:
