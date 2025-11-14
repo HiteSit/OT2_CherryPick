@@ -40,6 +40,10 @@ export interface WorkingPlateEntry {
   labware_id?: string
   position_rack?: string
   connection?: string
+  module_type?: string
+  target_temperature?: number
+  target_shake_speed?: number
+  persist_after_protocol?: boolean
 }
 
 export interface LiquidHandlingSettings {

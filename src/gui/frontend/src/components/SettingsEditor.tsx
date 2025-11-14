@@ -92,7 +92,7 @@ export function SettingsEditor() {
   const handleWorkingPlateUpdate = (
     index: number,
     field: keyof (typeof workingPlate)[number],
-    value: string | null,
+    value: string | number | boolean | null,
   ) => {
     handlePatch(`settings.working_plate[${index}].${field.toString()}`, value)
   }
