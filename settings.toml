@@ -61,7 +61,7 @@ volume_ul = 20                   # Fixed push-out volume in µL
 # Mixing Configuration
 # Controls WHERE and WHEN mixing occurs during transfers
 [settings.liquid_handling.mixing]
-location = "none"             # Options: "destination", "source", "none"
+location = "none"               # Options: "destination", "source", "none"
                                 # "destination": Mix after dispensing (default, current behavior)
                                 #                Use for: dilutions, reagent addition, compound screening
                                 # "source": Mix before aspirating (resuspends stock before sampling)
