@@ -43,10 +43,12 @@ class FileStateStore:
         self.csv_dir.mkdir(parents=True, exist_ok=True)
 
         self.protocol_output = self.workspace_dir / "CherryPick_OT2.py"
+        self.shell_settings_path = self.workspace_dir / "shell_settings.json"
 
         self._bootstrap_file(self.repo_root / "settings.toml", self.settings_path)
         self._bootstrap_file(self.repo_root / "labware_dict.toml", self.labware_path)
         self._bootstrap_file(self.repo_root / "CherryPick_OT2.py", self.protocol_output)
+        self._ensure_shell_settings()
 
     # ------------------------------------------------------------------ #
     # Public accessors
@@ -129,6 +131,35 @@ class FileStateStore:
         return {"settings": self.get_settings(), "labware": self.get_labware()}
 
     # ------------------------------------------------------------------ #
+    # Shell runner configuration
+    # ------------------------------------------------------------------ #
+
+    def get_shell_settings(self) -> dict[str, Any]:
+        return self._load_shell_settings()
+
+    def update_shell_settings(
+        self,
+        *,
+        target_protocol_src_win: str | None = None,
+        labware_path_win: str | None = None,
+    ) -> dict[str, Any]:
+        data = self._load_shell_settings()
+        if target_protocol_src_win is not None:
+            data["target_protocol_src_win"] = target_protocol_src_win.strip()
+        if labware_path_win is not None:
+            data["labware_path_win"] = labware_path_win.strip()
+        self._write_shell_settings(data)
+        return data
+
+    def browse_and_update_shell_settings(self, field: str) -> dict[str, Any]:
+        if field not in {"target_protocol_src_win", "labware_path_win"}:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid shell setting field.")
+        title = "Select Opentrons protocol folder" if field == "target_protocol_src_win" else "Select custom labware folder"
+        selection = self._prompt_for_directory(title)
+        kwargs: dict[str, Any] = {field: selection}
+        return self.update_shell_settings(**kwargs)
+
+    # ------------------------------------------------------------------ #
     # CSV helpers
     # ------------------------------------------------------------------ #
 
@@ -209,12 +240,15 @@ class FileStateStore:
         protocol_path: Path | str | None = None,
     ) -> tuple[dict[str, Any], list[str]]:
         protocol_file = Path(protocol_path) if protocol_path else self.protocol_output
+        labware_override = self._resolve_labware_path()
         log_lines = [
             "=== Step 2: Running protocol simulation ===",
             f"Protocol: {protocol_file}",
         ]
+        if labware_override:
+            log_lines.append(f"Custom labware dir: {labware_override}")
         try:
-            result = simulate_protocol(str(protocol_file))
+            result = simulate_protocol(str(protocol_file), labware_path=labware_override)
             result["success"] = True
             stdout = (result.get("stdout") or "").strip()
             stderr = (result.get("stderr") or "").strip()
@@ -284,11 +318,20 @@ class FileStateStore:
             command.append("--send-to-opentrons")
 
         backups = self._sync_repo_configs()
+        env = os.environ.copy()
+        shell_settings = self._load_shell_settings()
+        target_override = shell_settings.get("target_protocol_src_win")
+        if target_override:
+            env["TARGET_PROTOCOL_SRC_WIN_OVERRIDE"] = target_override
+        labware_override = shell_settings.get("labware_path_win")
+        if labware_override:
+            env["LABWARE_PATH_WIN_OVERRIDE"] = labware_override
         log_lines = ["=== simulate_protocol.sh ===", f"Command: {' '.join(command)}"]
         try:
             completed = subprocess.run(
                 command,
                 cwd=self.repo_root,
+                env=env,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -334,6 +377,79 @@ class FileStateStore:
     def _doc_to_plain(self, doc: tomlkit.TOMLDocument) -> dict[str, Any]:
         # Round-trip through tomllib for a JSON-compatible dict (drops comments intentionally).
         return tomllib.loads(tomlkit.dumps(doc))
+
+    def _ensure_shell_settings(self) -> None:
+        if self.shell_settings_path.exists():
+            return
+        self.shell_settings_path.write_text(
+            json.dumps({"target_protocol_src_win": "", "labware_path_win": ""}, indent=2),
+            encoding="utf-8",
+        )
+
+    def _load_shell_settings(self) -> dict[str, Any]:
+        self._ensure_shell_settings()
+        raw = self.shell_settings_path.read_text(encoding="utf-8")
+        try:
+            data = json.loads(raw) if raw.strip() else {}
+        except json.JSONDecodeError:
+            data = {}
+        if "target_protocol_src_win" not in data:
+            data["target_protocol_src_win"] = ""
+        if "labware_path_win" not in data:
+            data["labware_path_win"] = ""
+        return data
+
+    def _write_shell_settings(self, payload: dict[str, Any]) -> None:
+        self.shell_settings_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    def _prompt_for_directory(self, dialog_title: str) -> str:
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+        except Exception as exc:  # pragma: no cover - GUI dependency
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Folder dialog is unavailable on this environment.",
+            ) from exc
+
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        selected = filedialog.askdirectory(title=dialog_title)
+        root.destroy()
+
+        if not selected:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Folder selection canceled.")
+        return selected
+
+    def _resolve_labware_path(self) -> str | None:
+        data = self._load_shell_settings()
+        raw = (data.get("labware_path_win") or "").strip()
+        if not raw:
+            return None
+        return self._windows_to_wsl(raw)
+
+    def _windows_to_wsl(self, path: str) -> str:
+        if not path or path.startswith("/"):
+            return path
+        try:
+            completed = subprocess.run(
+                ["wslpath", path],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            candidate = completed.stdout.strip()
+            if candidate:
+                return candidate
+        except (FileNotFoundError, subprocess.CalledProcessError):  # pragma: no cover - best effort fallback
+            pass
+        sanitized = path.replace("\\", "/")
+        if ":" in sanitized:
+            drive, rest = sanitized.split(":", 1)
+            rest = rest.lstrip("/")
+            return f"/mnt/{drive.lower()}/{rest}"
+        return sanitized
 
     def _apply_patch(self, doc: tomlkit.TOMLDocument, path: str, value: Any) -> None:
         keys = self._explode_path(path)

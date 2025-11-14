@@ -4,7 +4,7 @@ Pydantic schemas for the GUI backend.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -103,6 +103,32 @@ class CSVListResponse(BaseModel):
     files: List[str]
 
 
+class ShellSettings(BaseModel):
+    target_protocol_src_win: Optional[str] = Field(
+        None,
+        description="Absolute Windows path for simulate_protocol.sh deployment",
+    )
+    labware_path_win: Optional[str] = Field(
+        None,
+        description="Absolute Windows path to the custom labware directory",
+    )
+
+
+class ShellSettingsUpdate(BaseModel):
+    target_protocol_src_win: Optional[str] = Field(None, description="Absolute Windows folder path for deployment")
+    labware_path_win: Optional[str] = Field(None, description="Absolute Windows folder path for labware")
+
+    @model_validator(mode="after")
+    def _ensure_field_present(cls, values: "ShellSettingsUpdate") -> "ShellSettingsUpdate":  # noqa: D417
+        if values.target_protocol_src_win is None and values.labware_path_win is None:
+            raise ValueError("At least one field must be provided for shell settings update.")
+        return values
+
+
+class ShellSettingsBrowseRequest(BaseModel):
+    field: Literal["target_protocol_src_win", "labware_path_win"]
+
+
 __all__ = [
     "CSVListResponse",
     "CSVUploadPayload",
@@ -112,4 +138,7 @@ __all__ = [
     "WorkingPlateMovePayload",
     "ProtocolGenerationRequest",
     "ProtocolGenerationResponse",
+    "ShellSettings",
+    "ShellSettingsUpdate",
+    "ShellSettingsBrowseRequest",
 ]

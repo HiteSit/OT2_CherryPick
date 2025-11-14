@@ -4,6 +4,9 @@ import type {
   CsvUploadPayload,
   LabwareDocument,
   SettingsDocument,
+  ShellSettings,
+  ShellSettingsBrowseRequest,
+  ShellSettingsUpdate,
   WorkflowRequest,
   WorkflowResponse,
 } from './types'
@@ -85,6 +88,21 @@ export const deleteCsv = async (name: string): Promise<void> => {
 
 export const runWorkflow = async (payload: WorkflowRequest): Promise<WorkflowResponse> => {
   const { data } = await api.post<WorkflowResponse>('/workflow/generate', payload)
+  return data
+}
+
+export const fetchShellSettings = async (): Promise<ShellSettings> => {
+  const { data } = await api.get<ShellSettings>('/shell-settings')
+  return data
+}
+
+export const updateShellSettings = async (payload: ShellSettingsUpdate): Promise<ShellSettings> => {
+  const { data } = await api.put<ShellSettings>('/shell-settings', payload)
+  return data
+}
+
+export const browseShellSettings = async (payload: ShellSettingsBrowseRequest): Promise<ShellSettings> => {
+  const { data } = await api.post<ShellSettings>('/shell-settings/browse', payload)
   return data
 }
 

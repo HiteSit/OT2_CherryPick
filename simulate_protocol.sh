@@ -27,6 +27,14 @@ setup_environment() {
             ;;
     esac
 
+    # Allow runtime overrides via environment variables provided by the GUI/backend
+    if [ -n "${LABWARE_PATH_WIN_OVERRIDE:-}" ]; then
+        LABWARE_PATH_WIN="$LABWARE_PATH_WIN_OVERRIDE"
+    fi
+    if [ -n "${TARGET_PROTOCOL_SRC_WIN_OVERRIDE:-}" ]; then
+        TARGET_PROTOCOL_SRC_WIN="$TARGET_PROTOCOL_SRC_WIN_OVERRIDE"
+    fi
+
     # Auto-convert Windows paths to WSL format
     if [ -n "$LABWARE_PATH_WIN" ]; then
         if command -v wslpath &> /dev/null; then

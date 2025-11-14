@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { PatchPayload } from './client'
 import {
+  addWorkingPlateEntry,
+  browseShellSettings,
   deleteCsv,
   deleteWorkingPlateEntry,
   fetchCsvContent,
@@ -8,14 +10,20 @@ import {
   fetchLabware,
   fetchRawSettings,
   fetchSettings,
-  addWorkingPlateEntry,
+  fetchShellSettings,
   moveWorkingPlateEntry,
   patchSetting,
   replaceSettings,
   runWorkflow,
+  updateShellSettings,
   uploadCsv,
 } from './client'
-import type { CsvUploadPayload, WorkflowRequest } from './types'
+import type {
+  CsvUploadPayload,
+  ShellSettingsBrowseRequest,
+  ShellSettingsUpdate,
+  WorkflowRequest,
+} from './types'
 
 export const useSettingsQuery = () =>
   useQuery({
@@ -123,6 +131,32 @@ export const useMoveWorkingPlateEntry = () => {
     mutationFn: ({ index, target }: { index: number; target: number }) => moveWorkingPlateEntry(index, target),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] })
+    },
+  })
+}
+
+export const useShellSettingsQuery = () =>
+  useQuery({
+    queryKey: ['shell-settings'],
+    queryFn: fetchShellSettings,
+  })
+
+export const useUpdateShellSettings = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: ShellSettingsUpdate) => updateShellSettings(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shell-settings'] })
+    },
+  })
+}
+
+export const useBrowseShellSettings = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: ShellSettingsBrowseRequest) => browseShellSettings(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shell-settings'] })
     },
   })
 }

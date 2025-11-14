@@ -114,3 +114,19 @@ export interface WorkflowResponse {
   } | null
   logs: string[]
 }
+
+export interface ShellSettings {
+  target_protocol_src_win?: string | null
+  labware_path_win?: string | null
+}
+
+export interface ShellSettingsUpdate {
+  target_protocol_src_win?: string
+  labware_path_win?: string
+}
+
+export type ShellSettingsField = 'target_protocol_src_win' | 'labware_path_win'
+
+export interface ShellSettingsBrowseRequest {
+  field: ShellSettingsField
+}
