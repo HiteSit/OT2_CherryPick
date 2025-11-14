@@ -1,0 +1,66 @@
+version: '3.9'
+
+services:
+  # FastAPI Backend
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: ot2-cherrypick-backend
+    environment:
+      OT2_GUI_WORKSPACE: ${OT2_GUI_WORKSPACE:-gui_state}
+      PYTHONUNBUFFERED: "1"
+      # Mount labware from host Windows directory (read-only)
+      # This allows opentrons_simulate to find custom labware
+      # REQUIRED: Must be set in .env file
+      LABWARE_PATH: ${LABWARE_PATH_MOUNT}
+    volumes:
+      # Persist gui_state workspace across container restarts
+      - gui_state:/app/gui_state
+      # Mount logs for debugging
+      - logs:/app/logs
+      # Mount custom labware directory from Windows host (read-only)
+      # REQUIRED: Set LABWARE_PATH_HOST and LABWARE_PATH_MOUNT in .env file
+      - ${LABWARE_PATH_HOST}:${LABWARE_PATH_MOUNT}
+      # Mount entire Opentrons protocols directory (read-write)
+      # REQUIRED: Set PROTOCOLS_DIR_HOST and PROTOCOLS_DIR_MOUNT in .env file
+      # This allows switching between different protocol UUIDs via the GUI without container restarts
+      - ${PROTOCOLS_DIR_HOST}:${PROTOCOLS_DIR_MOUNT}
+    networks:
+      - ot2-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/settings')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy + Frontend
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: ot2-cherrypick-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${HOST_PORT:-80}:80"
+    networks:
+      - ot2-network
+    restart: unless-stopped
+
+volumes:
+  # Persistent storage for configuration and CSVs
+  gui_state:
+    driver: local
+  # Persistent storage for logs
+  logs:
+    driver: local
+
+networks:
+  ot2-network:
+    driver: bridge
