@@ -15,7 +15,7 @@ function App() {
       </AppShell.Header>
       <AppShell.Main>
         <Container size="lg" pb="xl">
-          <Tabs defaultValue="settings" keepMounted={false}>
+          <Tabs defaultValue="settings" keepMounted>
             <Tabs.List>
               <Tabs.Tab value="settings">Settings</Tabs.Tab>
               <Tabs.Tab value="csvs">CSV Manager</Tabs.Tab>
