@@ -1,4 +1,4 @@
-import { AppShell, Container, Group, Tabs, Text, Title } from '@mantine/core'
+import { AppShell, Container, Group, Tabs, Title } from '@mantine/core'
 import { SettingsEditor } from './components/SettingsEditor'
 import { WorkflowRunner } from './components/WorkflowRunner'
 import { LabwareSummary } from './components/LabwareSummary'
@@ -11,9 +11,6 @@ function App() {
       <AppShell.Header>
         <Group h="100%" px="md" align="center" justify="space-between">
           <Title order={3}>OT-2 CherryPick Control</Title>
-          <Text c="dimmed" size="sm">
-            FastAPI backend · GUI prototype
-          </Text>
         </Group>
       </AppShell.Header>
       <AppShell.Main>
