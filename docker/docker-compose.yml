@@ -6,6 +6,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.backend
+    image: ot2cherrypick/backend:latest
     container_name: ot2-cherrypick-backend
     environment:
       OT2_GUI_WORKSPACE: ${OT2_GUI_WORKSPACE:-gui_state}
@@ -43,6 +44,7 @@ services:
       dockerfile: docker/Dockerfile.frontend
       args:
         VITE_API_BASE_URL: /api
+    image: ot2cherrypick/frontend:latest
     container_name: ot2-cherrypick-frontend
     depends_on:
       backend:
