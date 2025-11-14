@@ -1,0 +1,50 @@
+/.git
+/.gitmodules
+/.claude
+/.idea
+/.serena
+/.vscode
+/.pytest_cache
+/.mypy_cache
+/.ruff_cache
+/.benchmarks
+.DS_Store
+**/.DS_Store
+
+# Python environments / artifacts
+/.venv
+**/__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Node dependencies and build outputs
+node_modules
+**/node_modules
+src/gui/frontend/dist
+
+# Generated protocol workspace & logs
+/gui_state
+/gui_state/**
+/CSVs
+/CSVs/**
+logs
+logs/**
+
+# Large/docs/demo directories not needed in runtime image
+/docs
+/docs/**
+/guide
+/guide/**
+/notebooks
+/notebooks/**
+/projects
+/projects/**
+/utils
+/utils/**
+/tests
+/tests/**
+
+# Misc local files
+*.log
+*.tmp

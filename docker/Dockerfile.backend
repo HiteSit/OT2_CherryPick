@@ -18,12 +18,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Ensure pipx binaries are in PATH
 ENV PATH="/root/.local/bin:$PATH"
 
-# Copy the entire source code first (needed for editable install)
-COPY . .
+# Copy dependency metadata first to leverage Docker layer caching
+COPY pyproject.toml uv.lock ./
 
-# Install Python dependencies using uv in editable mode
-# Use --no-cache to reduce image size
+# Copy Python sources required for editable install (other assets copied later)
+COPY src ./src
+
+# Hatchling needs the project README referenced in pyproject
+COPY README.md .
+
+# Install Python dependencies using uv in editable mode (only reruns when deps or src/ change)
 RUN uv pip install --system --no-cache -e .
+
+# Copy the remaining source tree
+COPY . .
 
 # Install opentrons_simulate globally via pipx
 # This matches the development workflow where it's installed separately

@@ -8,8 +8,8 @@ WORKDIR /frontend
 # Copy package files for dependency installation
 COPY src/gui/frontend/package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install full dependency graph (build needs devDeps like TypeScript)
+RUN npm ci
 
 # Copy source code
 COPY src/gui/frontend ./

@@ -305,10 +305,10 @@ docker stats ot2-cherrypick-backend ot2-cherrypick-frontend
 **Backend:**
 1. Install UV package manager
 2. Install system deps (pipx for opentrons)
-3. Copy `pyproject.toml` and `uv.lock`
-4. Install Python dependencies
+3. Copy `pyproject.toml`, `uv.lock`, and Python sources (`src/`)
+4. Install Python dependencies via `uv pip install -e .`
 5. Install `opentrons_simulate` via pipx
-6. Copy source code
+6. Copy remaining repository files (docs, frontend, etc.)
 7. Run uvicorn with `--root-path /api`
 
 **Frontend:**
@@ -344,6 +344,13 @@ A: Standard convention for reverse proxies. Frontend calls `/api/*`, nginx strip
 - [Nginx Reverse Proxy Guide](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
 - [Multi-stage Docker Builds](https://docs.docker.com/build/building/multi-stage/)
+
+## Build Performance Tips
+
+- The repository root includes a `.dockerignore` tuned for this project. It excludes `.venv/`, `node_modules/`, `gui_state/`, lab/storage CSVs, notebooks, docs, and other dev-only folders so Docker doesn’t waste time transferring them. If you add new bulky directories, update `.dockerignore` accordingly.
+- Python dependency layers are cached because `pyproject.toml`, `uv.lock`, and `src/` are copied before the rest of the repo (see `docker/Dockerfile.backend`). Doc changes no longer invalidate the install layer.
+- The frontend Dockerfile already copies `package*.json` ahead of the source tree, so `npm ci` only reruns when dependencies change.
+- Prefer bind mounts/volumes for stateful data (e.g., labware, protocols, GUI workspace) rather than copying them into the image. That keeps images lean and rebuilds fast.
 
 ## Support
 
