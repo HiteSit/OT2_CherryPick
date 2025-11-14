@@ -190,15 +190,17 @@ export function SettingsEditor() {
               onChange={(value) => value !== '' && handlePatch('settings.general.head_speed.speed', value)}
             />
           </Grid.Col>
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Textarea
-              label="Starting tip well"
-              autosize
-              minRows={1}
-              value={general.starting_tip_well}
-              onChange={(event) => handlePatch('settings.general.starting_tip_well', event.currentTarget.value)}
-            />
-          </Grid.Col>
+          {general.mode === 'multi_X1' && (
+            <Grid.Col span={{ base: 12, md: 6 }}>
+              <Textarea
+                label="Starting tip well"
+                autosize
+                minRows={1}
+                value={general.starting_tip_well}
+                onChange={(event) => handlePatch('settings.general.starting_tip_well', event.currentTarget.value)}
+              />
+            </Grid.Col>
+          )}
         </Grid>
       </SectionCard>
 
