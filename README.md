@@ -117,3 +117,13 @@ Highlights:
 5. If simulation fails, consult `logs://last-simulation` and invoke `troubleshoot_simulation_error` for corrective steps.
 
 With these pieces in place, the OT-2 cherry-pick pipeline is fully accessible through MCP clients, enabling automated experiment setup, validation, and deployment from natural-language prompts.
+
+## GUI Development Shortcut
+
+To run the FastAPI backend and the React GUI together on consistent ports (8000 for API, 5173 for UI), use the helper script:
+
+```bash
+./scripts/run_gui_dev.sh
+```
+
+The script frees those ports (terminating any conflicting processes via `lsof`) before launching `npm run dev:full`. Press `Ctrl+C` to stop both servers.
