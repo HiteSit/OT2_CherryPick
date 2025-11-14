@@ -21,7 +21,6 @@ export function WorkflowRunner() {
   const [selectedCsv, setSelectedCsv] = useState<string>('')
   const [runSimulation, setRunSimulation] = useState(true)
   const [sendToOpentrons, setSendToOpentrons] = useState(false)
-  const [targetPath, setTargetPath] = useState('')
   const [shellTargetPathWin, setShellTargetPathWin] = useState('')
   const [labwarePathWin, setLabwarePathWin] = useState('')
   const [activeBrowseField, setActiveBrowseField] = useState<ShellSettingsField | null>(null)
@@ -42,17 +41,21 @@ export function WorkflowRunner() {
       notifications.show({ color: 'red', title: 'CSV required', message: 'Select a CSV file before running.' })
       return
     }
-    if (sendToOpentrons && !runSimulation && !targetPath) {
-      notifications.show({ color: 'red', title: 'Target path required', message: 'Provide a target path for deployment.' })
+    if (sendToOpentrons && !shellTargetPathWin) {
+      notifications.show({
+        color: 'red',
+        title: 'Opentrons protocol folder required',
+        message: 'Configure "Opentrons protocol folder" in Shell Settings below before deploying.'
+      })
       return
     }
     workflow.mutate(
       {
         csv: selectedCsv,
         run_simulation: runSimulation,
-        use_shell_runner: runSimulation,
+        use_shell_runner: false,
         send_to_opentrons: sendToOpentrons,
-        target_path: sendToOpentrons && !runSimulation ? targetPath : undefined,
+        target_path: undefined,
         copy_to_clipboard: copyToClipboard,
       },
       {
@@ -150,23 +153,15 @@ export function WorkflowRunner() {
         label="Send to Opentrons deployment path"
         checked={sendToOpentrons}
         onChange={(event) => setSendToOpentrons(event.currentTarget.checked)}
+        description="Deploy protocol to Opentrons protocol folder configured below"
       />
-
-      {sendToOpentrons && !runSimulation && (
-        <TextInput
-          label="Target path"
-          description="Absolute path (WSL/Unix) used when deploying without the shell runner."
-          value={targetPath}
-          onChange={(event) => setTargetPath(event.currentTarget.value)}
-        />
-      )}
 
       {sendToOpentrons && (
         <Paper withBorder radius="md" p="md">
           <Stack gap="sm">
             <Title order={5}>Shell runner Windows folders</Title>
             <Text size="sm" c="dimmed">
-              Used when the shell runner is enabled (the default when simulation is requested).
+              Configure Windows paths for opentrons_simulate custom labware and optional manual shell script usage (simulate_protocol.sh).
             </Text>
 
             <Stack gap="xs">

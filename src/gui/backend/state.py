@@ -294,10 +294,23 @@ class FileStateStore:
             "=== Step 3: Deployment ===",
             f"Source protocol: {protocol_file}",
         ]
+        
+        # Auto-convert Windows paths to WSL format for deployment
+        resolved_target: str | None = None
+        if target_path is not None:
+            target_str = str(target_path)
+            # Check if Windows path (C:\... or D:\... etc.)
+            import re
+            if re.match(r'^[A-Za-z]:', target_str):
+                resolved_target = self._windows_to_wsl(target_str)
+                log_lines.append(f"Converted Windows path: {target_str} -> {resolved_target}")
+            else:
+                resolved_target = target_str
+        
         try:
             result = deploy_protocol(
                 str(protocol_file),
-                target_path=str(target_path) if target_path is not None else None,
+                target_path=resolved_target,
                 copy_to_clipboard=copy_to_clipboard,
             )
         except Exception as exc:  # pragma: no cover - bubbled up to API

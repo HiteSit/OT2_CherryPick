@@ -83,8 +83,8 @@ class ProtocolGenerationRequest(BaseModel):
 
     @model_validator(mode="after")
     def _validate_target(cls, values: "ProtocolGenerationRequest") -> "ProtocolGenerationRequest":  # noqa: D417
-        if values.send_to_opentrons and not values.target_path and not values.use_shell_runner:
-            raise ValueError("target_path is required when send_to_opentrons is true.")
+        # target_path is now optional - will fall back to shell_settings.target_protocol_src_win
+        # No validation needed
         return values
 
 

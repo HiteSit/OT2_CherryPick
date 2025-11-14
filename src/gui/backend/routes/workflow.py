@@ -41,19 +41,22 @@ def generate_protocol_endpoint(
             simulation, sim_log = store.run_simulation(payload.protocol_path)
             logs.extend(sim_log)
 
-    if payload.send_to_opentrons and payload.target_path and not payload.use_shell_runner:
-        deployment, dep_log = store.deploy_protocol(
-            payload.protocol_path,
-            target_path=payload.target_path,
-            copy_to_clipboard=payload.copy_to_clipboard,
-        )
-        logs.extend(dep_log)
-    elif payload.send_to_opentrons and payload.target_path and payload.use_shell_runner:
-        deployment, dep_log = store.deploy_protocol(
-            payload.protocol_path,
-            target_path=payload.target_path,
-            copy_to_clipboard=payload.copy_to_clipboard,
-        )
-        logs.extend(dep_log)
+    # Deployment only happens in Python-native path (shell script handles its own deployment via cp)
+    if payload.send_to_opentrons and not payload.use_shell_runner:
+        # Use shell_settings target_protocol_src_win if target_path not explicitly provided
+        target = payload.target_path
+        if not target:
+            shell_settings = store.get_shell_settings()
+            target = shell_settings.get("target_protocol_src_win")
+
+        if target:
+            deployment, dep_log = store.deploy_protocol(
+                payload.protocol_path,
+                target_path=target,
+                copy_to_clipboard=payload.copy_to_clipboard,
+            )
+            logs.extend(dep_log)
+        else:
+            logs.append("⚠ Deployment skipped: No target path configured in Shell Settings")
 
     return ProtocolGenerationResponse(generated=generated, simulation=simulation, deployment=deployment, logs=logs)
