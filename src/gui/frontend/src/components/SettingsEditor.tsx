@@ -365,13 +365,15 @@ export function SettingsEditor() {
           </Grid>
         }
       >
-        <WorkingPlateTable
-          entries={workingPlate}
-          labware={labwareOptions}
-          onUpdate={handleWorkingPlateUpdate}
-          onRemove={(index) => handleRemoveWorkingPlate(index)}
-          onMove={handleMoveWorkingPlate}
-        />
+        <div style={{ overflowX: 'auto' }}>
+          <WorkingPlateTable
+            entries={workingPlate}
+            labware={labwareOptions}
+            onUpdate={handleWorkingPlateUpdate}
+            onRemove={(index) => handleRemoveWorkingPlate(index)}
+            onMove={handleMoveWorkingPlate}
+          />
+        </div>
       </SectionCard>
 
       <Accordion variant="contained">
