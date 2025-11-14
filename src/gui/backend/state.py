@@ -561,7 +561,9 @@ class FileStateStore:
     def _read_simulation_log(self) -> dict[str, Any]:
         log_path = Path(DEFAULT_LOG_FILE)
         if not log_path.is_absolute():
-            log_path = self.repo_root / log_path
+            # Prefer the active workspace (matches OT2_PROJECT_DIR) but fall back to repo root
+            workspace_candidate = self.workspace_dir / log_path
+            log_path = workspace_candidate if workspace_candidate.exists() else self.repo_root / log_path
         if log_path.exists():
             try:
                 return json.loads(log_path.read_text(encoding="utf-8"))
