@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { WorkingPlateEntry } from '../../../api/types'
 import { useState } from 'react'
 import { LabwareModal } from './LabwareModal'
-import { useDeleteWorkingPlateEntry } from '../../../api/hooks'
+import { useWizard } from '../WizardContext'
 
 interface LabwareCardProps {
   labware: WorkingPlateEntry
@@ -21,7 +21,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 export function LabwareCard({ labware, slot }: LabwareCardProps) {
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const deleteMutation = useDeleteWorkingPlateEntry()
+  const { state, setDeckLayout } = useWizard()
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `labware-${slot}`,
@@ -36,12 +36,7 @@ export function LabwareCard({ labware, slot }: LabwareCardProps) {
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
-    // Find the index in the settings array
-    // This requires getting the current settings and finding the index
-    // For now, we'll use the slot as a proxy
-    if (confirm(`Delete labware from slot ${slot}?`)) {
-      deleteMutation.mutate(slot - 1) // Approximate index
-    }
+    setDeckLayout(state.deckLayout.filter(l => l.position_rack !== String(slot)))
   }
 
   const handleEdit = (e: React.MouseEvent) => {

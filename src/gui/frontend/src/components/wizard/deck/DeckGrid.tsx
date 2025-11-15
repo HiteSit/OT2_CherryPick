@@ -1,4 +1,4 @@
-import { Grid, Stack, Title } from '@mantine/core'
+import { SimpleGrid, Stack, Title } from '@mantine/core'
 import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { EmptySlot } from './EmptySlot'
@@ -79,22 +79,30 @@ export function DeckGrid() {
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <Stack gap="md">
         <Title order={3}>OT-2 Deck Layout</Title>
-        <Grid gutter="md">
+        <SimpleGrid
+          cols={3}
+          spacing="md"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '1rem'
+          }}
+        >
           {slots.map(slot => {
             const labware = state.deckLayout.find(
               l => l.position_rack === String(slot)
             )
             return (
-              <Grid.Col key={slot} span={3}>
+              <div key={slot}>
                 {labware ? (
                   <LabwareCard labware={labware} slot={slot} />
                 ) : (
                   <EmptySlot slot={slot} />
                 )}
-              </Grid.Col>
+              </div>
             )
           })}
-        </Grid>
+        </SimpleGrid>
       </Stack>
     </DndContext>
   )

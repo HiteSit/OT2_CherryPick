@@ -1,10 +1,10 @@
-import { Stack, Button, Switch, Paper, Title, Text, Alert } from '@mantine/core'
-import { useState } from 'react'
+import { Stack, Button, Switch, Paper, Title, Text, Alert, TextInput, Group } from '@mantine/core'
+import { useState, useEffect } from 'react'
 import { IconAlertCircle } from '@tabler/icons-react'
 import { ConfigSummary } from '../review/ConfigSummary'
 import { PreflightChecklist } from '../review/PreflightChecklist'
 import { ProgressDisplay } from '../review/ProgressDisplay'
-import { useWorkflowRunner } from '../../../api/hooks'
+import { useWorkflowRunner, useShellSettingsQuery, useUpdateShellSettings, useBrowseShellSettings } from '../../../api/hooks'
 import { useWizard } from '../WizardContext'
 
 export function ReviewExecuteStep() {
@@ -14,6 +14,20 @@ export function ReviewExecuteStep() {
   const [sendToOpentrons, setSendToOpentrons] = useState(false)
 
   const workflow = useWorkflowRunner()
+  const { data: shellSettings } = useShellSettingsQuery()
+  const updateShellSettings = useUpdateShellSettings()
+  const browseFolder = useBrowseShellSettings()
+
+  const [labwarePath, setLabwarePath] = useState('')
+  const [protocolPath, setProtocolPath] = useState('')
+
+  // Initialize paths from shell settings
+  useEffect(() => {
+    if (shellSettings) {
+      setLabwarePath(shellSettings.labware_path_win || '')
+      setProtocolPath(shellSettings.target_protocol_src_win || '')
+    }
+  }, [shellSettings])
 
   const canExecute =
     state.deckLayout.some(l => l.type === 'source') &&
@@ -22,6 +36,23 @@ export function ReviewExecuteStep() {
     state.settings !== null &&
     state.csv.content.length > 0 &&
     state.csv.filename !== ''
+
+  const handleBrowseLabware = async () => {
+    const result = await browseFolder.mutateAsync('labware_path_win')
+    if (result) setLabwarePath(result)
+  }
+
+  const handleBrowseProtocol = async () => {
+    const result = await browseFolder.mutateAsync('target_protocol_src_win')
+    if (result) setProtocolPath(result)
+  }
+
+  const handleSavePaths = () => {
+    updateShellSettings.mutate({
+      labware_path_win: labwarePath,
+      target_protocol_src_win: protocolPath
+    })
+  }
 
   const handleExecute = () => {
     workflow.mutate({
@@ -67,15 +98,66 @@ export function ReviewExecuteStep() {
             onChange={(e) => setSendToOpentrons(e.target.checked)}
           />
         </Stack>
-
-        {sendToOpentrons && (
-          <Alert color="blue" mt="md">
-            <Text size="sm">
-              Make sure you have configured the Opentrons deployment path in the Workflow tab settings.
-            </Text>
-          </Alert>
-        )}
       </Paper>
+
+      {sendToOpentrons && (
+        <Paper withBorder p="md">
+          <Title order={5} mb="md">Shell Runner Windows Folders</Title>
+          <Text size="sm" c="dimmed" mb="md">
+            Configure Windows paths for simulation and deployment. These paths are required when "Send to Opentrons" is enabled.
+          </Text>
+          <Stack gap="md">
+            <div>
+              <TextInput
+                label="Custom labware folder (Windows)"
+                placeholder="C:\Users\...\AppData\Roaming\Opentrons\labware"
+                description="Path to Opentrons custom labware JSON files (required for simulation)"
+                value={labwarePath}
+                onChange={(e) => setLabwarePath(e.target.value)}
+              />
+              <Group mt="xs">
+                <Button
+                  size="xs"
+                  variant="light"
+                  onClick={handleBrowseLabware}
+                  loading={browseFolder.isPending}
+                >
+                  Browse...
+                </Button>
+              </Group>
+            </div>
+
+            <div>
+              <TextInput
+                label="Opentrons protocol folder (Windows)"
+                placeholder="C:\Users\...\AppData\Roaming\Opentrons\protocols\{UUID}\src"
+                description="Path to target Opentrons App protocol directory (must end with \src)"
+                value={protocolPath}
+                onChange={(e) => setProtocolPath(e.target.value)}
+              />
+              <Group mt="xs">
+                <Button
+                  size="xs"
+                  variant="light"
+                  onClick={handleBrowseProtocol}
+                  loading={browseFolder.isPending}
+                >
+                  Browse...
+                </Button>
+              </Group>
+            </div>
+
+            <Button
+              onClick={handleSavePaths}
+              variant="filled"
+              loading={updateShellSettings.isPending}
+              disabled={!labwarePath && !protocolPath}
+            >
+              Save as default
+            </Button>
+          </Stack>
+        </Paper>
+      )}
 
       <Button
         onClick={handleExecute}
