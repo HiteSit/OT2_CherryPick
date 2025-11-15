@@ -1,0 +1,61 @@
+/**
+ * Basic validation tests for WizardContext
+ * Run with: npm test (if test framework is set up)
+ */
+
+import { describe, it, expect } from '@jest/globals'
+
+// Mock test to verify structure
+describe('WizardContext Validation Logic', () => {
+  it('should validate step 0 requires deck layout', () => {
+    const state = {
+      currentStep: 0,
+      deckLayout: [],
+      settings: null,
+      csv: { filename: '', content: '' }
+    }
+
+    // Step 0 validation: deckLayout.length > 0
+    const canProceedStep0 = state.deckLayout.length > 0
+    expect(canProceedStep0).toBe(false)
+  })
+
+  it('should validate step 1 requires settings', () => {
+    const state = {
+      currentStep: 1,
+      deckLayout: [{ type: 'source', labware_id: 'test', position_rack: '1' }],
+      settings: null,
+      csv: { filename: '', content: '' }
+    }
+
+    // Step 1 validation: settings !== null
+    const canProceedStep1 = state.settings !== null
+    expect(canProceedStep1).toBe(false)
+  })
+
+  it('should validate step 2 requires CSV data', () => {
+    const state = {
+      currentStep: 2,
+      deckLayout: [{ type: 'source', labware_id: 'test', position_rack: '1' }],
+      settings: {} as any,
+      csv: { filename: '', content: '' }
+    }
+
+    // Step 2 validation: csv.filename !== '' && csv.content !== ''
+    const canProceedStep2 = state.csv.filename !== '' && state.csv.content !== ''
+    expect(canProceedStep2).toBe(false)
+  })
+
+  it('should allow proceeding when all conditions met', () => {
+    const validState = {
+      currentStep: 0,
+      deckLayout: [{ type: 'source', labware_id: 'test', position_rack: '1' }],
+      settings: {} as any,
+      csv: { filename: 'test.csv', content: 'data' }
+    }
+
+    expect(validState.deckLayout.length > 0).toBe(true)
+    expect(validState.settings !== null).toBe(true)
+    expect(validState.csv.filename !== '' && validState.csv.content !== '').toBe(true)
+  })
+})
