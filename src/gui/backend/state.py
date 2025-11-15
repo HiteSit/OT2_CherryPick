@@ -19,7 +19,7 @@ from ot2_cherrypick_mcp.core.deployment import deploy_protocol
 from ot2_cherrypick_mcp.core.protocol_generator import generate_protocol
 from ot2_cherrypick_mcp.core.simulation import DEFAULT_LOG_FILE, simulate_protocol
 from ot2_cherrypick_mcp.utils.errors import SimulationError
-from ot2_cherrypick_mcp.utils.paths import get_repo_root
+from ot2_cherrypick_mcp.utils.paths import get_repo_root, resolve_project_path
 
 
 class FileStateStore:
@@ -561,9 +561,12 @@ class FileStateStore:
     def _read_simulation_log(self) -> dict[str, Any]:
         log_path = Path(DEFAULT_LOG_FILE)
         if not log_path.is_absolute():
-            # Prefer the active workspace (matches OT2_PROJECT_DIR) but fall back to repo root
-            workspace_candidate = self.workspace_dir / log_path
-            log_path = workspace_candidate if workspace_candidate.exists() else self.repo_root / log_path
+            try:
+                log_path = resolve_project_path(log_path)
+            except Exception:
+                # Fall back to workspace dir, then repo root
+                workspace_candidate = self.workspace_dir / log_path
+                log_path = workspace_candidate if workspace_candidate.exists() else self.repo_root / log_path
         if log_path.exists():
             try:
                 return json.loads(log_path.read_text(encoding="utf-8"))
