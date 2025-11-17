@@ -1,6 +1,6 @@
 import { Tabs, Textarea, Button, Group, Stack, FileInput, Text, TextInput } from '@mantine/core'
 import { IconUpload, IconPlus, IconMinus } from '@tabler/icons-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useWizard } from '../WizardContext'
 import Spreadsheet from 'react-spreadsheet'
 import Papa from 'papaparse'
@@ -76,10 +76,30 @@ export function CsvEditor() {
   }
 
   // Parse CSV to spreadsheet data
-  const sheetData = activeTab === 'spreadsheet' ? parseCsvToSheet(editorContent) : []
+  const sheetData = useMemo(() => {
+    if (activeTab !== 'spreadsheet') return []
+    return parseCsvToSheet(editorContent)
+  }, [editorContent, activeTab])
 
   const handleSheetChange = (data: Array<Array<CellBase | undefined>>) => {
     const headers = parseHeaders(editorContent)
+
+    // Validation: Ensure column counts match to prevent data corruption
+    if (data.length > 0 && data[0].length !== headers.length) {
+      console.warn('Column count mismatch detected. Headers:', headers.length, 'Data columns:', data[0].length)
+      // Attempt to normalize - pad or trim data to match header count
+      const normalizedData = data.map(row => {
+        const normalized = [...row]
+        while (normalized.length < headers.length) {
+          normalized.push({ value: '' })
+        }
+        return normalized.slice(0, headers.length)
+      })
+      const csv = sheetToCsv(normalizedData, headers)
+      handleTextChange(csv)
+      return
+    }
+
     const csv = sheetToCsv(data, headers)
     handleTextChange(csv)
   }
@@ -178,9 +198,10 @@ function parseCsvToSheet(content: string): CellBase[][] {
 
 function parseHeaders(content: string): string[] {
   if (!content) return []
-  const lines = content.split('\n')
-  if (lines.length === 0) return []
-  return lines[0].split(',')
+  const result = Papa.parse(content, { header: false })
+  const data = result.data as string[][]
+  if (data.length === 0) return []
+  return data[0].map(cell => cell ?? '')  // First row is headers
 }
 
 function sheetToCsv(data: Array<Array<CellBase | undefined>>, headers: string[]): string {
