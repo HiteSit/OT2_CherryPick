@@ -6,6 +6,7 @@ import type { WorkingPlateEntry } from '../../../api/types'
 import { useState } from 'react'
 import { LabwareModal } from './LabwareModal'
 import { useWizard } from '../WizardContext'
+import { usePatchSetting } from '../../../api/hooks'
 
 interface LabwareCardProps {
   labware: WorkingPlateEntry
@@ -17,11 +18,13 @@ const TYPE_COLORS: Record<string, string> = {
   destination: 'green',
   tip: 'yellow',
   module: 'grape',
+  reservoir: 'cyan',
 }
 
 export function LabwareCard({ labware, slot }: LabwareCardProps) {
   const [editModalOpen, setEditModalOpen] = useState(false)
   const { state, setDeckLayout } = useWizard()
+  const patchSettings = usePatchSetting()
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `labware-${slot}`,
@@ -31,12 +34,15 @@ export function LabwareCard({ labware, slot }: LabwareCardProps) {
     transform: CSS.Translate.toString(transform),
     opacity: isDragging ? 0.5 : 1,
     cursor: isDragging ? 'grabbing' : 'grab',
-    minHeight: rem(120),
+    minHeight: rem(140),
+    height: '100%',
   }
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setDeckLayout(state.deckLayout.filter(l => l.position_rack !== String(slot)))
+    const updatedLayout = state.deckLayout.filter(l => l.position_rack !== String(slot))
+    setDeckLayout(updatedLayout)
+    patchSettings.mutate({ path: 'settings.working_plate', value: updatedLayout })
   }
 
   const handleEdit = (e: React.MouseEvent) => {
@@ -110,7 +116,6 @@ export function LabwareCard({ labware, slot }: LabwareCardProps) {
       </Card>
 
       <LabwareModal
-        key={`edit-${slot}-${labware.labware_id}`}
         opened={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         slot={slot}

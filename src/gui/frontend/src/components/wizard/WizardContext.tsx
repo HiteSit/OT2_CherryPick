@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { WorkingPlateEntry, SettingsDocument } from '../../api/types'
 
@@ -34,28 +34,30 @@ const initialState: WizardState = {
 export function WizardProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<WizardState>(initialState)
 
-  const setCurrentStep = (step: number) => {
+  // Memoize setter functions to prevent context value from changing on every render
+  // This is critical to prevent infinite re-rendering loops in consuming components
+  const setCurrentStep = useCallback((step: number) => {
     setState(prev => ({ ...prev, currentStep: step }))
-  }
+  }, [])
 
-  const setDeckLayout = (layout: WorkingPlateEntry[]) => {
+  const setDeckLayout = useCallback((layout: WorkingPlateEntry[]) => {
     setState(prev => ({ ...prev, deckLayout: layout }))
-  }
+  }, [])
 
-  const setSettings = (settings: SettingsDocument) => {
+  const setSettings = useCallback((settings: SettingsDocument) => {
     setState(prev => ({ ...prev, settings }))
-  }
+  }, [])
 
-  const setCSV = (filename: string, content: string) => {
+  const setCSV = useCallback((filename: string, content: string) => {
     setState(prev => ({ ...prev, csv: { filename, content } }))
-  }
+  }, [])
 
-  const resetWizard = () => {
+  const resetWizard = useCallback(() => {
     setState(initialState)
-  }
+  }, [])
 
   // Validation logic for proceeding to next step
-  const canProceed = (step: number): boolean => {
+  const canProceed = useCallback((step: number): boolean => {
     switch (step) {
       case 0: // Deck Setup -> Configuration
         // Require at least 1 source, 1 destination, and 1 tip rack
@@ -72,7 +74,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       default:
         return false
     }
-  }
+  }, [state.deckLayout, state.settings, state.csv.filename, state.csv.content])
 
   const value: WizardContextValue = {
     state,

@@ -1,19 +1,36 @@
-import { Tabs, Textarea, Button, Group, Stack, FileInput, Text } from '@mantine/core'
+import { Tabs, Textarea, Button, Group, Stack, FileInput, Text, TextInput } from '@mantine/core'
 import { IconUpload, IconPlus, IconTablePlus } from '@tabler/icons-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useWizard } from '../WizardContext'
 import Spreadsheet from 'react-spreadsheet'
 import Papa from 'papaparse'
 import type { CellBase } from 'react-spreadsheet'
+import { useUploadCsv } from '../../../api/hooks'
 
 export function CsvEditor() {
   const { state, setCSV } = useWizard()
   const [activeTab, setActiveTab] = useState<string | null>('spreadsheet')
   const [editorContent, setEditorContent] = useState(state.csv.content)
+  const [filename, setFilename] = useState(state.csv.filename || 'wizard.csv')
+  const uploadCsv = useUploadCsv()
+
+  // Sync wizard context CSV state to local editor state
+  // Note: setFilename and setEditorContent are stable useState setters, not needed in deps
+  // The conditional prevents unnecessary updates when user is actively editing
+  useEffect(() => {
+    if (state.csv.filename) {
+      setFilename(state.csv.filename)
+    }
+    if (state.csv.content !== editorContent) {
+      setEditorContent(state.csv.content)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.csv.filename, state.csv.content])
 
   const handleTextChange = (value: string) => {
+    const targetFilename = filename || 'wizard.csv'
     setEditorContent(value)
-    setCSV(state.csv.filename, value)
+    setCSV(targetFilename, value)
   }
 
   const handleFileUpload = (file: File | null) => {
@@ -22,7 +39,9 @@ export function CsvEditor() {
     reader.onload = (e) => {
       const content = e.target?.result as string
       setEditorContent(content)
+      setFilename(file.name)
       setCSV(file.name, content)
+      uploadCsv.mutate({ name: file.name, content })
     }
     reader.readAsText(file)
   }
@@ -48,6 +67,12 @@ export function CsvEditor() {
     handleTextChange(newLines.join('\n'))
   }
 
+  const handleSaveWorkspace = () => {
+    const targetFilename = filename || 'wizard.csv'
+    setCSV(targetFilename, editorContent)
+    uploadCsv.mutate({ name: targetFilename, content: editorContent })
+  }
+
   // Parse CSV to spreadsheet data
   const sheetData = activeTab === 'spreadsheet' ? parseCsvToSheet(editorContent) : []
 
@@ -60,6 +85,17 @@ export function CsvEditor() {
   return (
     <Stack>
       <Group>
+        <TextInput
+          label="CSV filename"
+          placeholder="wizard.csv"
+          value={filename}
+          onChange={(e) => {
+            const next = e.target.value || 'wizard.csv'
+            setFilename(next)
+            setCSV(next, editorContent)
+          }}
+          style={{ maxWidth: 240 }}
+        />
         <FileInput
           placeholder="Upload CSV"
           leftSection={<IconUpload size={14} />}
@@ -72,6 +108,9 @@ export function CsvEditor() {
         </Button>
         <Button leftSection={<IconTablePlus size={14} />} variant="light" onClick={handleAddColumn}>
           Add Column
+        </Button>
+        <Button variant="filled" onClick={handleSaveWorkspace} loading={uploadCsv.isPending}>
+          Save to workspace
         </Button>
       </Group>
 

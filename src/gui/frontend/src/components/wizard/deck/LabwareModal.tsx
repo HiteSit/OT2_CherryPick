@@ -1,6 +1,6 @@
 import { Modal, Select, Button, Stack, NumberInput, Switch } from '@mantine/core'
-import { useState } from 'react'
-import { useLabwareQuery, useAddWorkingPlateEntry } from '../../../api/hooks'
+import { useEffect, useMemo, useState } from 'react'
+import { useLabwareQuery, usePatchSetting } from '../../../api/hooks'
 import { useWizard } from '../WizardContext'
 import type { WorkingPlateEntry } from '../../../api/types'
 
@@ -14,13 +14,22 @@ interface LabwareModalProps {
 export function LabwareModal({ opened, onClose, slot, existingLabware }: LabwareModalProps) {
   const { state, setDeckLayout } = useWizard()
   const { data: labwareOptions } = useLabwareQuery()
-  const addMutation = useAddWorkingPlateEntry()
+  const patchSettings = usePatchSetting()
 
-  // Form state - initialize from existingLabware or defaults
-  const [type, setType] = useState<string>(existingLabware?.type || 'source')
+  const normalizeModuleType = (value: string | undefined) => {
+    if (!value) return ''
+    if (value === 'heaterShaker' || value === 'heater_shaker') return 'heaterShaker'
+    return value
+  }
+  const normalizeType = (value: string | undefined) => {
+    const allowed = ['source', 'destination', 'tip', 'reservoir', 'module']
+    return value && allowed.includes(value) ? value : 'source'
+  }
+
+  const [type, setType] = useState<string>(normalizeType(existingLabware?.type))
   const [labwareId, setLabwareId] = useState<string>(existingLabware?.labware_id || '')
   const [connection, setConnection] = useState<string>(existingLabware?.connection || '')
-  const [moduleType, setModuleType] = useState<string>(existingLabware?.module_type || '')
+  const [moduleType, setModuleType] = useState<string>(normalizeModuleType(existingLabware?.module_type))
   const [targetTemperature, setTargetTemperature] = useState<number | string>(
     existingLabware?.target_temperature ?? ''
   )
@@ -30,6 +39,17 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
   const [persistAfterProtocol, setPersistAfterProtocol] = useState<boolean>(
     existingLabware?.persist_after_protocol ?? false
   )
+
+  // Re-sync when opening a different labware card; prevents stale state and crashes
+  useEffect(() => {
+    setType(normalizeType(existingLabware?.type))
+    setLabwareId(existingLabware?.labware_id || '')
+    setConnection(existingLabware?.connection || '')
+    setModuleType(normalizeModuleType(existingLabware?.module_type))
+    setTargetTemperature(existingLabware?.target_temperature ?? '')
+    setTargetShakeSpeed(existingLabware?.target_shake_speed ?? '')
+    setPersistAfterProtocol(existingLabware?.persist_after_protocol ?? false)
+  }, [existingLabware])
 
   const handleSave = () => {
     const newEntry: WorkingPlateEntry = {
@@ -53,27 +73,29 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
       newEntry.persist_after_protocol = persistAfterProtocol
     }
 
-    if (existingLabware) {
-      // Update existing labware
-      const updatedLayout = state.deckLayout.map(item =>
-        item.position_rack === String(slot) ? newEntry : item
-      )
-      setDeckLayout(updatedLayout)
-    } else {
-      // Add new labware
-      setDeckLayout([...state.deckLayout, newEntry])
-    }
+    const existingIndex = state.deckLayout.findIndex(item => item.position_rack === String(slot))
+    const updatedLayout =
+      existingIndex >= 0
+        ? state.deckLayout.map(item => (item.position_rack === String(slot) ? newEntry : item))
+        : [...state.deckLayout, newEntry]
 
-    // Also update backend via mutation
-    addMutation.mutate(newEntry)
+    setDeckLayout(updatedLayout)
+    patchSettings.mutate({ path: 'settings.working_plate', value: updatedLayout })
 
     onClose()
   }
 
-  const labwareSelectData = labwareOptions?.labware.map(l => ({
-    value: l.labware_id,
-    label: `${l.labware_id} (${l.well_count} wells, ${l.well_volume}µL)`,
-  })) || []
+  const labwareSelectData = useMemo(() => {
+    const base = labwareOptions?.labware.map(l => ({
+      value: l.labware_id,
+      label: `${l.labware_id} (${l.well_count} wells, ${l.well_volume}µL)`,
+    })) || []
+
+    if (labwareId && !base.find(item => item.value === labwareId)) {
+      base.unshift({ value: labwareId, label: labwareId })
+    }
+    return base
+  }, [labwareOptions, labwareId])
 
   return (
     <Modal
@@ -89,6 +111,7 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
             { value: 'source', label: 'Source' },
             { value: 'destination', label: 'Destination' },
             { value: 'tip', label: 'Tip Rack' },
+            { value: 'reservoir', label: 'Reservoir' },
             { value: 'module', label: 'Module' },
           ]}
           value={type}
@@ -126,29 +149,29 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
               data={[
                 { value: 'temperature', label: 'Temperature Module' },
                 { value: 'thermocycler', label: 'Thermocycler' },
-                { value: 'heater_shaker', label: 'Heater Shaker' },
+                { value: 'heaterShaker', label: 'Heater Shaker' },
                 { value: 'magnetic', label: 'Magnetic Module' },
               ]}
               value={moduleType}
               onChange={(v) => setModuleType(v || '')}
             />
 
-            {(moduleType === 'temperature' || moduleType === 'thermocycler' || moduleType === 'heater_shaker') && (
+            {(moduleType === 'temperature' || moduleType === 'thermocycler' || moduleType === 'heaterShaker') && (
               <NumberInput
                 label="Target Temperature (°C)"
                 description="Temperature to maintain during protocol"
-                value={targetTemperature}
+                value={typeof targetTemperature === 'number' ? targetTemperature : undefined}
                 onChange={setTargetTemperature}
                 min={4}
                 max={95}
               />
             )}
 
-            {moduleType === 'heater_shaker' && (
+            {moduleType === 'heaterShaker' && (
               <NumberInput
                 label="Target Shake Speed (RPM)"
                 description="Shaking speed during protocol"
-                value={targetShakeSpeed}
+                value={typeof targetShakeSpeed === 'number' ? targetShakeSpeed : undefined}
                 onChange={setTargetShakeSpeed}
                 min={200}
                 max={3000}
@@ -167,7 +190,7 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
         <Button
           onClick={handleSave}
           disabled={!labwareId}
-          loading={addMutation.isPending}
+          loading={patchSettings.isPending}
         >
           {existingLabware ? 'Update' : 'Add'} Labware
         </Button>

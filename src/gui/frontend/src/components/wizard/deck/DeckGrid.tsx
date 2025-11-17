@@ -4,9 +4,11 @@ import type { DragEndEvent } from '@dnd-kit/core'
 import { EmptySlot } from './EmptySlot'
 import { LabwareCard } from './LabwareCard'
 import { useWizard } from '../WizardContext'
+import { usePatchSetting } from '../../../api/hooks'
 
 export function DeckGrid() {
   const { state, setDeckLayout } = useWizard()
+  const patchSettings = usePatchSetting()
 
   // OT-2 deck slots in visual order (top to bottom, left to right)
   const slots = [10, 11, 12, 7, 8, 9, 4, 5, 6, 1, 2, 3]
@@ -64,6 +66,7 @@ export function DeckGrid() {
         return item
       })
       setDeckLayout(updatedLayout)
+      patchSettings.mutate({ path: 'settings.working_plate', value: updatedLayout })
     } else {
       // Move to empty slot
       const updatedLayout = state.deckLayout.map(item =>
@@ -72,6 +75,7 @@ export function DeckGrid() {
           : item
       )
       setDeckLayout(updatedLayout)
+      patchSettings.mutate({ path: 'settings.working_plate', value: updatedLayout })
     }
   }
 
@@ -93,12 +97,12 @@ export function DeckGrid() {
               l => l.position_rack === String(slot)
             )
             return (
-              <div key={slot}>
-                {labware ? (
-                  <LabwareCard labware={labware} slot={slot} />
-                ) : (
-                  <EmptySlot slot={slot} />
-                )}
+          <div key={slot} style={{ height: '100%' }}>
+            {labware ? (
+              <LabwareCard labware={labware} slot={slot} />
+            ) : (
+              <EmptySlot slot={slot} />
+            )}
               </div>
             )
           })}

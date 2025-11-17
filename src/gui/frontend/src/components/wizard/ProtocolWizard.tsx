@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Stepper, Container, Box } from '@mantine/core'
 import { WizardProvider, useWizard } from './WizardContext'
 import { WizardNavigation } from './WizardNavigation'
@@ -5,6 +6,7 @@ import { DeckSetupStep } from './steps/DeckSetupStep'
 import { ConfigurationStep } from './steps/ConfigurationStep'
 import { TransferMapStep } from './steps/TransferMapStep'
 import { ReviewExecuteStep } from './steps/ReviewExecuteStep'
+import { useSettingsQuery } from '../../api/hooks'
 
 export function ProtocolWizard() {
   return (
@@ -15,7 +17,18 @@ export function ProtocolWizard() {
 }
 
 function WizardContent() {
-  const { state, setCurrentStep } = useWizard()
+  const { state, setCurrentStep, setDeckLayout, setSettings } = useWizard()
+  const { data: settings } = useSettingsQuery()
+
+  // Keep wizard state in sync with backend settings (including deck layout)
+  // Note: setSettings and setDeckLayout are stable Context functions and should NOT be in the dependency array
+  // Including them causes infinite loops because they get new references on every parent render
+  useEffect(() => {
+    if (settings) {
+      setSettings(settings)
+      setDeckLayout(settings.settings?.working_plate ?? [])
+    }
+  }, [settings])
 
   return (
     <Container size="xl" py="xl">

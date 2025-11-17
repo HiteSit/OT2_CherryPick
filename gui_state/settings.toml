@@ -161,166 +161,20 @@ adapter_id = "opentrons_universal_flat_adapter"
 labware_id = ""
 target_temperature = 0
 target_shake_speed = 0
-persist_after_protocol = true        # Keep running after protocol ends
+persist_after_protocol = true
 
 [[settings.working_plate]]
-type = "reservoir"
+type = "destination"
 labware_id = "384_ppv_55ul"
 position_rack = "2"
 
 [[settings.working_plate]]
-type = "reservoir"
+type = "source"
 labware_id = "tube_rack_96_1500ul"
 position_rack = "4"
 
 [[settings.working_plate]]
 type = "tip"
 labware_id = "opentrons_96_tiprack_300ul"
+position_rack = "5"
 connection = "Pipette_8"
-position_rack = "1"
-
-# =============================================================================
-# HARDWARE MODULES (OPTIONAL)
-# =============================================================================
-# Hardware modules like heater-shaker provide environmental control but do NOT
-# participate in liquid transfers. Modules are "background-only" - CSV transfers
-# cannot reference module labware as source or destination.
-#
-# HEATER-SHAKER MODULE:
-# The heater-shaker provides temperature control (37-95°C) and orbital shaking
-# (200-3000 RPM) for maintaining optimal reaction conditions during protocols.
-#
-# KEY BEHAVIORS:
-# - Initializes at protocol start (non-blocking temperature, blocking shake)
-# - Temperature ramps in background while transfers execute (parallel operation)
-# - Shaking initialization blocks ~5-10 seconds (acceptable for setup)
-# - Latch remains CLOSED throughout protocol (no pipetting access to module plate)
-# - Labware on module is for manual sample prep only (not CSV-accessible)
-# - Module slot is marked as occupied (deck conflict detection applies)
-#
-# CONFIGURATION FIELDS:
-# - type: Must be "module" to identify as hardware module
-# - module_type: "heaterShaker" (only supported module currently)
-# - position_rack: Deck slot (OT-2: slots 1,3,4,6,7,10; avoid adjacent tall labware)
-# - adapter_id: Adapter loaded on module (required for labware mounting)
-# - labware_id: Labware loaded on adapter (standard Opentrons labware ID)
-# - target_temperature: Temperature in °C (0 = disabled, 37-95 = active, MUST be explicit)
-# - target_shake_speed: Shake speed in RPM (0 = disabled, 200-3000 = active, MUST be explicit)
-# - persist_after_protocol: If true, module continues running after protocol ends
-#                          If false, module deactivates immediately (heater off, shaker off)
-#
-# IMPORTANT CONSTRAINTS:
-# - Module labware is NEVER referenced in CSV (background-only)
-# - Set target_temperature = 0 to disable heating (explicit required)
-# - Set target_shake_speed = 0 to disable shaking (explicit required)
-# - Cannot pipette to/from module labware (latch remains closed)
-# - Module slot counts as occupied (include in deck layout planning)
-#
-# EXAMPLE CONFIGURATIONS:
-#
-# Example 1: Full heater-shaker (heating + shaking, persist after protocol)
-# [[settings.working_plate]]
-# type = "module"
-# module_type = "heaterShaker"
-# position_rack = "7"
-# adapter_id = "opentrons_96_flat_bottom_adapter"
-# labware_id = "nest_96_wellplate_200ul_flat"
-# target_temperature = 37              # 37°C (physiological temperature)
-# target_shake_speed = 300             # 300 RPM (gentle mixing)
-# persist_after_protocol = true        # Keep running after protocol ends
-#
-# Example 2: Heating only (no shaking, deactivate after protocol)
-# [[settings.working_plate]]
-# type = "module"
-# module_type = "heaterShaker"
-# position_rack = "7"
-# adapter_id = "opentrons_96_flat_bottom_adapter"
-# labware_id = "nest_96_wellplate_200ul_flat"
-# target_temperature = 42              # 42°C (elevated temperature)
-# target_shake_speed = 0               # No shaking (MUST be explicit)
-# persist_after_protocol = false       # Deactivate at protocol end
-#
-# Example 3: Shaking only (no heating, persist after protocol)
-# [[settings.working_plate]]
-# type = "module"
-# module_type = "heaterShaker"
-# position_rack = "7"
-# adapter_id = "opentrons_96_flat_bottom_adapter"
-# labware_id = "nest_96_wellplate_200ul_flat"
-# target_temperature = 0               # No heating (MUST be explicit)
-# target_shake_speed = 500             # 500 RPM (moderate agitation)
-# persist_after_protocol = true        # Keep shaking after protocol ends
-
-# =============================================================================
-# CSV COLUMN DOCUMENTATION
-# =============================================================================
-# Complete reference for all available CSV columns in cherry-pick transfers
-
-# REQUIRED COLUMNS (must be present in every CSV):
-# - "Source Labware": Name of source labware (e.g., "iqb_96_tuberack_2000ul_4")
-# - "Source Well": Source well position (e.g., "A1", "H12")
-# - "Volume (ul)": Transfer volume in microliters (e.g., 50, 100.5)
-# - "Dest Labware": Name of destination labware (e.g., "pp_384_wellplate_150_ul_high_2")
-# - "Dest Well": Destination well position (e.g., "B1", "P24")
-
-# POSITIONING COLUMNS (choose ONE for source, ONE for destination):
-# Source positioning - specify EITHER Source Height OR Source Top (not both):
-# - "Source Height": Offset from well bottom in mm (e.g., 2, 1.5, 0.5)
-#                   Positive = higher from bottom, 0 = at bottom
-# - "Source Top": Offset from well top in mm (e.g., -5, -2.0, -10)
-#                Negative = down from top, 0 = at top surface
-#
-# Destination positioning - specify EITHER Dest Height OR Dest Top (not both):
-# - "Dest Height": Offset from well bottom in mm (e.g., 1, 2.5)
-# - "Dest Top": Offset from well top in mm (e.g., -3, -7.5)
-#
-# Mixing positioning (optional, only used if Mix Volume > 0):
-# - "Mix Height": Offset from well bottom for mixing (e.g., 2.0, 5.0)
-#                Context-dependent on [settings.liquid_handling.mixing].location:
-#                  - location="destination": Mix Height in DESTINATION well
-#                  - location="source": Mix Height in SOURCE well
-#                Default: 2.0mm if not specified
-
-# LIQUID HANDLING COLUMNS (all optional, defaults applied if missing):
-# - "Mix Volume": Volume in µL for mixing (e.g., 20, 50, 150)
-#                0 = no mixing, >0 = mix 3 times with specified volume
-#                WHERE mixing occurs depends on [settings.liquid_handling.mixing].location:
-#                  - location="destination": Mix AFTER dispensing (default behavior)
-#                  - location="source": Mix BEFORE aspirating (for cell suspensions, beads)
-#                  - location="none": Mix Volume ignored entirely
-#                Default: 0 (no mixing)
-#
-# - "Flow Aspirate": Aspirate rate multiplier (e.g., 0.5, 1.0, 1.5)
-#                   1.0 = normal speed, <1.0 = slower, >1.0 = faster
-#                   Default: 1.0
-#
-# - "Flow Dispense": Dispense rate multiplier (e.g., 0.8, 1.2, 2.0)
-#                   1.0 = normal speed, <1.0 = slower, >1.0 = faster
-#                   Default: 1.0
-#
-# - "Air Gap": Air gap volume in µL (e.g., 5, 10, 20)
-#             0 = no air gap, >0 = aspirate air after liquid
-#             Prevents dripping during transport
-#             Default: 0
-#
-# - "Air Gap Rate": Air gap aspiration rate multiplier (e.g., 0.5, 1.0)
-#                  Only applies if Air Gap > 0
-#                  Default: 1.0
-
-# TIP MANAGEMENT COLUMN (optional):
-# - "Tip Action": Per-transfer tip behavior, overrides global tip_reuse setting
-#    - "new": Always get new tip (drop current if present, pick up fresh)
-#    - "keep": Keep current tip (pick up new only if none present)
-#    - "drop": Use tip for transfer then drop it immediately after
-#    - "auto": Use global tip_reuse setting from [settings.general]
-#    Default: "auto"
-
-# CSV EXAMPLES:
-# Basic CSV (minimal required columns):
-# Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top
-# tube_rack_1,A1,50,plate_2,B1,2,-5
-#
-# Advanced CSV (all features):
-# Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mix Volume,Flow Aspirate,Flow Dispense,Air Gap,Tip Action
-# tube_rack_1,A1,100,plate_2,B1,2,-5,20,0.5,1.2,10,new
-# tube_rack_1,A2,50,plate_2,B2,2,-5,0,0.8,1.0,0,keep

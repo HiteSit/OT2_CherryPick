@@ -24,7 +24,8 @@ export function EmptySlot({ slot }: EmptySlotProps) {
           borderColor: isOver ? 'var(--mantine-color-blue-6)' : 'var(--mantine-color-gray-4)',
           backgroundColor: isOver ? 'var(--mantine-color-blue-0)' : 'var(--mantine-color-gray-0)',
           cursor: 'pointer',
-          minHeight: rem(120),
+          minHeight: rem(140),
+          height: '100%',
           transition: 'all 0.2s ease',
         }}
         onClick={() => setModalOpen(true)}

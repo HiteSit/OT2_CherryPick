@@ -4,8 +4,9 @@ import { IconAlertCircle } from '@tabler/icons-react'
 import { ConfigSummary } from '../review/ConfigSummary'
 import { PreflightChecklist } from '../review/PreflightChecklist'
 import { ProgressDisplay } from '../review/ProgressDisplay'
-import { useWorkflowRunner, useShellSettingsQuery, useUpdateShellSettings, useBrowseShellSettings } from '../../../api/hooks'
+import { useWorkflowRunner, useShellSettingsQuery, useUpdateShellSettings, useBrowseShellSettings, useUploadCsv } from '../../../api/hooks'
 import { useWizard } from '../WizardContext'
+import { notifications } from '@mantine/notifications'
 
 export function ReviewExecuteStep() {
   const { state } = useWizard()
@@ -17,6 +18,7 @@ export function ReviewExecuteStep() {
   const { data: shellSettings } = useShellSettingsQuery()
   const updateShellSettings = useUpdateShellSettings()
   const browseFolder = useBrowseShellSettings()
+  const uploadCsv = useUploadCsv()
 
   const [labwarePath, setLabwarePath] = useState('')
   const [protocolPath, setProtocolPath] = useState('')
@@ -38,13 +40,13 @@ export function ReviewExecuteStep() {
     state.csv.filename !== ''
 
   const handleBrowseLabware = async () => {
-    const result = await browseFolder.mutateAsync('labware_path_win')
-    if (result) setLabwarePath(result)
+    const result = await browseFolder.mutateAsync({ field: 'labware_path_win' })
+    if (result?.labware_path_win) setLabwarePath(result.labware_path_win)
   }
 
   const handleBrowseProtocol = async () => {
-    const result = await browseFolder.mutateAsync('target_protocol_src_win')
-    if (result) setProtocolPath(result)
+    const result = await browseFolder.mutateAsync({ field: 'target_protocol_src_win' })
+    if (result?.target_protocol_src_win) setProtocolPath(result.target_protocol_src_win)
   }
 
   const handleSavePaths = () => {
@@ -54,14 +56,25 @@ export function ReviewExecuteStep() {
     })
   }
 
-  const handleExecute = () => {
-    workflow.mutate({
-      csv: state.csv.filename,
-      run_simulation: runSimulation,
-      copy_to_clipboard: copyToClipboard,
-      send_to_opentrons: sendToOpentrons,
-      use_shell_runner: false
-    })
+  const handleExecute = async () => {
+    const csvName = state.csv.filename || 'wizard.csv'
+    try {
+      await uploadCsv.mutateAsync({ name: csvName, content: state.csv.content })
+      workflow.mutate({
+        csv: csvName,
+        run_simulation: runSimulation,
+        copy_to_clipboard: copyToClipboard,
+        send_to_opentrons: sendToOpentrons,
+        use_shell_runner: false
+      })
+    } catch (error) {
+      notifications.show({
+        color: 'red',
+        title: 'Failed to save CSV',
+        message: error instanceof Error ? error.message : 'Unable to persist CSV before execution',
+        position: 'top-right'
+      })
+    }
   }
 
   return (

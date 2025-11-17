@@ -11,11 +11,12 @@ export function ConfigurationStep() {
   const { data: settings } = useSettingsQuery()
 
   // Sync settings from API query into wizard context for validation
+  // Note: setSettings is a stable Context function and should NOT be in the dependency array
   useEffect(() => {
     if (settings && !state.settings) {
       setSettings(settings)
     }
-  }, [settings, state.settings, setSettings])
+  }, [settings, state.settings])
 
   // Context-aware warning for multi mode
   const hasNon96Or384Plate = state.deckLayout.some(labware => {
