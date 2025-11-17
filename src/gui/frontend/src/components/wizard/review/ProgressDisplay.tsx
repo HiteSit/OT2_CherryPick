@@ -135,8 +135,8 @@ export function ProgressDisplay({ workflowData, isLoading, error }: ProgressDisp
               label="Simulation Output"
               value={workflowData.simulation.stdout}
               readOnly
-              minRows={8}
-              maxRows={15}
+              minRows={15}
+              maxRows={30}
               styles={{ input: { fontFamily: 'monospace', fontSize: '0.75rem' } }}
             />
           )}
@@ -145,8 +145,8 @@ export function ProgressDisplay({ workflowData, isLoading, error }: ProgressDisp
               label="Simulation Errors"
               value={workflowData.simulation.stderr}
               readOnly
-              minRows={4}
-              maxRows={10}
+              minRows={10}
+              maxRows={20}
               styles={{ input: { fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--mantine-color-red-6)' } }}
             />
           )}

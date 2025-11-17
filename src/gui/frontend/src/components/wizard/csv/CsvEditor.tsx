@@ -1,5 +1,5 @@
 import { Tabs, Textarea, Button, Group, Stack, FileInput, Text, TextInput } from '@mantine/core'
-import { IconUpload, IconPlus, IconTablePlus, IconMinus, IconTableMinus } from '@tabler/icons-react'
+import { IconUpload, IconPlus, IconMinus } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { useWizard } from '../WizardContext'
 import Spreadsheet from 'react-spreadsheet'
@@ -58,19 +58,6 @@ export function CsvEditor() {
     handleTextChange(newContent)
   }
 
-  const handleAddColumn = () => {
-    const lines = editorContent.split('\n')
-    if (lines.length === 0) {
-      handleTextChange('New Column')
-      return
-    }
-    const newLines = lines.map((line, idx) => {
-      if (idx === 0) return `${line},New Column`
-      return `${line},`
-    })
-    handleTextChange(newLines.join('\n'))
-  }
-
   const handleRemoveRow = () => {
     const lines = editorContent.split('\n')
     if (lines.length <= 1) {
@@ -79,18 +66,6 @@ export function CsvEditor() {
     }
     // Remove last row
     const newLines = lines.slice(0, -1)
-    handleTextChange(newLines.join('\n'))
-  }
-
-  const handleRemoveColumn = () => {
-    const lines = editorContent.split('\n')
-    if (lines.length === 0) return
-
-    const newLines = lines.map(line => {
-      const cells = line.split(',')
-      if (cells.length <= 1) return line // Don't remove if only one column
-      return cells.slice(0, -1).join(',')
-    })
     handleTextChange(newLines.join('\n'))
   }
 
@@ -135,19 +110,13 @@ export function CsvEditor() {
         />
       </Group>
 
-      {/* Row 2: Add/Remove Row and Column */}
+      {/* Row 2: Add/Remove Row */}
       <Group>
         <Button leftSection={<IconPlus size={14} />} variant="light" onClick={handleAddRow}>
           Add Row
         </Button>
         <Button leftSection={<IconMinus size={14} />} variant="light" color="red" onClick={handleRemoveRow}>
           Remove Row
-        </Button>
-        <Button leftSection={<IconTablePlus size={14} />} variant="light" onClick={handleAddColumn}>
-          Add Column
-        </Button>
-        <Button leftSection={<IconTableMinus size={14} />} variant="light" color="red" onClick={handleRemoveColumn}>
-          Remove Column
         </Button>
       </Group>
 
@@ -185,8 +154,8 @@ export function CsvEditor() {
             value={editorContent}
             onChange={(e) => handleTextChange(e.target.value)}
             styles={{ input: { fontFamily: 'monospace', fontSize: '0.85rem' } }}
-            minRows={15}
-            maxRows={25}
+            minRows={25}
+            maxRows={50}
             placeholder="Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well"
           />
         </Tabs.Panel>
