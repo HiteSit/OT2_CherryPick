@@ -1,4 +1,4 @@
-import { Stack, Button, Switch, Paper, Title, Text, Alert, TextInput, Group } from '@mantine/core'
+import { Stack, Button, Switch, Paper, Title, Text, Alert, TextInput, Group, Accordion } from '@mantine/core'
 import { useState, useEffect } from 'react'
 import { IconAlertCircle } from '@tabler/icons-react'
 import { ConfigSummary } from '../review/ConfigSummary'
@@ -99,17 +99,25 @@ export function ReviewExecuteStep() {
             onChange={(e) => setRunSimulation(e.target.checked)}
           />
           <Switch
-            label="Copy protocol to clipboard"
-            description="Automatically copy generated protocol to system clipboard"
-            checked={copyToClipboard}
-            onChange={(e) => setCopyToClipboard(e.target.checked)}
-          />
-          <Switch
             label="Send to Opentrons deployment path"
             description="Copy protocol to configured Opentrons App directory"
             checked={sendToOpentrons}
             onChange={(e) => setSendToOpentrons(e.target.checked)}
           />
+
+          <Accordion variant="separated">
+            <Accordion.Item value="advanced">
+              <Accordion.Control>Advanced Options</Accordion.Control>
+              <Accordion.Panel>
+                <Switch
+                  label="Copy protocol to clipboard"
+                  description="Automatically copy generated protocol to system clipboard"
+                  checked={copyToClipboard}
+                  onChange={(e) => setCopyToClipboard(e.target.checked)}
+                />
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
         </Stack>
       </Paper>
 
