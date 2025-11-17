@@ -1,5 +1,5 @@
 import { Tabs, Textarea, Button, Group, Stack, FileInput, Text, TextInput } from '@mantine/core'
-import { IconUpload, IconPlus, IconTablePlus } from '@tabler/icons-react'
+import { IconUpload, IconPlus, IconTablePlus, IconMinus, IconTableMinus } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { useWizard } from '../WizardContext'
 import Spreadsheet from 'react-spreadsheet'
@@ -16,14 +16,12 @@ export function CsvEditor() {
 
   // Sync wizard context CSV state to local editor state
   // Note: setFilename and setEditorContent are stable useState setters, not needed in deps
-  // The conditional prevents unnecessary updates when user is actively editing
   useEffect(() => {
     if (state.csv.filename) {
       setFilename(state.csv.filename)
     }
-    if (state.csv.content !== editorContent) {
-      setEditorContent(state.csv.content)
-    }
+    // Always sync content to ensure Text View updates when CSV is uploaded
+    setEditorContent(state.csv.content)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.csv.filename, state.csv.content])
 
@@ -34,7 +32,13 @@ export function CsvEditor() {
   }
 
   const handleFileUpload = (file: File | null) => {
-    if (!file) return
+    if (!file) {
+      // Clear button clicked - reset both spreadsheet and text views
+      setEditorContent('')
+      setFilename('wizard.csv')
+      setCSV('wizard.csv', '')
+      return
+    }
     const reader = new FileReader()
     reader.onload = (e) => {
       const content = e.target?.result as string
@@ -63,6 +67,29 @@ export function CsvEditor() {
     const newLines = lines.map((line, idx) => {
       if (idx === 0) return `${line},New Column`
       return `${line},`
+    })
+    handleTextChange(newLines.join('\n'))
+  }
+
+  const handleRemoveRow = () => {
+    const lines = editorContent.split('\n')
+    if (lines.length <= 1) {
+      // Don't remove if only header remains
+      return
+    }
+    // Remove last row
+    const newLines = lines.slice(0, -1)
+    handleTextChange(newLines.join('\n'))
+  }
+
+  const handleRemoveColumn = () => {
+    const lines = editorContent.split('\n')
+    if (lines.length === 0) return
+
+    const newLines = lines.map(line => {
+      const cells = line.split(',')
+      if (cells.length <= 1) return line // Don't remove if only one column
+      return cells.slice(0, -1).join(',')
     })
     handleTextChange(newLines.join('\n'))
   }
@@ -108,13 +135,19 @@ export function CsvEditor() {
         />
       </Group>
 
-      {/* Row 2: Add Row and Add Column */}
+      {/* Row 2: Add/Remove Row and Column */}
       <Group>
         <Button leftSection={<IconPlus size={14} />} variant="light" onClick={handleAddRow}>
           Add Row
         </Button>
+        <Button leftSection={<IconMinus size={14} />} variant="light" color="red" onClick={handleRemoveRow}>
+          Remove Row
+        </Button>
         <Button leftSection={<IconTablePlus size={14} />} variant="light" onClick={handleAddColumn}>
           Add Column
+        </Button>
+        <Button leftSection={<IconTableMinus size={14} />} variant="light" color="red" onClick={handleRemoveColumn}>
+          Remove Column
         </Button>
       </Group>
 

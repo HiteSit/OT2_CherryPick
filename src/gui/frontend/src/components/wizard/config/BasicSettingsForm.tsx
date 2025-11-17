@@ -90,21 +90,24 @@ export function BasicSettingsForm() {
         onChange={(v) => typeof v === 'number' && handleChange('settings.general.head_speed.speed', v)}
       />
 
-      <TextInput
-        label={
-          <Group gap={4}>
-            Starting Tip Well
-            <Tooltip label={HELP_TEXT.startingTipWell} maw={400} multiline>
-              <ActionIcon size="xs" variant="subtle" color="gray">
-                <IconHelp size={14} />
-              </ActionIcon>
-            </Tooltip>
-          </Group>
-        }
-        value={settings?.settings?.general?.starting_tip_well || 'H1'}
-        onChange={(e) => handleChange('settings.general.starting_tip_well', e.target.value)}
-        placeholder="H1 or A1"
-      />
+      {/* Show Starting Tip Well only for multi_X1 mode */}
+      {settings?.settings?.general?.mode === 'multi_X1' && (
+        <TextInput
+          label={
+            <Group gap={4}>
+              Starting Tip Well
+              <Tooltip label={HELP_TEXT.startingTipWell} maw={400} multiline>
+                <ActionIcon size="xs" variant="subtle" color="gray">
+                  <IconHelp size={14} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+          }
+          value={settings?.settings?.general?.starting_tip_well || 'H1'}
+          onChange={(e) => handleChange('settings.general.starting_tip_well', e.target.value)}
+          placeholder="H1 or A1"
+        />
+      )}
     </Stack>
   )
 }
