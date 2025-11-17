@@ -153,7 +153,7 @@ export function CsvEditor() {
           <Textarea
             value={editorContent}
             onChange={(e) => handleTextChange(e.target.value)}
-            styles={{ input: { fontFamily: 'monospace', fontSize: '0.85rem' } }}
+            styles={{ input: { fontFamily: 'monospace', fontSize: '0.85rem', minHeight: '400px' } }}
             minRows={25}
             maxRows={50}
             placeholder="Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well"

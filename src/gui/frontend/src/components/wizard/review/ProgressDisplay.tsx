@@ -137,7 +137,7 @@ export function ProgressDisplay({ workflowData, isLoading, error }: ProgressDisp
               readOnly
               minRows={15}
               maxRows={30}
-              styles={{ input: { fontFamily: 'monospace', fontSize: '0.75rem' } }}
+              styles={{ input: { fontFamily: 'monospace', fontSize: '0.75rem', minHeight: '400px' } }}
             />
           )}
           {workflowData.simulation.stderr && (
@@ -147,7 +147,7 @@ export function ProgressDisplay({ workflowData, isLoading, error }: ProgressDisp
               readOnly
               minRows={10}
               maxRows={20}
-              styles={{ input: { fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--mantine-color-red-6)' } }}
+              styles={{ input: { fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--mantine-color-red-6)', minHeight: '400px' } }}
             />
           )}
         </Stack>
