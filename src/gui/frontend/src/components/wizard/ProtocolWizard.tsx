@@ -35,7 +35,7 @@ function WizardContent() {
       <Stepper
         active={state.currentStep}
         onStepClick={setCurrentStep}
-        allowNextStepsSelect={false}
+        allowNextStepsSelect={true}
       >
         <Stepper.Step
           label="Deck Setup"

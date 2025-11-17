@@ -164,17 +164,17 @@ target_shake_speed = 0
 persist_after_protocol = true
 
 [[settings.working_plate]]
-type = "destination"
+type = "source"
 labware_id = "384_ppv_55ul"
 position_rack = "2"
 
 [[settings.working_plate]]
-type = "source"
+type = "destination"
 labware_id = "tube_rack_96_1500ul"
 position_rack = "4"
 
 [[settings.working_plate]]
 type = "tip"
 labware_id = "opentrons_96_tiprack_300ul"
-position_rack = "5"
 connection = "Pipette_8"
+position_rack = "1"

@@ -84,7 +84,8 @@ export function CsvEditor() {
 
   return (
     <Stack>
-      <Group>
+      {/* Row 1: Filename and Upload */}
+      <Group align="flex-end">
         <TextInput
           label="CSV filename"
           placeholder="wizard.csv"
@@ -94,21 +95,31 @@ export function CsvEditor() {
             setFilename(next)
             setCSV(next, editorContent)
           }}
-          style={{ maxWidth: 240 }}
+          style={{ flex: 1, maxWidth: 300 }}
         />
         <FileInput
-          placeholder="Upload CSV"
+          label="Upload CSV"
+          placeholder="Choose file"
           leftSection={<IconUpload size={14} />}
           onChange={handleFileUpload}
           accept=".csv"
           clearable
+          style={{ flex: 1, maxWidth: 300 }}
         />
+      </Group>
+
+      {/* Row 2: Add Row and Add Column */}
+      <Group>
         <Button leftSection={<IconPlus size={14} />} variant="light" onClick={handleAddRow}>
           Add Row
         </Button>
         <Button leftSection={<IconTablePlus size={14} />} variant="light" onClick={handleAddColumn}>
           Add Column
         </Button>
+      </Group>
+
+      {/* Row 3: Save to workspace */}
+      <Group>
         <Button variant="filled" onClick={handleSaveWorkspace} loading={uploadCsv.isPending}>
           Save to workspace
         </Button>

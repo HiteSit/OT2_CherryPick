@@ -86,15 +86,62 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
   }
 
   const labwareSelectData = useMemo(() => {
-    const base = labwareOptions?.labware.map(l => ({
-      value: l.labware_id,
-      label: `${l.labware_id} (${l.well_count} wells, ${l.well_volume}µL)`,
-    })) || []
+    if (!labwareOptions?.labware) return []
 
-    if (labwareId && !base.find(item => item.value === labwareId)) {
-      base.unshift({ value: labwareId, label: labwareId })
+    // Group labware by category
+    const grouped: Record<string, Array<{ value: string; label: string }>> = {}
+
+    labwareOptions.labware.forEach(l => {
+      const category = l.category || 'other'
+      if (!grouped[category]) grouped[category] = []
+      grouped[category].push({
+        value: l.labware_id,
+        label: `${l.labware_id} (${l.well_count} wells, ${l.well_volume}µL)`
+      })
+    })
+
+    // Convert to Mantine Select format with groups
+    const selectData: Array<{ group: string; items: Array<{ value: string; label: string }> }> = []
+
+    // Define preferred order for categories
+    const categoryOrder = ['tip_rack', 'plate', 'tube_rack', 'reservoir']
+    const categoryLabels: Record<string, string> = {
+      tip_rack: 'Tip Racks',
+      plate: 'Plates',
+      tube_rack: 'Tube Racks',
+      reservoir: 'Reservoirs',
+      other: 'Other'
     }
-    return base
+
+    // Add groups in preferred order
+    categoryOrder.forEach(cat => {
+      if (grouped[cat]) {
+        selectData.push({
+          group: categoryLabels[cat] || cat,
+          items: grouped[cat]
+        })
+      }
+    })
+
+    // Add remaining categories not in preferred order
+    Object.keys(grouped).forEach(cat => {
+      if (!categoryOrder.includes(cat)) {
+        selectData.push({
+          group: categoryLabels[cat] || cat,
+          items: grouped[cat]
+        })
+      }
+    })
+
+    // Add current labware if not found in list
+    if (labwareId && !labwareOptions.labware.find(l => l.labware_id === labwareId)) {
+      selectData.unshift({
+        group: 'Current Selection',
+        items: [{ value: labwareId, label: labwareId }]
+      })
+    }
+
+    return selectData
   }, [labwareOptions, labwareId])
 
   return (
@@ -127,6 +174,7 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
           onChange={(v) => setLabwareId(v || '')}
           searchable
           required
+          maxDropdownHeight={400}
         />
 
         {type === 'tip' && (

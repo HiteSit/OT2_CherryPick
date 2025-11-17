@@ -60,11 +60,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const canProceed = useCallback((step: number): boolean => {
     switch (step) {
       case 0: // Deck Setup -> Configuration
-        // Require at least 1 source, 1 destination, and 1 tip rack
-        const hasSource = state.deckLayout.some(l => l.type === 'source')
-        const hasDestination = state.deckLayout.some(l => l.type === 'destination')
+        // Only require at least 1 tip rack (source/destination types are optional/graphical only)
         const hasTip = state.deckLayout.some(l => l.type === 'tip')
-        return hasSource && hasDestination && hasTip
+        return hasTip
       case 1: // Configuration -> Transfer Map
         return state.settings !== null
       case 2: // Transfer Map -> Review & Execute
