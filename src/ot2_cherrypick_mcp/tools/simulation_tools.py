@@ -44,7 +44,7 @@ def register_simulation_tools(mcp: FastMCP) -> None:
     """Register simulation tools with the FastMCP app."""
 
     @mcp.tool(
-        name="simulate_protocol",
+        name="ot2_simulate_protocol",
         description="""Validate protocol using opentrons_simulate.
 
 EXAMPLE:
@@ -66,6 +66,10 @@ COMMON SIMULATION ERRORS:
 
 Returns simulation output (stdout/stderr) and success status.
 """,
+        annotations={
+            "readOnlyHint": True,
+            "openWorldHint": True
+        }
     )
     def simulate_protocol_tool(  # pragma: no cover - executed via run_simulation tests
         protocol_path: str = str(DEFAULT_PROTOCOL_PATH),

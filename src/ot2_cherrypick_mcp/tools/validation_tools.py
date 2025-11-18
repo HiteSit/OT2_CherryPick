@@ -35,7 +35,7 @@ def register_validation_tools(mcp: FastMCP) -> None:
     """Register validation tools with the FastMCP application."""
 
     @mcp.tool(
-        name="validate_configuration",
+        name="ot2_validate_configuration",
         description="""Pre-flight validation before protocol generation.
 
 EXAMPLE:
@@ -53,6 +53,10 @@ CHECKS PERFORMED:
 Returns errors (must fix) and warnings (should review).
 Run before generate_protocol() to catch issues early.
 """,
+        annotations={
+            "readOnlyHint": True,
+            "openWorldHint": False
+        }
     )
     def validate_configuration_tool(  # pragma: no cover - executed via run_validation tests
         csv_path: str,

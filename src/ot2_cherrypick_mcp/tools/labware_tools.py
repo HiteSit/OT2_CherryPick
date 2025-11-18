@@ -87,7 +87,7 @@ def register_labware_tools(mcp: FastMCP) -> None:
     """Register labware manipulation tools."""
 
     @mcp.tool(
-        name="add_labware_definition",
+        name="ot2_add_labware_definition",
         description="""Add labware to catalog with calibration offsets.
 
 EXAMPLE:
@@ -115,6 +115,12 @@ Offsets compensate for:
 Without offsets, tips may crash into edges or miss wells entirely.
 Determine offsets via "Labware Position Check" in Opentrons App.
 """,
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False
+        }
     )
     def add_labware_definition_tool(  # pragma: no cover - exercised via tests
         labware_id: str,

@@ -91,11 +91,17 @@ def register_protocol_tools(mcp: FastMCP) -> None:
     """Register protocol-related tools with the FastMCP application."""
 
     @mcp.tool(
-        name="generate_protocol",
+        name="ot2_generate_protocol",
         description=(
             "Compile TOML configuration and a transfer CSV into an OT-2 protocol "
             "file with embedded JSON."
         ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False
+        }
     )
     def generate_protocol_tool(  # pragma: no cover - exercised via run_generate_protocol tests
         csv_path: str,

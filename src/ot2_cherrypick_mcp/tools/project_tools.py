@@ -143,7 +143,7 @@ def register_project_tools(mcp: FastMCP) -> None:
     """Register project management tools with the MCP server."""
 
     @mcp.tool(
-        name="initialize_project",
+        name="ot2_initialize_project",
         description=(
             "OPTIONAL: Explicitly initialize project workspace with example CSVs. "
             "Template files (settings.toml, labware_dict.toml, CherryPick_OT2.py) "
@@ -151,6 +151,12 @@ def register_project_tools(mcp: FastMCP) -> None:
             "Works in both temp (no OT2_PROJECT_DIR) and persistent modes. "
             "Use to set up complete workspace with example files."
         ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False
+        }
     )
     def initialize_project_tool() -> str:
         """Initialize the OT-2 project directory and return a status message."""
@@ -158,23 +164,33 @@ def register_project_tools(mcp: FastMCP) -> None:
         return result["message"]
 
     @mcp.tool(
-        name="get_project_directory",
+        name="ot2_get_project_directory",
         description=(
             "Return the path of the currently active OT-2 project directory. "
             "If the server auto-created a temporary workspace, auto_created "
             "will be True so you can decide whether to export or initialize it."
         ),
+        annotations={
+            "readOnlyHint": True,
+            "openWorldHint": False
+        }
     )
     def get_project_directory_tool() -> Dict[str, object]:
         """Provide project directory details to the caller."""
         return get_active_project_directory()
 
     @mcp.tool(
-        name="export_project_archive",
+        name="ot2_export_project_archive",
         description=(
             "Create a zip archive of the current project workspace. Optionally set "
             "as_base64=true to receive the archive contents inline."
         ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False
+        }
     )
     def export_project_archive_tool(as_base64: bool = False) -> Dict[str, object]:
         """Generate an archive and return its location (and optional payload)."""

@@ -121,7 +121,7 @@ def register_csv_tools(mcp: FastMCP) -> None:
     """Register CSV-related tools with FastMCP."""
 
     @mcp.tool(
-        name="generate_csv_template",
+        name="ot2_generate_csv_template",
         description="""Generate CSV template with proper column structure for liquid transfers.
 
 EXAMPLE:
@@ -143,6 +143,12 @@ HEIGHT COLUMNS: Use EITHER Height (from bottom) OR Top (from rim) - never both
 Template creates skeleton CSV that you then populate with specific well positions.
 Use files://csvs resource to list generated files.
 """,
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False
+        }
     )
     def generate_csv_template_tool(  # pragma: no cover - intent tested via helper
         filename: str,
@@ -164,7 +170,7 @@ Use files://csvs resource to list generated files.
         )
 
     @mcp.tool(
-        name="upload_csv_content",
+        name="ot2_upload_csv_content",
         description="""Save CSV content to disk for protocol generation.
 
 EXAMPLE:
@@ -178,6 +184,12 @@ Use when you have CSV data as string (from user, from computation, etc).
 Validates header contains required columns before saving.
 Saved file can then be used with generate_protocol(csv_path="CSVs/my_transfers.csv").
 """,
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False
+        }
     )
     def upload_csv_content_tool(  # pragma: no cover - intent tested via helper
         csv_content: str,

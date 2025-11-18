@@ -36,7 +36,7 @@ def register_deployment_tools(mcp: FastMCP) -> None:
     """Register deployment-related tools with FastMCP."""
 
     @mcp.tool(
-        name="deploy_to_opentrons",
+        name="ot2_deploy_to_opentrons",
         description="""Deploy protocol to target location or clipboard for Opentrons App.
 
 EXAMPLES:
@@ -56,6 +56,12 @@ After deployment, protocol is ready to:
 
 Returns deployment status and paths written.
 """,
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False
+        }
     )
     def deploy_tool(  # pragma: no cover - executed via run_deployment tests
         protocol_path: str = str(DEFAULT_PROTOCOL_PATH),

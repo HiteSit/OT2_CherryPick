@@ -171,7 +171,7 @@ def register_config_tools(mcp: FastMCP) -> None:
     """Register configuration-oriented MCP tools."""
 
     @mcp.tool(
-        name="update_settings",
+        name="ot2_update_settings",
         description="""Update settings.toml values from natural language or exact dotted paths.
 
 **WORKFLOW - When user gives natural language request:**
@@ -214,6 +214,12 @@ DECK POSITIONS (working_plate array items use [index] notation):
 3. Match user's intent to visible structure
 4. Then call update_settings with exact path
 """,
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False
+        }
     )
     def update_settings_tool(  # pragma: no cover - exercised via update_settings_value tests
         path: str,
@@ -226,7 +232,7 @@ DECK POSITIONS (working_plate array items use [index] notation):
             raise ConfigurationError(f"Failed to update settings: {exc}") from exc
 
     @mcp.tool(
-        name="apply_liquid_preset",
+        name="ot2_apply_liquid_preset",
         description="""Apply liquid handling preset configuration for different liquid types.
 
 AVAILABLE PRESETS:
@@ -247,6 +253,12 @@ Presets update multiple parameters atomically:
 
 Check status://liquid-handling-config after applying to see active parameters.
 """,
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False
+        }
     )
     def apply_liquid_preset_tool(  # pragma: no cover - exercised via apply_liquid_preset tests
         preset_name: str,
@@ -255,8 +267,12 @@ Check status://liquid-handling-config after applying to see active parameters.
         return apply_liquid_preset(preset_name=preset_name, settings_path=settings_path)
 
     @mcp.tool(
-        name="list_settings",
+        name="ot2_list_settings",
         description="List every setting and value from settings.toml using dotted paths.",
+        annotations={
+            "readOnlyHint": True,
+            "openWorldHint": False
+        }
     )
     def list_settings_tool(
         settings_path: str = str(DEFAULT_SETTINGS_PATH),

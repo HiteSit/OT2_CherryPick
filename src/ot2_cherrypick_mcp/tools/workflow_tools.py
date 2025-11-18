@@ -122,7 +122,7 @@ def register_workflow_tools(mcp: FastMCP) -> None:
     """Register workflow orchestration tools."""
 
     @mcp.tool(
-        name="full_workflow",
+        name="ot2_full_workflow",
         description="""Execute complete protocol workflow: validate → generate → simulate → deploy.
 
 TYPICAL USAGE:
@@ -148,6 +148,12 @@ PARAMETERS:
 - deployment_target: Path to copy protocol file
 - copy_to_clipboard: Also copy to clipboard (default: False)
 """,
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True
+        }
     )
     def full_workflow_tool(  # pragma: no cover - executed via run_full_workflow tests
         csv_path: str,
