@@ -8,12 +8,13 @@ they can be consumed safely by MCP clients.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Literal
 
 from fastmcp import FastMCP
 
 from ..core import protocol_generator
 from ..utils.errors import ConfigurationError, ProtocolGenerationError
+from ..utils.formatters import ResponseFormat, ResponseFormatter
 from ..utils.paths import resolve_project_path
 
 DEFAULT_LABWARE_PATH = Path("labware_dict.toml")
@@ -94,7 +95,11 @@ def register_protocol_tools(mcp: FastMCP) -> None:
         name="ot2_generate_protocol",
         description=(
             "Compile TOML configuration and a transfer CSV into an OT-2 protocol "
-            "file with embedded JSON."
+            "file with embedded JSON.\n\n"
+            "Response Format Options:\n"
+            "- json (default): Full structured data for programmatic use\n"
+            "- markdown: Human-readable formatted summary\n"
+            "- concise: Single-line status (minimal context usage)"
         ),
         annotations={
             "readOnlyHint": False,
@@ -109,7 +114,8 @@ def register_protocol_tools(mcp: FastMCP) -> None:
         labware_path: str = str(DEFAULT_LABWARE_PATH),
         protocol_path: str = str(DEFAULT_PROTOCOL_PATH),
         verbose: bool = False,
-    ) -> Dict[str, Any]:
+        response_format: Literal["json", "markdown", "concise"] = "json",
+    ) -> str | Dict[str, Any]:
         """
         Generate a cherry-pick protocol.
 
@@ -119,14 +125,24 @@ def register_protocol_tools(mcp: FastMCP) -> None:
             labware_path: Path to the labware dictionary TOML file.
             protocol_path: Path to the protocol file to update.
             verbose: Enable verbose logging from the legacy helper.
+            response_format: Output format (json, markdown, or concise).
         """
 
-        return run_generate_protocol(
+        result = run_generate_protocol(
             csv_path=csv_path,
             settings_path=settings_path,
             labware_path=labware_path,
             protocol_path=protocol_path,
             verbose=verbose,
+        )
+
+        if response_format == "json":
+            return result
+
+        return ResponseFormatter.format(
+            result,
+            tool_type="protocol_generation",
+            format_type=ResponseFormat(response_format),
         )
 
 

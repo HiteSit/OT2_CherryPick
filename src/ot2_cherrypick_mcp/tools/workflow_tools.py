@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Literal, Optional
 
 from fastmcp import FastMCP
 
@@ -17,6 +17,7 @@ from ..utils.errors import (
     ProtocolGenerationError,
     SimulationError,
 )
+from ..utils.formatters import ResponseFormat, ResponseFormatter
 
 DEFAULT_SETTINGS_PATH = Path("settings.toml")
 DEFAULT_LABWARE_PATH = Path("labware_dict.toml")
@@ -138,6 +139,11 @@ STEPS PERFORMED:
 3. Simulate (optional, validates with opentrons_simulate)
 4. Deploy (optional, copy to target path or clipboard)
 
+Response Format Options:
+- json (default): Full nested results from all stages
+- markdown: Pipeline view with per-stage status (recommended for complex workflows)
+- concise: Single-line completion status with stage count
+
 Returns comprehensive results from all stages.
 Check logs://last-simulation for simulation details.
 
@@ -166,8 +172,9 @@ PARAMETERS:
         deployment_target: Optional[str] = None,
         copy_to_clipboard: bool = False,
         clipboard_command: Optional[str] = None,
-    ) -> Dict[str, object]:
-        return run_full_workflow(
+        response_format: Literal["json", "markdown", "concise"] = "json",
+    ) -> str | Dict[str, Any]:
+        result = run_full_workflow(
             csv_path=csv_path,
             settings_path=settings_path,
             labware_path=labware_path,
@@ -178,4 +185,13 @@ PARAMETERS:
             deployment_target=deployment_target,
             copy_to_clipboard=copy_to_clipboard,
             clipboard_command=clipboard_command,
+        )
+
+        if response_format == "json":
+            return result
+
+        return ResponseFormatter.format(
+            result,
+            tool_type="workflow",
+            format_type=ResponseFormat(response_format),
         )

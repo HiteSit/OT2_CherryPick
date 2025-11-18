@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, Literal
 
 from fastmcp import FastMCP
 
 from ..core.validation import validate_configuration
 from ..utils.errors import ConfigurationError
+from ..utils.formatters import ResponseFormat, ResponseFormatter
 
 DEFAULT_SETTINGS_PATH = Path("settings.toml")
 DEFAULT_LABWARE_PATH = Path("labware_dict.toml")
@@ -50,6 +51,11 @@ CHECKS PERFORMED:
 - Multi-channel mode compatibility (only 96/384-well plates)
 - Height specification consistency (not both Height and Top)
 
+Response Format Options:
+- json (default): Full error/warning lists for programmatic use
+- markdown: Formatted report with status badges and bulleted lists
+- concise: Single-line pass/fail with error count
+
 Returns errors (must fix) and warnings (should review).
 Run before generate_protocol() to catch issues early.
 """,
@@ -62,11 +68,22 @@ Run before generate_protocol() to catch issues early.
         csv_path: str,
         settings_path: str = str(DEFAULT_SETTINGS_PATH),
         labware_path: str = str(DEFAULT_LABWARE_PATH),
-    ) -> Dict[str, object]:
+        response_format: Literal["json", "markdown", "concise"] = "json",
+    ) -> str | Dict[str, Any]:
         if not csv_path:
             raise ConfigurationError("csv_path parameter is required")
-        return run_validation(
+
+        result = run_validation(
             settings_path=settings_path,
             labware_path=labware_path,
             csv_path=csv_path,
+        )
+
+        if response_format == "json":
+            return result
+
+        return ResponseFormatter.format(
+            result,
+            tool_type="validation",
+            format_type=ResponseFormat(response_format),
         )

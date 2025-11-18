@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Literal, Optional
 
 from fastmcp import FastMCP
 
 from ..core.simulation import DEFAULT_LOG_FILE, simulate_protocol
 from ..utils.errors import ConfigurationError, SimulationError
+from ..utils.formatters import ResponseFormat, ResponseFormatter
 
 DEFAULT_PROTOCOL_PATH = Path("CherryPick_OT2.py")
 
@@ -64,6 +65,11 @@ COMMON SIMULATION ERRORS:
 - "Module not found": Verify pipette definitions in labware_dict.toml
 - "Invalid well": CSV references non-existent well for labware type
 
+Response Format Options:
+- json (default): Full simulation output including stdout/stderr
+- markdown: Formatted summary with collapsible output (recommended for large logs)
+- concise: Single-line pass/fail status (minimal context)
+
 Returns simulation output (stdout/stderr) and success status.
 """,
         annotations={
@@ -76,13 +82,23 @@ Returns simulation output (stdout/stderr) and success status.
         labware_path: Optional[str] = None,
         timeout: int = 180,
         log_file: Optional[str] = str(DEFAULT_LOG_FILE),
-    ) -> Dict[str, object]:
+        response_format: Literal["json", "markdown", "concise"] = "json",
+    ) -> str | Dict[str, Any]:
         try:
-            return run_simulation(
+            result = run_simulation(
                 protocol_path=protocol_path,
                 labware_path=labware_path,
                 timeout=timeout,
                 log_file=log_file,
+            )
+
+            if response_format == "json":
+                return result
+
+            return ResponseFormatter.format(
+                result,
+                tool_type="simulation",
+                format_type=ResponseFormat(response_format),
             )
         except (ConfigurationError, SimulationError) as exc:
             raise SimulationError(f"Simulation failed: {exc}") from exc
