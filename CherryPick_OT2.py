@@ -1,13 +1,24 @@
 def get_values(*names):
     import json
-    _all_values = json.loads("""{"labware_dict":{"pipettes":[{"name":"Pipette_8","opentrons_id":"p300_multi_gen2","channels":8,"volume_range":[30,300],"preferred_mount":"right","tip_connections":["opentrons_96_tiprack_300ul"]},{"name":"Pipette_1","opentrons_id":"p1000_single_gen2","channels":1,"volume_range":[100,1000],"preferred_mount":"left","tip_connections":["tip_rack_geb_1000ul"]}],"labware":[{"category":"tip_rack","labware_id":"tip_rack_yellow_100ul","well_count":96,"well_volume":100},{"category":"tip_rack","labware_id":"opentrons_96_tiprack_300ul","well_count":96,"well_volume":300},{"category":"tip_rack","labware_id":"tip_rack_geb_1000ul","well_count":96,"well_volume":1000},{"category":"reservoir","labware_id":"reservoir_horizontal","well_count":12,"well_volume":15000},{"category":"plate","labware_id":"384_pp_standard_100ul","well_count":384,"well_volume":100},{"category":"plate","labware_id":"384_pp_high_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ppv_55ul","well_count":384,"well_volume":55},{"category":"plate","labware_id":"384_ppv_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ldv_12ul","well_count":384,"well_volume":12},{"category":"tube_rack","labware_id":"tube_rack_96_2000ul","well_count":96,"well_volume":2000},{"category":"tube_rack","labware_id":"tube_rack_96_1500ul","well_count":96,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_24_4000ul","well_count":24,"well_volume":4000},{"category":"tube_rack","labware_id":"tube_rack_48_1500ul","well_count":48,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_54_1500ul","well_count":54,"well_volume":1500}]},"settings":{"settings":{"general":{"tip_reuse":"always","mode":"multi","starting_tip_well":"H1","head_speed":{"speed":400}},"liquid_handling":{"pre_aspirate_contact":{"enabled":false,"position_offset_percent":20,"aspirate_volume":20},"post_aspirate_wick":{"enabled":false,"radius":1,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":true,"volume_ul":20},"mixing":{"location":"none","repetitions":2,"source_remixing":"once"},"presets":{"standard":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"viscous":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":2.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"location":"destination","repetitions":5,"source_remixing":"once"}},"slippery":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":5},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"minimal":{"pre_aspirate_contact":{"enabled":false},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"aggressive":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":30,"aspirate_volume":10},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":15},"delays":{"post_aspirate":3.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"location":"destination","repetitions":7,"source_remixing":"once"}},"cell_resuspension":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"source","repetitions":5,"source_remixing":"once"}}}},"working_plate":[{"type":"module","module_type":"heaterShaker","position_rack":"10","adapter_id":"opentrons_universal_flat_adapter","labware_id":"","target_temperature":0,"target_shake_speed":0,"persist_after_protocol":true},{"type":"reservoir","labware_id":"384_ppv_55ul","position_rack":"2"},{"type":"reservoir","labware_id":"tube_rack_96_1500ul","position_rack":"4"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","position_rack":"1"}]}},"csv_data":"Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top\\ntube_rack_96_1500ul_4,A1,100,384_ppv_55ul_2,B1,2,-5\\ntube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,B2,2,-5\\ntube_rack_96_1500ul_4,A3,75,384_ppv_55ul_2,B3,2,-5\\ntube_rack_96_1500ul_4,A4,25,384_ppv_55ul_2,B4,2,-5"}""")
+    _all_values = json.loads("""{"labware_dict":{"pipettes":[{"name":"Pipette_8","opentrons_id":"p300_multi_gen2","channels":8,"volume_range":[30,300],"preferred_mount":"right","tip_connections":["opentrons_96_tiprack_300ul"]},{"name":"Pipette_1","opentrons_id":"p1000_single_gen2","channels":1,"volume_range":[100,1000],"preferred_mount":"left","tip_connections":["tip_rack_geb_1000ul"]}],"labware":[{"category":"tip_rack","labware_id":"tip_rack_yellow_100ul","well_count":96,"well_volume":100},{"category":"tip_rack","labware_id":"opentrons_96_tiprack_300ul","well_count":96,"well_volume":300},{"category":"tip_rack","labware_id":"tip_rack_geb_1000ul","well_count":96,"well_volume":1000},{"category":"reservoir","labware_id":"reservoir_horizontal","well_count":12,"well_volume":15000},{"category":"plate","labware_id":"384_pp_standard_100ul","well_count":384,"well_volume":100},{"category":"plate","labware_id":"384_pp_high_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ppv_55ul","well_count":384,"well_volume":55},{"category":"plate","labware_id":"384_ppv_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ldv_12ul","well_count":384,"well_volume":12},{"category":"tube_rack","labware_id":"tube_rack_96_2000ul","well_count":96,"well_volume":2000},{"category":"tube_rack","labware_id":"tube_rack_96_1500ul","well_count":96,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_24_4000ul","well_count":24,"well_volume":4000},{"category":"tube_rack","labware_id":"tube_rack_48_1500ul","well_count":48,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_54_1500ul","well_count":54,"well_volume":1500}]},"settings":{"settings":{"general":{"tip_reuse":"always","mode":"multi","starting_tip_well":"H1","head_speed":{"speed":400}},"liquid_handling":{"pre_aspirate_contact":{"enabled":false,"position_offset_percent":20,"aspirate_volume":20},"post_aspirate_wick":{"enabled":false,"radius":1,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":true,"volume_ul":20},"mixing":{"location":"none","repetitions":2,"source_remixing":"once"},"presets":{"standard":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"viscous":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":2.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"location":"destination","repetitions":5,"source_remixing":"once"}},"slippery":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":5},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"minimal":{"pre_aspirate_contact":{"enabled":false},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"aggressive":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":30,"aspirate_volume":10},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":15},"delays":{"post_aspirate":3.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"location":"destination","repetitions":7,"source_remixing":"once"}},"cell_resuspension":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"source","repetitions":5,"source_remixing":"once"}}}},"working_plate":[{"type":"module","module_type":"heaterShaker","position_rack":"10","adapter_id":"opentrons_universal_flat_adapter","labware_id":"","target_temperature":0,"target_shake_speed":0,"persist_after_protocol":true},{"type":"reservoir","labware_id":"384_ppv_55ul","position_rack":"2"},{"type":"reservoir","labware_id":"tube_rack_96_1500ul","position_rack":"4"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","position_rack":"1"}]}},"csv_data":"Source Labware,Source Well,Volume (ul),Distribution Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Distribution,Mix Volume,Tip Action\\ntube_rack_96_1500ul_4,A1,,50,384_ppv_55ul_2,B1|B2|B3|B4,2,-5,equal,,auto\\ntube_rack_96_1500ul_4,A2,,100,384_ppv_55ul_2,C1|C2|C3|C4,2,-5,geometric:0.5,,new\\ntube_rack_96_1500ul_4,A3,200,60,384_ppv_55ul_2,D1|D2|D3|D4|D5,2,-5,equal,,auto\\ntube_rack_96_1500ul_4,A4,,20,384_ppv_55ul_2,E1|E2|E3|E4,2,-5,geometric:2,,keep"}""")
     return [_all_values[n] for n in names]
 
 
 """
-Unified Cherry-pick Protocol (CherryPick_OT)
-Combines all liquid handling strategies into configurable physical parameters
-Supports single-channel, multi-channel, and multi_X1 modes with custom flow rates
+Unified Cherry-pick & Distribution Protocol (CherryPick_OT2)
+
+Supports two transfer modes:
+1. CHERRY-PICK MODE: One-to-one transfers (source well → destination well)
+2. DISTRIBUTION MODE: One-to-many transfers (source well → multiple destinations)
+
+Distribution features:
+- Equal distribution: Same volume to all destinations
+- Geometric distribution: Varying volumes with growth/decay patterns (serial dilution)
+- Smart refilling: Automatic multi-trip handling when volume exceeds pipette capacity
+- Full liquid handling parameter support (air gaps, mixing, wicking, delays)
+
+Pipette modes: single-channel, 8-channel multi, 8-channel single-tip (multi_X1)
+Configurable via settings.toml and CSV transfer maps
 """
 from opentrons import protocol_api
 from opentrons.protocol_api import SINGLE
@@ -16,9 +27,9 @@ from io import StringIO
 
 # Metadata
 metadata = {
-    'protocolName': 'Unified Cherry-Pick Protocol (CherryPick_OT2)',
+    'protocolName': 'Unified Cherry-Pick & Distribution Protocol (CherryPick_OT2)',
     'author': 'Opentrons User',
-    'description': 'Unified cherry-pick protocol with configurable liquid handling strategies'
+    'description': 'Cherry-pick and distribution protocol with serial dilution support and configurable liquid handling'
 }
 
 requirements = {"robotType": "OT-2", "apiLevel": "2.24"}
@@ -170,10 +181,14 @@ def determine_well_position(transfer, well_object, position_type):
 
     if has_height:
         offset = float(height_val)
-        return well_object.bottom(offset), f"bottom+{offset}mm"
+        # Format description: use + for positive, let negative sign show naturally
+        sign = '+' if offset >= 0 else ''
+        return well_object.bottom(offset), f"bottom{sign}{offset}mm"
     elif has_top:
         offset = float(top_val)
-        return well_object.top(offset), f"top+{offset}mm"
+        # Format description: use + for positive, let negative sign show naturally
+        sign = '+' if offset >= 0 else ''
+        return well_object.top(offset), f"top{sign}{offset}mm"
     else:
         # Default to bottom with 1mm offset if neither specified
         return well_object.bottom(1.0), f"bottom+1mm (default)"
@@ -516,6 +531,357 @@ def split_volume_into_chunks(volume, min_vol, max_vol, air_gap_volume=0):
         chunk_size = volume / num_chunks
         return [chunk_size] * num_chunks
 
+def calculate_distribution_volumes(base_volume, num_wells, distribution_pattern):
+    """
+    Calculate volume for each destination well based on distribution pattern
+    
+    Args:
+        base_volume: Base volume in µL from CSV 'Distribution Volume (ul)'
+        num_wells: Number of destination wells
+        distribution_pattern: Distribution type string:
+            - "equal": Same volume in all wells
+            - "geometric:2": 2x growth (20→40→80→160)
+            - "geometric:0.5": 0.5x decay / serial dilution (100→50→25→12.5)
+            - "geometric:2:desc": 2x descending (160→80→40→20)
+    
+    Returns:
+        list: Volumes for each destination well [vol1, vol2, vol3, ...]
+    
+    Examples:
+        >>> calculate_distribution_volumes(20, 4, "equal")
+        [20, 20, 20, 20]
+        
+        >>> calculate_distribution_volumes(20, 4, "geometric:2")
+        [20, 40, 80, 160]
+        
+        >>> calculate_distribution_volumes(100, 4, "geometric:0.5")
+        [100, 50.0, 25.0, 12.5]
+        
+        >>> calculate_distribution_volumes(20, 4, "geometric:2:desc")
+        [160, 80, 40, 20]
+    """
+    pattern_lower = distribution_pattern.strip().lower()
+    
+    if pattern_lower == 'equal':
+        # Same volume for all destinations
+        return [base_volume] * num_wells
+    
+    elif pattern_lower.startswith('geometric:'):
+        # Parse geometric pattern: geometric:factor or geometric:factor:desc
+        parts = pattern_lower.split(':')
+        
+        if len(parts) < 2:
+            raise ValueError(f"Invalid geometric pattern: '{distribution_pattern}'. Expected format: 'geometric:factor' or 'geometric:factor:desc'")
+        
+        try:
+            factor = float(parts[1])
+        except ValueError:
+            raise ValueError(f"Invalid geometric factor: '{parts[1]}'. Must be a number (e.g., 2, 0.5, 1.5)")
+        
+        if factor <= 0:
+            raise ValueError(f"Geometric factor must be > 0, got {factor}")
+        
+        # Calculate volumes with geometric progression
+        volumes = [base_volume * (factor ** i) for i in range(num_wells)]
+        
+        # Check for descending order
+        if len(parts) >= 3 and parts[2] == 'desc':
+            volumes.reverse()
+        
+        return volumes
+    
+    else:
+        raise ValueError(f"Unknown distribution pattern: '{distribution_pattern}'. Valid options: 'equal', 'geometric:factor', 'geometric:factor:desc'")
+
+def plan_distribution_trips(dest_volumes, max_volume_per_trip, air_gap_volume, min_vol, max_vol):
+    """
+    Split distribution into multiple source trips if total volume exceeds capacity
+    
+    Each trip represents one aspirate from source followed by multiple dispenses to destinations.
+    Automatically splits across trips when:
+    - Total volume exceeds max_volume_per_trip
+    - Total volume (including air gaps) exceeds pipette capacity
+    
+    Args:
+        dest_volumes: List of volumes for each destination [vol1, vol2, vol3, ...]
+        max_volume_per_trip: Maximum volume to aspirate per trip (from CSV 'Volume (ul)' or pipette max)
+        air_gap_volume: Air gap volume to aspirate between dispenses (µL)
+        min_vol: Pipette minimum volume (µL)
+        max_vol: Pipette maximum volume (µL)
+    
+    Returns:
+        list: List of trip dictionaries:
+        [
+            {
+                'aspirate_volume': 250,  # Total volume to aspirate from source
+                'dispenses': [(0, 50), (1, 50), (2, 50), (3, 100)]  # (dest_index, volume) tuples
+            },
+            ...
+        ]
+    
+    Examples:
+        >>> # All fits in one trip
+        >>> plan_distribution_trips([50, 50, 50], 300, 10, 30, 300)
+        [{'aspirate_volume': 170, 'dispenses': [(0, 50), (1, 50), (2, 50)]}]
+        
+        >>> # Requires two trips due to capacity
+        >>> plan_distribution_trips([100, 100, 100, 100], 250, 10, 30, 300)
+        [
+            {'aspirate_volume': 240, 'dispenses': [(0, 100), (1, 100)]},
+            {'aspirate_volume': 210, 'dispenses': [(2, 100), (3, 100)]}
+        ]
+    """
+    import math
+    
+    trips = []
+    current_dispenses = []
+    current_liquid_volume = 0
+    current_total_volume = 0  # Includes air gaps
+    
+    for dest_idx, volume in enumerate(dest_volumes):
+        # Validate volume does not exceed pipette maximum
+        # Note: Minimum volume is a precision guideline, not a hard limit (pipette can transfer below min)
+        if volume > max_vol:
+            raise ValueError(f"Destination volume {volume}µL exceeds pipette maximum ({max_vol}µL). "
+                           f"Reduce 'Distribution Volume (ul)' or adjust distribution pattern.")
+        
+        # Calculate volume needed for this destination (liquid + air gap after dispense)
+        # Note: Air gap is aspirated AFTER each dispense, not before first
+        is_first_in_trip = len(current_dispenses) == 0
+        volume_with_gap = volume if is_first_in_trip else volume + air_gap_volume
+        
+        # Check if adding this destination would exceed capacity
+        would_exceed_max = current_total_volume + volume_with_gap > max_volume_per_trip
+        would_exceed_pipette = current_total_volume + volume_with_gap > max_vol
+        
+        if (would_exceed_max or would_exceed_pipette) and len(current_dispenses) > 0:
+            # Start new trip - save current trip
+            trips.append({
+                'aspirate_volume': current_total_volume,
+                'dispenses': current_dispenses
+            })
+            
+            # Reset for new trip
+            current_dispenses = []
+            current_liquid_volume = 0
+            current_total_volume = 0
+            
+            # This destination starts the new trip (no air gap before first)
+            volume_with_gap = volume
+        
+        # Add destination to current trip
+        current_dispenses.append((dest_idx, volume))
+        current_liquid_volume += volume
+        current_total_volume += volume_with_gap
+    
+    # Add final trip
+    if current_dispenses:
+        trips.append({
+            'aspirate_volume': current_total_volume,
+            'dispenses': current_dispenses
+        })
+    
+    # Validate all trips do not exceed maximum volume
+    # Note: Minimum volume not checked - pipette can transfer below rated minimum (less precise)
+    for trip_idx, trip in enumerate(trips):
+        if trip['aspirate_volume'] > max_vol:
+            raise ValueError(f"Trip {trip_idx+1} aspirate volume ({trip['aspirate_volume']}µL) "
+                           f"exceeds pipette maximum ({max_vol}µL)")
+    
+    return trips
+
+def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liquid_contact_config, 
+                        wick_config, delay_config, push_out_config, mixing_config, mixing_repetitions,
+                        mixing_location, source_remixing, mixed_source_wells, general_settings, 
+                        protocol, mode, last_source_labware, tip_reuse):
+    """
+    Execute distribution transfer: one source well → multiple destination wells with varying volumes
+    
+    Handles:
+    - Equal distribution (same volume to all destinations)
+    - Geometric distribution (varying volumes: growth or decay patterns)
+    - Multiple trips to source if total volume exceeds pipette capacity
+    - Tip management per CSV 'Tip Action' parameter
+    - Mixing at source (before aspirate) and/or destination (after dispense)
+    - All existing liquid handling parameters (air gaps, wick, delays, push-out)
+    
+    Args:
+        transfer: CSV row dict with distribution parameters
+        pipette: OpenTrons pipette object
+        loaded_labware: Dict of loaded labware objects
+        pipette_config: Pipette configuration from labware_dict
+        liquid_contact_config: Pre-aspirate contact settings
+        wick_config: Post-aspirate wick settings
+        delay_config: Delay settings
+        push_out_config: Push-out settings
+        mixing_config: Mixing configuration
+        mixing_repetitions: Number of mix cycles
+        mixing_location: Where to mix ("source", "destination", "none")
+        source_remixing: How often to remix source ("once", "always")
+        mixed_source_wells: Set tracking which source wells have been mixed
+        general_settings: General protocol settings
+        protocol: ProtocolContext for logging
+        mode: Pipette mode (single_X1, multi_X1, multi)
+        last_source_labware: Last source labware name (for tip management)
+        tip_reuse: Global tip reuse strategy
+    
+    Returns:
+        tuple: (last_source_labware_name, tip_contacted_flag)
+    """
+    # ========== Parse CSV row ==========
+    source_labware_name = transfer['Source Labware']
+    source_well = transfer['Source Well']
+    dest_labware_name = transfer['Dest Labware']
+    dest_wells_str = transfer['Dest Well']
+    dest_well_names = dest_wells_str.split('|')  # Split pipe-delimited list
+    
+    base_volume = float(transfer['Distribution Volume (ul)'])
+    distribution_pattern = transfer.get('Distribution', 'equal').strip().lower()
+    max_volume_specified = transfer.get('Volume (ul)', '').strip()
+    
+    # Rate multipliers (optional, default 1.0)
+    rate_aspirate = float(transfer.get('Flow Aspirate', 1.0))
+    rate_dispense = float(transfer.get('Flow Dispense', 1.0))
+    
+    # Air gap parameters
+    air_gap_volume = float(transfer.get('Air Gap', 0)) if transfer.get('Air Gap') else 0
+    air_gap_rate = float(transfer.get('Air Gap Rate', 1.0))
+    
+    # Mixing parameters
+    mix_volume = float(transfer.get('Mix Volume', 0)) if transfer.get('Mix Volume') else 0
+    
+    # ========== Calculate distribution volumes ==========
+    try:
+        dest_volumes = calculate_distribution_volumes(base_volume, len(dest_well_names), distribution_pattern)
+    except ValueError as e:
+        protocol.comment(f"Distribution volume calculation failed: {e}")
+        raise
+    
+    # ========== Determine max volume per trip ==========
+    min_vol, max_vol = pipette_config['volume_range']
+    
+    if max_volume_specified and max_volume_specified != '':
+        max_per_trip = float(max_volume_specified)
+    else:
+        max_per_trip = max_vol  # Use pipette maximum
+    
+    # ========== Plan trips ==========
+    try:
+        trips = plan_distribution_trips(dest_volumes, max_per_trip, air_gap_volume, min_vol, max_vol)
+    except ValueError as e:
+        protocol.comment(f"Distribution trip planning failed: {e}")
+        raise
+    
+    protocol.comment(f"Distribution: {source_well} → {len(dest_well_names)} wells, pattern: {distribution_pattern}, {len(trips)} trip(s)")
+    
+    # ========== Get labware objects ==========
+    source_labware = loaded_labware[source_labware_name]
+    dest_labware = loaded_labware[dest_labware_name]
+    
+    # Get source well object (handle multi mode)
+    if mode == "multi":
+        # Get well count for source labware
+        source_labware_id = source_labware_name.rsplit('_', 1)[0] if '_' in source_labware_name else source_labware_name
+        # For multi mode, would need well count lookup, but distribution typically uses single mode
+        # For now, assume single well access in distribution mode
+        source_well_obj = source_labware[source_well]
+    else:
+        source_well_obj = source_labware[source_well]
+    
+    # ========== Execute each trip ==========
+    tip_contacted = False
+    source_well_key = f"{source_labware_name}:{source_well}"
+    
+    for trip_idx, trip in enumerate(trips):
+        is_first_trip = (trip_idx == 0)
+        
+        # ===== Source mixing (before aspirate) =====
+        should_mix_source = (
+            mix_volume > 0 and 
+            mixing_location == 'source' and
+            (source_remixing == 'always' or (is_first_trip and source_well_key not in mixed_source_wells))
+        )
+        
+        if should_mix_source:
+            # Ensure we have a tip for mixing
+            if not pipette.has_tip:
+                pipette.pick_up_tip()
+                tip_contacted = False
+            
+            source_mix_location, source_mix_desc = determine_well_position(transfer, source_well_obj, 'mix')
+            protocol.comment(f"Mixing source {source_well} at {source_mix_desc}: {mixing_repetitions}x with {mix_volume}µL")
+            pipette.mix(mixing_repetitions, mix_volume, source_mix_location)
+            
+            if is_first_trip:
+                mixed_source_wells.add(source_well_key)
+        
+        # ===== Tip management for this trip =====
+        tip_action = determine_tip_action(transfer, tip_reuse, source_labware_name, last_source_labware, pipette)
+        action_taken, new_tip_picked = execute_tip_action(tip_action, pipette, protocol, f"Distribution trip {trip_idx+1}/{len(trips)}")
+        
+        # Reset contact flag if new tip picked up
+        if new_tip_picked:
+            tip_contacted = False
+        
+        # ===== Liquid contact (only on first trip with new tip) =====
+        if is_first_trip and not tip_contacted and liquid_contact_config.get('enabled', False):
+            perform_liquid_contact(pipette, source_well_obj, transfer, protocol, liquid_contact_config)
+            tip_contacted = True
+        
+        # ===== Aspirate from source =====
+        source_location, source_pos_desc = determine_well_position(transfer, source_well_obj, 'source')
+        protocol.comment(f"Trip {trip_idx+1}/{len(trips)}: Aspirating {trip['aspirate_volume']}µL from {source_well} at {source_pos_desc}")
+        pipette.aspirate(trip['aspirate_volume'], source_location, rate=rate_aspirate)
+        
+        # ===== Post-aspirate actions (wick + delay) =====
+        perform_post_aspirate_actions(
+            pipette, source_well_obj, protocol,
+            wick_config, delay_config.get('post_aspirate', 0)
+        )
+        
+        # ===== Dispense to each destination in this trip =====
+        for dispense_idx, (dest_idx, volume) in enumerate(trip['dispenses']):
+            dest_well_name = dest_well_names[dest_idx]
+            dest_well_obj = dest_labware[dest_well_name]
+            dest_location, dest_pos_desc = determine_well_position(transfer, dest_well_obj, 'dest')
+            
+            protocol.comment(f"  Dispensing {volume}µL → {dest_well_name} at {dest_pos_desc}")
+            
+            # Dispense (no air gap here - handled separately below)
+            perform_dispense_with_options(
+                pipette, volume, dest_location, rate_dispense,
+                protocol, push_out_config, mix_volume, 0  # air_gap=0, handled separately
+            )
+            
+            # ===== Destination mixing (after dispense) =====
+            if mix_volume > 0 and mixing_location == 'destination':
+                dest_mix_location, dest_mix_desc = determine_well_position(transfer, dest_well_obj, 'mix')
+                protocol.comment(f"  Mixing destination {dest_well_name} at {dest_mix_desc}: {mixing_repetitions}x with {mix_volume}µL")
+                pipette.mix(mixing_repetitions, mix_volume, dest_mix_location)
+            
+            # ===== Air gap between destinations (except last in trip) =====
+            is_last_in_trip = (dispense_idx == len(trip['dispenses']) - 1)
+            if air_gap_volume > 0 and not is_last_in_trip:
+                pipette.air_gap(volume=air_gap_volume, rate=air_gap_rate)
+        
+        # ===== Blow out after last dispense in trip =====
+        last_dest_idx = trip['dispenses'][-1][0]
+        last_dest_well_name = dest_well_names[last_dest_idx]
+        last_dest_well_obj = dest_labware[last_dest_well_name]
+        last_dest_location, _ = determine_well_position(transfer, last_dest_well_obj, 'dest')
+        pipette.blow_out(last_dest_location)
+        
+        # ===== Handle tip after trip based on tip_action =====
+        # If 'drop' action, drop tip after trip
+        # If 'keep' action, keep tip for next trip (or return at end)
+        # If 'new' action, will drop at start of next trip
+        if tip_action == 'drop' and pipette.has_tip:
+            pipette.drop_tip()
+            tip_contacted = False
+    
+    # ===== Return tracking variables =====
+    return source_labware_name, tip_contacted
+
 def run(protocol: protocol_api.ProtocolContext):
     """Main protocol execution"""
 
@@ -718,7 +1084,54 @@ def run(protocol: protocol_api.ProtocolContext):
         source_labware_name = transfer['Source Labware']
         source_well = transfer['Source Well']
         dest_labware_name = transfer['Dest Labware']
-        dest_well = transfer['Dest Well']
+        dest_well_str = transfer['Dest Well']
+
+        # ========== DISTRIBUTION MODE DETECTION ==========
+        # Distribution mode: one source → multiple destinations with varying volumes
+        # Detected by: pipe delimiter in Dest Well (e.g., "B1|B2|B3") OR Distribution Volume column present
+        has_pipe_delimiter = '|' in dest_well_str
+        has_distribution_volume = transfer.get('Distribution Volume (ul)', '').strip() != ''
+
+        if has_pipe_delimiter or has_distribution_volume:
+            # === DISTRIBUTION MODE ===
+            # Validate distribution parameters
+            if has_pipe_delimiter and not has_distribution_volume:
+                raise ValueError(f"Row {i+1}: Pipe-delimited Dest Well '{dest_well_str}' requires 'Distribution Volume (ul)' column")
+
+            if has_distribution_volume and not has_pipe_delimiter:
+                protocol.comment(f"Warning row {i+1}: 'Distribution Volume (ul)' without pipe delimiter - treating as single destination")
+
+            # Execute distribution and continue to next transfer
+            try:
+                last_source_labware, tip_contacted = perform_distribution(
+                    transfer=transfer,
+                    pipette=pipette,
+                    loaded_labware=loaded_labware,
+                    pipette_config=pipette_config,
+                    liquid_contact_config=liquid_contact_config,
+                    wick_config=wick_config,
+                    delay_config=delay_config,
+                    push_out_config=push_out_config,
+                    mixing_config=mixing_config,
+                    mixing_repetitions=mixing_repetitions,
+                    mixing_location=mixing_location,
+                    source_remixing=source_remixing,
+                    mixed_source_wells=mixed_source_wells,
+                    general_settings=general_settings,
+                    protocol=protocol,
+                    mode=mode,
+                    last_source_labware=last_source_labware,
+                    tip_reuse=tip_reuse
+                )
+                # Update last_tip_action for final cleanup
+                last_tip_action = transfer.get('Tip Action', 'auto')
+                continue  # Skip to next CSV row
+            except Exception as e:
+                protocol.comment(f"Distribution failed at row {i+1}: {e}")
+                raise
+
+        # === EXISTING CHERRY-PICK MODE ===
+        dest_well = dest_well_str  # Single destination well
         requested_volume = float(transfer['Volume (ul)'])
         mix_volume = float(transfer.get('Mix Volume', 0)) if transfer.get('Mix Volume') else 0
 

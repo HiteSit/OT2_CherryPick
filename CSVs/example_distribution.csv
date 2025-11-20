@@ -1,0 +1,5 @@
+Source Labware,Source Well,Volume (ul),Distribution Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Distribution,Mix Volume,Tip Action
+tube_rack_96_1500ul_4,A1,,50,384_ppv_55ul_2,B1|B2|B3|B4,2,-5,equal,,auto
+tube_rack_96_1500ul_4,A2,,100,384_ppv_55ul_2,C1|C2|C3|C4,2,-5,geometric:0.5,,new
+tube_rack_96_1500ul_4,A3,200,60,384_ppv_55ul_2,D1|D2|D3|D4|D5,2,-5,equal,,auto
+tube_rack_96_1500ul_4,A4,,20,384_ppv_55ul_2,E1|E2|E3|E4,2,-5,geometric:2,,keep
