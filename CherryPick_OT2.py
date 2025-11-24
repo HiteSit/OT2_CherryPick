@@ -1,6 +1,6 @@
 def get_values(*names):
     import json
-    _all_values = json.loads("""{"labware_dict":{"pipettes":[{"name":"Pipette_8","opentrons_id":"p300_multi_gen2","channels":8,"volume_range":[30,300],"preferred_mount":"right","tip_connections":["opentrons_96_tiprack_300ul"]},{"name":"Pipette_1","opentrons_id":"p1000_single_gen2","channels":1,"volume_range":[100,1000],"preferred_mount":"left","tip_connections":["tip_rack_geb_1000ul"]}],"labware":[{"category":"tip_rack","labware_id":"tip_rack_yellow_100ul","well_count":96,"well_volume":100},{"category":"tip_rack","labware_id":"opentrons_96_tiprack_300ul","well_count":96,"well_volume":300},{"category":"tip_rack","labware_id":"tip_rack_geb_1000ul","well_count":96,"well_volume":1000},{"category":"reservoir","labware_id":"reservoir_horizontal","well_count":12,"well_volume":15000},{"category":"plate","labware_id":"384_pp_standard_100ul","well_count":384,"well_volume":100},{"category":"plate","labware_id":"384_pp_high_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ppv_55ul","well_count":384,"well_volume":55},{"category":"plate","labware_id":"384_ppv_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ldv_12ul","well_count":384,"well_volume":12},{"category":"tube_rack","labware_id":"tube_rack_96_2000ul","well_count":96,"well_volume":2000},{"category":"tube_rack","labware_id":"tube_rack_96_1500ul","well_count":96,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_24_4000ul","well_count":24,"well_volume":4000},{"category":"tube_rack","labware_id":"tube_rack_48_1500ul","well_count":48,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_54_1500ul","well_count":54,"well_volume":1500}]},"settings":{"settings":{"general":{"tip_reuse":"always","mode":"multi","starting_tip_well":"H1","head_speed":{"speed":400}},"liquid_handling":{"pre_aspirate_contact":{"enabled":false,"position_offset_percent":20,"aspirate_volume":20},"post_aspirate_wick":{"enabled":false,"radius":1,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":true,"volume_ul":20},"mixing":{"location":"none","repetitions":2,"source_remixing":"once"},"presets":{"standard":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"viscous":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":2.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"location":"destination","repetitions":5,"source_remixing":"once"}},"slippery":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":5},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"minimal":{"pre_aspirate_contact":{"enabled":false},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"aggressive":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":30,"aspirate_volume":10},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":15},"delays":{"post_aspirate":3.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"location":"destination","repetitions":7,"source_remixing":"once"}},"cell_resuspension":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"source","repetitions":5,"source_remixing":"once"}}}},"working_plate":[{"type":"module","module_type":"heaterShaker","position_rack":"10","adapter_id":"opentrons_universal_flat_adapter","labware_id":"","target_temperature":0,"target_shake_speed":0,"persist_after_protocol":true},{"type":"reservoir","labware_id":"384_ppv_55ul","position_rack":"2"},{"type":"reservoir","labware_id":"tube_rack_96_1500ul","position_rack":"4"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","position_rack":"1"}]}},"csv_data":"Source Labware,Source Well,Volume (ul),Distribution Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Distribution,Mix Volume,Tip Action\\ntube_rack_96_1500ul_4,A1,,50,384_ppv_55ul_2,B1|B2|B3|B4,2,-5,equal,,auto\\ntube_rack_96_1500ul_4,A2,,100,384_ppv_55ul_2,C1|C2|C3|C4,2,-5,geometric:0.5,,new\\ntube_rack_96_1500ul_4,A3,200,60,384_ppv_55ul_2,D1|D2|D3|D4|D5,2,-5,equal,,auto\\ntube_rack_96_1500ul_4,A4,,20,384_ppv_55ul_2,E1|E2|E3|E4,2,-5,geometric:2,,keep"}""")
+    _all_values = json.loads("""{"labware_dict":{"pipettes":[{"name":"Pipette_8","opentrons_id":"p300_multi_gen2","channels":8,"volume_range":[30,300],"preferred_mount":"right","tip_connections":["opentrons_96_tiprack_300ul"]},{"name":"Pipette_1","opentrons_id":"p1000_single_gen2","channels":1,"volume_range":[100,1000],"preferred_mount":"left","tip_connections":["tip_rack_geb_1000ul"]}],"labware":[{"category":"tip_rack","labware_id":"tip_rack_yellow_100ul","well_count":96,"well_volume":100},{"category":"tip_rack","labware_id":"opentrons_96_tiprack_300ul","well_count":96,"well_volume":300},{"category":"tip_rack","labware_id":"tip_rack_geb_1000ul","well_count":96,"well_volume":1000},{"category":"reservoir","labware_id":"reservoir_horizontal","well_count":12,"well_volume":15000},{"category":"plate","labware_id":"384_pp_standard_100ul","well_count":384,"well_volume":100},{"category":"plate","labware_id":"384_pp_high_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ppv_55ul","well_count":384,"well_volume":55},{"category":"plate","labware_id":"384_ppv_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ldv_12ul","well_count":384,"well_volume":12},{"category":"tube_rack","labware_id":"tube_rack_96_2000ul","well_count":96,"well_volume":2000},{"category":"tube_rack","labware_id":"tube_rack_96_1500ul","well_count":96,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_24_4000ul","well_count":24,"well_volume":4000},{"category":"tube_rack","labware_id":"tube_rack_48_1500ul","well_count":48,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_54_1500ul","well_count":54,"well_volume":1500}]},"settings":{"settings":{"general":{"tip_reuse":"always","mode":"dual","starting_tip_well":"H1","head_speed":{"speed":400}},"liquid_handling":{"pre_aspirate_contact":{"enabled":false,"position_offset_percent":20,"aspirate_volume":20},"post_aspirate_wick":{"enabled":false,"radius":1,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":true,"volume_ul":20},"mixing":{"location":"none","repetitions":2,"source_remixing":"once"},"presets":{"standard":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"viscous":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":2.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"location":"destination","repetitions":5,"source_remixing":"once"}},"slippery":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":5},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"minimal":{"pre_aspirate_contact":{"enabled":false},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"aggressive":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":30,"aspirate_volume":10},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":15},"delays":{"post_aspirate":3.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"location":"destination","repetitions":7,"source_remixing":"once"}},"cell_resuspension":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"source","repetitions":5,"source_remixing":"once"}}}},"working_plate":[{"type":"module","module_type":"heaterShaker","position_rack":"10","adapter_id":"opentrons_universal_flat_adapter","labware_id":"","target_temperature":0,"target_shake_speed":0,"persist_after_protocol":true},{"type":"reservoir","labware_id":"384_ppv_55ul","position_rack":"2"},{"type":"reservoir","labware_id":"tube_rack_96_1500ul","position_rack":"4"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","mode":"multi","position_rack":"1"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","mode":"multi_X1","position_rack":"3"},{"type":"tip","labware_id":"tip_rack_geb_1000ul","connection":"Pipette_1","mode":"single_X1","position_rack":"9"}]}},"csv_data":"Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mode\\ntube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-5,multi\\ntube_rack_96_1500ul_4,A2,600,384_ppv_55ul_2,A2,2,-5,single_X1\\ntube_rack_96_1500ul_4,A3,150,384_ppv_55ul_2,A3,2,-5,multi_X1\\ntube_rack_96_1500ul_4,A4,50,384_ppv_55ul_2,A4,2,-5,multi\\ntube_rack_96_1500ul_4,B1,800,384_ppv_55ul_2,B1,2,-5,single_X1\\ntube_rack_96_1500ul_4,B2,200,384_ppv_55ul_2,B2,2,-5,multi_X1\\ntube_rack_96_1500ul_4,C1,500,384_ppv_55ul_2,C1,2,-5,single_X1\\ntube_rack_96_1500ul_4,C2,50,384_ppv_55ul_2,C2,2,-5,multi\\ntube_rack_96_1500ul_4,D1,250,384_ppv_55ul_2,D1,2,-5,multi_X1"}""")
     return [_all_values[n] for n in names]
 
 
@@ -21,7 +21,7 @@ Pipette modes: single-channel, 8-channel multi, 8-channel single-tip (multi_X1)
 Configurable via settings.toml and CSV transfer maps
 """
 from opentrons import protocol_api
-from opentrons.protocol_api import SINGLE
+from opentrons.protocol_api import SINGLE, ALL
 import csv
 from io import StringIO
 
@@ -461,6 +461,49 @@ def deactivate_modules(modules_list, protocol):
             # Deactivate heater if it was running
             if target_temp > 0:
                 module.deactivate_heater()
+
+def reconfigure_pipette_for_mode(pipette_right, mode, tip_racks_by_mode, starting_nozzle, protocol):
+    """
+    Dynamically reconfigure Pipette_8 between multi and multi_X1 modes.
+    
+    This function enables mid-protocol switching of nozzle layouts, allowing the same
+    8-channel pipette to operate in either full 8-tip mode or single-tip mode.
+    
+    CRITICAL: Pipette must NOT have a tip attached when calling this function.
+    The Opentrons API requires tips to be dropped before reconfiguration.
+    
+    Args:
+        pipette_right: The 8-channel pipette instance
+        mode: Target mode ('multi' or 'multi_X1')
+        tip_racks_by_mode: Dict mapping mode → list of tip rack objects
+        starting_nozzle: Starting nozzle position for single-tip mode (e.g., 'H1')
+        protocol: ProtocolContext for logging
+        
+    Raises:
+        ValueError: If mode is invalid or tip racks not configured for requested mode
+    """
+    if mode not in ['multi', 'multi_X1']:
+        raise ValueError(f"Invalid mode for Pipette_8: '{mode}'. Must be 'multi' or 'multi_X1'")
+    
+    if mode not in tip_racks_by_mode or not tip_racks_by_mode[mode]:
+        raise ValueError(f"No tip racks configured for mode '{mode}'")
+    
+    if mode == 'multi':
+        # Full 8-channel mode - all nozzles active
+        pipette_right.configure_nozzle_layout(
+            style=ALL,
+            tip_racks=tip_racks_by_mode['multi']
+        )
+        protocol.comment(f"🔄 Reconfigured Pipette_8: MULTI mode (8 tips simultaneously)")
+        
+    elif mode == 'multi_X1':
+        # Single-tip mode from 8-channel pipette
+        pipette_right.configure_nozzle_layout(
+            style=SINGLE,
+            start=starting_nozzle,
+            tip_racks=tip_racks_by_mode['multi_X1']
+        )
+        protocol.comment(f"🔄 Reconfigured Pipette_8: MULTI_X1 mode (single tip from {starting_nozzle})")
 
 def split_volume_into_chunks(volume, min_vol, max_vol, air_gap_volume=0):
     """
@@ -1007,64 +1050,220 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # Labware and module loading complete (no dynamic CSV loading)
 
-    # Load pipette based on mode
-    mode = general_settings['mode']
+    # ========== DUAL-PIPETTE MODE DETECTION & SETUP ==========
 
-    # Determine which pipette to use
-    if mode == "single_X1":
-        pipette_key = "Pipette_1"
-    elif mode in ["multi_X1", "multi"]:
-        pipette_key = "Pipette_8"
+    # Check if dual-pipette mode is enabled
+    mode = general_settings.get('mode', 'single_X1')
+    is_dual_mode = (mode == 'dual')
+
+    # Analyze CSV to detect if Mode column exists and extract used modes
+    csv_modes = set()
+    csv_has_mode_column = False
+    if transfers and 'Mode' in transfers[0]:
+        csv_has_mode_column = True
+        for transfer in transfers:
+            transfer_mode = transfer.get('Mode', '').strip()
+            if transfer_mode:
+                csv_modes.add(transfer_mode)
+        if csv_modes:
+            is_dual_mode = True  # CSV overrides settings if Mode column present
+
+    protocol.comment(f"Dual-pipette mode: {'ENABLED' if is_dual_mode else 'DISABLED (legacy single-pipette)'}")
+
+    if not is_dual_mode:
+        # ========== LEGACY SINGLE-PIPETTE MODE (Backward Compatibility) ==========
+        protocol.comment(f"Using legacy mode: {mode}")
+
+        # Determine which pipette to use
+        if mode == "single_X1":
+            pipette_key = "Pipette_1"
+        elif mode in ["multi_X1", "multi"]:
+            pipette_key = "Pipette_8"
+        else:
+            raise ValueError(f"Unknown mode: {mode}. Valid modes: single_X1, multi_X1, multi, dual")
+
+        # Get pipette configuration from table array structure
+        if pipette_key not in available_pipettes:
+            raise ValueError(f"Pipette '{pipette_key}' not found in pipette definitions")
+
+        pipette_config = available_pipettes[pipette_key]
+        pipette_ot_id = pipette_config['opentrons_id']
+        mount = pipette_config['preferred_mount']
+
+        # Find connected tip racks
+        tip_racks = []
+
+        for plate_config in settings['settings']['working_plate']:
+            if plate_config['type'] == 'tip' and 'connection' in plate_config:
+                if plate_config['connection'] == pipette_key:
+                    # Create unique tip rack name using labware_id_position_rack convention
+                    tip_labware_id = plate_config['labware_id']
+                    tip_slot = plate_config['position_rack']
+                    tip_rack_name = f"{tip_labware_id}_{tip_slot}"
+
+                    if tip_rack_name in loaded_labware:
+                        tip_racks.append(loaded_labware[tip_rack_name])
+
+        if not tip_racks:
+            raise ValueError(f"No tip racks found for {pipette_key}")
+
+        # Load the single pipette
+        try:
+            pipette = protocol.load_instrument(pipette_ot_id, mount, tip_racks=tip_racks)
+        except Exception as e:
+            protocol.comment(f"Failed to load pipette: {e}")
+            raise
+
+        # Set Default Speed
+        pipette.default_speed = speed
+
+        # Configure single-tip mode if using multi_X1 mode
+        if mode == "multi_X1" and pipette_config['channels'] > 1:
+            starting_nozzle = settings['settings']['general']['starting_tip_well']
+            try:
+                pipette.configure_nozzle_layout(
+                    style=SINGLE,
+                    start=starting_nozzle,
+                    tip_racks=tip_racks
+                )
+            except Exception as e:
+                protocol.comment(f"Failed to configure single-tip mode: {e}")
+                raise
+
+        # For legacy mode compatibility, set these variables for transfer loop
+        pipette_left = None
+        pipette_right = None
+        if mount == 'left':
+            pipette_left = pipette
+        else:
+            pipette_right = pipette
+        tip_racks_by_mode = {}
+        active_pipette = pipette
+        active_pipette_config = pipette_config
+        current_mode = mode
+
     else:
-        raise ValueError(f"Unknown mode: {mode}. Valid modes: single_X1, multi_X1, multi")
+        # ========== NEW DUAL-PIPETTE MODE ==========
 
-    # Get pipette configuration from table array structure
-    if pipette_key not in available_pipettes:
-        raise ValueError(f"Pipette '{pipette_key}' not found in pipette definitions")
+        # Validate CSV modes
+        valid_modes = {'multi', 'multi_X1', 'single_X1'}
+        invalid_modes = csv_modes - valid_modes
+        if invalid_modes:
+            raise ValueError(f"Invalid Mode values in CSV: {invalid_modes}. Valid: {valid_modes}")
 
-    pipette_config = available_pipettes[pipette_key]
-    pipette_ot_id = pipette_config['opentrons_id']
-    mount = pipette_config['preferred_mount']
+        protocol.comment(f"CSV modes detected: {', '.join(sorted(csv_modes)) if csv_modes else 'none'}")
 
-    # Find connected tip racks
-    tip_racks = []
+        # Organize tip racks by mode
+        tip_racks_by_mode = {
+            'multi': [],
+            'multi_X1': [],
+            'single_X1': []
+        }
 
-    for plate_config in settings['settings']['working_plate']:
-        if plate_config['type'] == 'tip' and 'connection' in plate_config:
-            if plate_config['connection'] == pipette_key:
-                # Create unique tip rack name using labware_id_position_rack convention
+        for plate_config in settings['settings']['working_plate']:
+            if plate_config['type'] == 'tip' and 'connection' in plate_config:
+                tip_mode = plate_config.get('mode')
+
+                # If no mode field, this is a legacy config - assign based on connection
+                if not tip_mode:
+                    # Legacy: assign tip rack to all modes for this pipette
+                    connection = plate_config['connection']
+                    if connection == 'Pipette_1':
+                        tip_mode = 'single_X1'
+                    elif connection == 'Pipette_8':
+                        # In legacy, we don't know if it's multi or multi_X1, so allow both
+                        protocol.comment(f"Warning: Tip rack in slot {plate_config['position_rack']} has no 'mode' field - assigning to both multi and multi_X1 (may cause conflicts)")
+                        tip_mode = 'multi'  # Default to multi
+
                 tip_labware_id = plate_config['labware_id']
                 tip_slot = plate_config['position_rack']
                 tip_rack_name = f"{tip_labware_id}_{tip_slot}"
 
                 if tip_rack_name in loaded_labware:
-                    tip_racks.append(loaded_labware[tip_rack_name])
+                    tip_racks_by_mode[tip_mode].append(loaded_labware[tip_rack_name])
+                    protocol.comment(f"Tip rack {tip_rack_name} assigned to mode: {tip_mode}")
 
-    if not tip_racks:
-        raise ValueError(f"No tip racks found for {pipette_key}")
+        # Validate: modes used in CSV must have tip racks configured
+        for csv_mode in csv_modes:
+            if not tip_racks_by_mode[csv_mode]:
+                raise ValueError(
+                    f"CSV uses '{csv_mode}' mode but no tip racks configured for this mode in settings.toml\n"
+                    f"Add [[settings.working_plate]] entries with type='tip', connection='Pipette_X', and mode='{csv_mode}'"
+                )
 
-    # Load the pipette
-    try:
-        pipette = protocol.load_instrument(pipette_ot_id, mount, tip_racks=tip_racks)
-    except Exception as e:
-        protocol.comment(f"Failed to load pipette: {e}")
-        raise
-
-    # Set Default Speed
-    pipette.default_speed = speed
-
-    # Configure single-tip mode if using multi_X1 mode
-    if mode == "multi_X1" and pipette_config['channels'] > 1:
+        # Load pipettes based on which modes are used
+        pipette_left = None
+        pipette_right = None
         starting_nozzle = settings['settings']['general']['starting_tip_well']
-        try:
-            pipette.configure_nozzle_layout(
-                style=SINGLE,
-                start=starting_nozzle,
-                tip_racks=tip_racks
+
+        # Load Pipette_1 (left) if single_X1 mode is used
+        if 'single_X1' in csv_modes:
+            if 'Pipette_1' not in available_pipettes:
+                raise ValueError("CSV uses 'single_X1' mode but Pipette_1 not defined in labware_dict.toml")
+
+            pipette_1_config = available_pipettes['Pipette_1']
+            pipette_left = protocol.load_instrument(
+                pipette_1_config['opentrons_id'],
+                'left',
+                tip_racks=tip_racks_by_mode['single_X1']
             )
-        except Exception as e:
-            protocol.comment(f"Failed to configure single-tip mode: {e}")
-            raise
+            pipette_left.default_speed = speed
+            protocol.comment(f"✓ Loaded Pipette_1 ({pipette_1_config['opentrons_id']}) on LEFT mount for single_X1 mode")
+
+        # Load Pipette_8 (right) if multi or multi_X1 mode is used
+        if 'multi' in csv_modes or 'multi_X1' in csv_modes:
+            if 'Pipette_8' not in available_pipettes:
+                raise ValueError("CSV uses 'multi' or 'multi_X1' mode but Pipette_8 not defined in labware_dict.toml")
+
+            pipette_8_config = available_pipettes['Pipette_8']
+
+            # Determine initial nozzle configuration based on first mode encountered
+            # (we'll reconfigure on-the-fly as needed during transfers)
+            initial_mode = None
+            for transfer in transfers:
+                transfer_mode = transfer.get('Mode', '').strip()
+                if transfer_mode in ['multi', 'multi_X1']:
+                    initial_mode = transfer_mode
+                    break
+
+            if not initial_mode:
+                # Fallback: prefer multi over multi_X1
+                initial_mode = 'multi' if 'multi' in csv_modes else 'multi_X1'
+
+            # Load pipette with initial configuration
+            if initial_mode == 'multi':
+                pipette_right = protocol.load_instrument(
+                    pipette_8_config['opentrons_id'],
+                    'right',
+                    tip_racks=tip_racks_by_mode['multi']
+                )
+                pipette_right.default_speed = speed
+                pipette_right.configure_nozzle_layout(
+                    style=ALL,
+                    tip_racks=tip_racks_by_mode['multi']
+                )
+                protocol.comment(f"✓ Loaded Pipette_8 ({pipette_8_config['opentrons_id']}) on RIGHT mount - MULTI mode (8 tips)")
+            else:  # multi_X1
+                pipette_right = protocol.load_instrument(
+                    pipette_8_config['opentrons_id'],
+                    'right',
+                    tip_racks=tip_racks_by_mode['multi_X1']
+                )
+                pipette_right.default_speed = speed
+                pipette_right.configure_nozzle_layout(
+                    style=SINGLE,
+                    start=starting_nozzle,
+                    tip_racks=tip_racks_by_mode['multi_X1']
+                )
+                protocol.comment(f"✓ Loaded Pipette_8 ({pipette_8_config['opentrons_id']}) on RIGHT mount - MULTI_X1 mode ({starting_nozzle})")
+
+            current_mode = initial_mode
+        else:
+            current_mode = None
+
+        # Verify at least one pipette was loaded
+        if pipette_left is None and pipette_right is None:
+            raise ValueError("No valid modes found in CSV - at least one transfer with Mode column required in dual mode")
 
     # Execute transfers
     tip_reuse = general_settings['tip_reuse']
@@ -1073,8 +1272,8 @@ def run(protocol: protocol_api.ProtocolContext):
     last_tip_action = None  # Track the last transfer's tip action for final cleanup
     mixed_source_wells = set()  # Track which source wells have been mixed (for source_remixing='once')
 
-    # Pick up tip if always reusing
-    if tip_reuse == 'always':
+    # Pick up tip if always reusing (only in legacy single-pipette mode)
+    if tip_reuse == 'always' and not is_dual_mode:
         pipette.pick_up_tip()
         tip_contacted = False  # New tip, needs contact
 
@@ -1085,6 +1284,42 @@ def run(protocol: protocol_api.ProtocolContext):
         source_well = transfer['Source Well']
         dest_labware_name = transfer['Dest Labware']
         dest_well_str = transfer['Dest Well']
+
+        # ========== DUAL-PIPETTE MODE SWITCHING ==========
+        if is_dual_mode:
+            # Get mode for this transfer
+            transfer_mode = transfer.get('Mode', '').strip()
+            if not transfer_mode:
+                raise ValueError(f"Row {i+1}: Missing 'Mode' column value in dual-pipette mode")
+
+            # Mode switch detection for Pipette_8 (multi <-> multi_X1 transitions)
+            if transfer_mode in ['multi', 'multi_X1'] and transfer_mode != current_mode:
+                protocol.comment(f"Mode switch detected: {current_mode} → {transfer_mode}")
+
+                # CRITICAL: Drop tip before reconfiguring (API requirement)
+                if pipette_right and pipette_right.has_tip:
+                    protocol.comment("Dropping tip before nozzle reconfiguration")
+                    pipette_right.drop_tip()
+                    tip_contacted = False
+
+                # Reconfigure nozzle layout
+                reconfigure_pipette_for_mode(pipette_right, transfer_mode, tip_racks_by_mode, starting_nozzle, protocol)
+                current_mode = transfer_mode
+
+            # Select active pipette for this transfer
+            if transfer_mode == 'single_X1':
+                active_pipette = pipette_left
+                active_pipette_config = available_pipettes['Pipette_1']
+            elif transfer_mode in ['multi', 'multi_X1']:
+                active_pipette = pipette_right
+                active_pipette_config = available_pipettes['Pipette_8']
+            else:
+                raise ValueError(f"Row {i+1}: Invalid Mode '{transfer_mode}'. Valid: multi, multi_X1, single_X1")
+
+            # Update reference variables for backward compatibility with existing code
+            pipette = active_pipette
+            pipette_config = active_pipette_config
+            mode = transfer_mode
 
         # ========== DISTRIBUTION MODE DETECTION ==========
         # Distribution mode: one source → multiple destinations with varying volumes
@@ -1276,14 +1511,39 @@ def run(protocol: protocol_api.ProtocolContext):
             pipette.drop_tip()
             tip_contacted = False  # Reset contact flag when tip is dropped
 
-    # Handle final tip based on last transfer's tip action
-    if pipette.has_tip:
-        if last_tip_action == 'keep':
-            # Return tip to rack for potential reuse
-            pipette.return_tip()
-        else:
-            # Drop tip (default for 'drop', 'new', or any other action)
-            pipette.drop_tip()
+    # Handle final tips based on mode
+    if is_dual_mode:
+        # Dual-pipette mode: handle both pipettes independently
+        if pipette_left and pipette_left.has_tip:
+            # Single-channel pipette can return tips safely
+            if last_tip_action == 'keep':
+                protocol.comment("Returning final tip from Pipette_1 (left)")
+                pipette_left.return_tip()
+            else:
+                protocol.comment("Dropping final tip from Pipette_1 (left)")
+                pipette_left.drop_tip()
+
+        if pipette_right and pipette_right.has_tip:
+            # For multi_X1 mode (partial tip configuration), MUST drop (cannot return)
+            # For multi mode (full configuration), can return
+            if current_mode == 'multi_X1':
+                protocol.comment("Dropping final tip from Pipette_8 (multi_X1 mode cannot return tips)")
+                pipette_right.drop_tip()
+            elif last_tip_action == 'keep':
+                protocol.comment("Returning final tip from Pipette_8 (right)")
+                pipette_right.return_tip()
+            else:
+                protocol.comment("Dropping final tip from Pipette_8 (right)")
+                pipette_right.drop_tip()
+    else:
+        # Legacy single-pipette mode
+        if pipette.has_tip:
+            if last_tip_action == 'keep':
+                # Return tip to rack for potential reuse
+                pipette.return_tip()
+            else:
+                # Drop tip (default for 'drop', 'new', or any other action)
+                pipette.drop_tip()
 
     # Deactivate modules based on persist_after_protocol setting
     deactivate_modules(modules_to_manage, protocol)

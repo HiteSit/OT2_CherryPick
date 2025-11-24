@@ -7,7 +7,8 @@
 # General Protocol Settings
 [settings.general]
 tip_reuse = "always"            # Options: "always", "never", "per_source"
-mode = "multi"                  # Options: "single_X1", "multi_X1", "multi"
+mode = "dual"                   # Options: "single_X1", "multi_X1", "multi", "dual"
+                                # "dual" enables multi-pipette mode (CSV Mode column required)
 starting_tip_well = "H1"        # Starting well for multi_X1 mode (single tip from 8-channel)
 
 # Head Speed Configuration
@@ -173,11 +174,37 @@ type = "reservoir"
 labware_id = "tube_rack_96_1500ul"
 position_rack = "4"
 
+# =============================================================================
+# TIP RACK ALLOCATION FOR DUAL-PIPETTE MODE
+# =============================================================================
+# CRITICAL: Each mode needs its own tip rack(s) to avoid consumption conflicts!
+# - 'multi' mode: Pipette_8 uses ALL 8 nozzles (consumes full columns)
+# - 'multi_X1' mode: Pipette_8 uses SINGLE nozzle (consumes scattered tips)
+# - 'single_X1' mode: Pipette_1 single-channel (consumes scattered tips)
+
+# Tip rack for Pipette_8 in MULTI mode (full 8-channel operation)
 [[settings.working_plate]]
 type = "tip"
 labware_id = "opentrons_96_tiprack_300ul"
 connection = "Pipette_8"
+mode = "multi"  # Used when CSV specifies Mode="multi"
 position_rack = "1"
+
+# Tip rack for Pipette_8 in MULTI_X1 mode (single-tip from 8-channel)
+[[settings.working_plate]]
+type = "tip"
+labware_id = "opentrons_96_tiprack_300ul"
+connection = "Pipette_8"
+mode = "multi_X1"  # Used when CSV specifies Mode="multi_X1"
+position_rack = "3"
+
+# Tip rack for Pipette_1 in SINGLE_X1 mode (dedicated single-channel)
+[[settings.working_plate]]
+type = "tip"
+labware_id = "tip_rack_geb_1000ul"
+connection = "Pipette_1"
+mode = "single_X1"  # Used when CSV specifies Mode="single_X1"
+position_rack = "9"  # Moved to slot 9 to avoid collision with multi_X1 pipette (top-right position)
 
 # =============================================================================
 # HARDWARE MODULES (OPTIONAL)
