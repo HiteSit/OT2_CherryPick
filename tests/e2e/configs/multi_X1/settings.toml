@@ -1,0 +1,53 @@
+# Multi-channel single-tip mode configuration for e2e tests
+# Uses Pipette_8 (p300_multi_gen2) on right mount with SINGLE nozzle layout
+# NOTE: tip_reuse must be "never" because partial tip configuration doesn't support return_tip()
+
+[settings.general]
+tip_reuse = "never"
+mode = "multi_X1"
+starting_tip_well = "H1"
+
+[settings.general.head_speed]
+speed = 400
+
+[settings.liquid_handling]
+
+[settings.liquid_handling.pre_aspirate_contact]
+enabled = false
+position_offset_percent = 20
+aspirate_volume = 0
+
+[settings.liquid_handling.post_aspirate_wick]
+enabled = false
+radius = 1
+v_offset_mm = -1.5
+speed = 20
+
+[settings.liquid_handling.delays]
+post_aspirate = 0
+
+[settings.liquid_handling.push_out]
+enabled = true
+volume_ul = 5
+
+[settings.liquid_handling.mixing]
+location = "none"
+repetitions = 3
+source_remixing = "once"
+
+# Deck layout: tube rack source, 384 destination, tip rack for Pipette_8
+[[settings.working_plate]]
+type = "reservoir"
+labware_id = "384_ppv_55ul"
+position_rack = "2"
+
+[[settings.working_plate]]
+type = "reservoir"
+labware_id = "tube_rack_96_1500ul"
+position_rack = "4"
+
+[[settings.working_plate]]
+type = "tip"
+labware_id = "opentrons_96_tiprack_300ul"
+connection = "Pipette_8"
+position_rack = "1"
