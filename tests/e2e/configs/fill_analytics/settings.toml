@@ -2,7 +2,6 @@
 # Uses different labware slots than standard CSVs
 
 [settings.general]
-tip_reuse = "always"
 mode = "single_X1"
 starting_tip_well = "H1"
 

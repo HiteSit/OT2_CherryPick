@@ -2,7 +2,6 @@
 # Uses Pipette_8 (p300_multi_gen2) on right mount with ALL nozzles
 
 [settings.general]
-tip_reuse = "always"
 mode = "multi"
 starting_tip_well = "H1"
 

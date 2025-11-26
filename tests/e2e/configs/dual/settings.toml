@@ -2,7 +2,6 @@
 # Enables mid-protocol switching between pipettes based on CSV Mode column
 
 [settings.general]
-tip_reuse = "always"
 mode = "dual"
 starting_tip_well = "H1"
 

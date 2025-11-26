@@ -1,7 +1,7 @@
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mode
-tube_rack_96_1500ul_4,A1,600,384_ppv_55ul_2,A1,2,-5,single_X1
-tube_rack_96_1500ul_4,A2,150,384_ppv_55ul_2,A2,2,-5,multi_X1
-tube_rack_96_1500ul_4,B1,700,384_ppv_55ul_2,B1,2,-5,single_X1
-tube_rack_96_1500ul_4,B2,200,384_ppv_55ul_2,B2,2,-5,multi_X1
-tube_rack_96_1500ul_4,C1,500,384_ppv_55ul_2,C1,2,-5,single_X1
-tube_rack_96_1500ul_4,C2,250,384_ppv_55ul_2,C2,2,-5,multi_X1
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mode,Tip Action
+tube_rack_96_1500ul_4,A1,600,384_ppv_55ul_2,A1,2,-5,single_X1,drop
+tube_rack_96_1500ul_4,A2,150,384_ppv_55ul_2,A2,2,-5,multi_X1,drop
+tube_rack_96_1500ul_4,B1,700,384_ppv_55ul_2,B1,2,-5,single_X1,drop
+tube_rack_96_1500ul_4,B2,200,384_ppv_55ul_2,B2,2,-5,multi_X1,drop
+tube_rack_96_1500ul_4,C1,500,384_ppv_55ul_2,C1,2,-5,single_X1,drop
+tube_rack_96_1500ul_4,C2,250,384_ppv_55ul_2,C2,2,-5,multi_X1,drop

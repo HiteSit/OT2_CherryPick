@@ -1,9 +1,8 @@
 # Multi-channel single-tip mode configuration for e2e tests
 # Uses Pipette_8 (p300_multi_gen2) on right mount with SINGLE nozzle layout
-# NOTE: tip_reuse must be "never" because partial tip configuration doesn't support return_tip()
+# NOTE: Tip Action 'keep' auto-converts to 'drop' because partial tip config doesn't support return_tip()
 
 [settings.general]
-tip_reuse = "never"
 mode = "multi_X1"
 starting_tip_well = "H1"
 

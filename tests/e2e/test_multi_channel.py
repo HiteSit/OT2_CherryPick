@@ -48,4 +48,4 @@ class TestMultiChannelMode:
         result = run_full_workflow(workspace, "example_multi_mode.csv")
 
         result.assert_success()
-        # With tip_reuse='always' and tip_action='keep', should minimize tip usage
+        # With Tip Action='keep' in CSV, should minimize tip usage

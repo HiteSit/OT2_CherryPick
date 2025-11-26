@@ -6,7 +6,6 @@
 
 # General Protocol Settings
 [settings.general]
-tip_reuse = "always"            # Options: "always", "never", "per_source"
 mode = "dual"                   # Options: "single_X1", "multi_X1", "multi", "dual"
                                 # "dual" enables multi-pipette mode (CSV Mode column required)
 starting_tip_well = "H1"        # Starting well for multi_X1 mode (single tip from 8-channel)
@@ -334,18 +333,17 @@ position_rack = "9"  # Moved to slot 9 to avoid collision with multi_X1 pipette 
 #                  Only applies if Air Gap > 0
 #                  Default: 1.0
 
-# TIP MANAGEMENT COLUMN (optional):
-# - "Tip Action": Per-transfer tip behavior, overrides global tip_reuse setting
+# TIP MANAGEMENT COLUMN (REQUIRED):
+# - "Tip Action": Per-transfer tip behavior - MUST be specified for each row
 #    - "new": Always get new tip (drop current if present, pick up fresh)
 #    - "keep": Keep current tip (pick up new only if none present)
+#             NOTE: Not supported in multi_X1 mode (auto-converts to 'drop')
 #    - "drop": Use tip for transfer then drop it immediately after
-#    - "auto": Use global tip_reuse setting from [settings.general]
-#    Default: "auto"
 
 # CSV EXAMPLES:
 # Basic CSV (minimal required columns):
-# Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top
-# tube_rack_1,A1,50,plate_2,B1,2,-5
+# Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+# tube_rack_1,A1,50,plate_2,B1,2,-5,new
 #
 # Advanced CSV (all features):
 # Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mix Volume,Flow Aspirate,Flow Dispense,Air Gap,Tip Action

@@ -83,32 +83,30 @@ def get_multi_channel_wells(labware, well_name, well_count):
     else:
         raise ValueError(f"Multi mode not supported for {well_count}-well plates")
 
-def determine_tip_action(transfer, global_tip_reuse, source_labware_name, last_source_labware, pipette):
-    """Determine tip action for this transfer based on CSV and global settings"""
-    # Get CSV-specified tip action (default to 'auto' if column missing)
-    csv_tip_action = transfer.get('Tip Action', 'auto').lower().strip()
+def determine_tip_action(transfer, row_index):
+    """
+    Determine tip action from CSV - column is REQUIRED.
 
-    # Validate tip action
-    valid_actions = ['new', 'keep', 'drop', 'auto']
+    Args:
+        transfer: CSV row dict
+        row_index: Row index for error messages (0-based)
+
+    Returns:
+        str: Tip action ('new', 'keep', or 'drop')
+
+    Raises:
+        ValueError: If Tip Action column is missing or invalid
+    """
+    csv_tip_action = transfer.get('Tip Action', '').strip().lower()
+
+    if not csv_tip_action:
+        raise ValueError(f"Row {row_index+1}: Missing required 'Tip Action' column. Valid values: new, keep, drop")
+
+    valid_actions = ['new', 'keep', 'drop']
     if csv_tip_action not in valid_actions:
-        raise ValueError(f"Invalid Tip Action '{csv_tip_action}'. Valid options: {valid_actions}")
+        raise ValueError(f"Row {row_index+1}: Invalid Tip Action '{csv_tip_action}'. Valid options: {valid_actions}")
 
-    # If CSV specifies explicit action, use it
-    if csv_tip_action in ['new', 'keep', 'drop']:
-        return csv_tip_action
-
-    # If 'auto', apply global strategy
-    if global_tip_reuse == 'never':
-        return 'new'
-    elif global_tip_reuse == 'always':
-        return 'keep' if pipette.has_tip else 'new'
-    elif global_tip_reuse == 'per_source':
-        if source_labware_name != last_source_labware:
-            return 'new'
-        else:
-            return 'keep' if pipette.has_tip else 'new'
-    else:
-        raise ValueError(f"Unknown global tip_reuse strategy: {global_tip_reuse}")
+    return csv_tip_action
 
 def execute_tip_action(tip_action, pipette, protocol, transfer_info=""):
     """Execute the determined tip action (pre-transfer) and return if new tip was picked up"""
@@ -733,10 +731,10 @@ def plan_distribution_trips(dest_volumes, max_volume_per_trip, air_gap_volume, m
     
     return trips
 
-def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liquid_contact_config, 
+def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liquid_contact_config,
                         wick_config, delay_config, push_out_config, mixing_config, mixing_repetitions,
-                        mixing_location, source_remixing, mixed_source_wells, general_settings, 
-                        protocol, mode, last_source_labware, tip_reuse):
+                        mixing_location, source_remixing, mixed_source_wells, general_settings,
+                        protocol, mode, row_index):
     """
     Execute distribution transfer: one source well → multiple destination wells with varying volumes
     
@@ -765,11 +763,10 @@ def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liqu
         general_settings: General protocol settings
         protocol: ProtocolContext for logging
         mode: Pipette mode (single_X1, multi_X1, multi)
-        last_source_labware: Last source labware name (for tip management)
-        tip_reuse: Global tip reuse strategy
-    
+        row_index: CSV row index for error messages (0-based)
+
     Returns:
-        tuple: (last_source_labware_name, tip_contacted_flag)
+        bool: tip_contacted flag (True if tip has contacted liquid)
     """
     # ========== Parse CSV row ==========
     source_labware_name = transfer['Source Labware']
@@ -859,7 +856,13 @@ def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liqu
                 mixed_source_wells.add(source_well_key)
         
         # ===== Tip management for this trip =====
-        tip_action = determine_tip_action(transfer, tip_reuse, source_labware_name, last_source_labware, pipette)
+        tip_action = determine_tip_action(transfer, row_index)
+
+        # Auto-convert 'keep' to 'drop' for multi_X1 mode (partial tip config doesn't support return_tip)
+        if mode == 'multi_X1' and tip_action == 'keep':
+            protocol.comment(f"Warning row {row_index+1}: Tip Action 'keep' not supported in multi_X1 mode. Auto-converting to 'drop'.")
+            tip_action = 'drop'
+
         action_taken, new_tip_picked = execute_tip_action(tip_action, pipette, protocol, f"Distribution trip {trip_idx+1}/{len(trips)}")
         
         # Reset contact flag if new tip picked up
@@ -923,7 +926,7 @@ def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liqu
             tip_contacted = False
     
     # ===== Return tracking variables =====
-    return source_labware_name, tip_contacted
+    return tip_contacted
 
 def run(protocol: protocol_api.ProtocolContext):
     """Main protocol execution"""
@@ -1266,16 +1269,9 @@ def run(protocol: protocol_api.ProtocolContext):
             raise ValueError("No valid modes found in CSV - at least one transfer with Mode column required in dual mode")
 
     # Execute transfers
-    tip_reuse = general_settings['tip_reuse']
-    last_source_labware = None
     tip_contacted = False  # Track if current tip has contacted liquid
     last_tip_action = None  # Track the last transfer's tip action for final cleanup
     mixed_source_wells = set()  # Track which source wells have been mixed (for source_remixing='once')
-
-    # Pick up tip if always reusing (only in legacy single-pipette mode)
-    if tip_reuse == 'always' and not is_dual_mode:
-        pipette.pick_up_tip()
-        tip_contacted = False  # New tip, needs contact
 
     # Execute each transfer
     for i, transfer in enumerate(transfers):
@@ -1338,7 +1334,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
             # Execute distribution and continue to next transfer
             try:
-                last_source_labware, tip_contacted = perform_distribution(
+                tip_contacted = perform_distribution(
                     transfer=transfer,
                     pipette=pipette,
                     loaded_labware=loaded_labware,
@@ -1355,11 +1351,10 @@ def run(protocol: protocol_api.ProtocolContext):
                     general_settings=general_settings,
                     protocol=protocol,
                     mode=mode,
-                    last_source_labware=last_source_labware,
-                    tip_reuse=tip_reuse
+                    row_index=i
                 )
                 # Update last_tip_action for final cleanup
-                last_tip_action = transfer.get('Tip Action', 'auto')
+                last_tip_action = transfer['Tip Action'].lower().strip()
                 continue  # Skip to next CSV row
             except Exception as e:
                 protocol.comment(f"Distribution failed at row {i+1}: {e}")
@@ -1378,9 +1373,13 @@ def run(protocol: protocol_api.ProtocolContext):
         air_gap_volume = float(transfer.get('Air Gap', 0)) if transfer.get('Air Gap') else 0
         air_gap_rate = float(transfer.get('Air Gap Rate', 1.0))
 
-        # Tip action parameter (optional in CSV, default 'auto' = use global setting)
-        tip_action_raw = transfer.get('Tip Action', 'auto')
-        tip_action = determine_tip_action(transfer, tip_reuse, source_labware_name, last_source_labware, pipette)
+        # Tip action - REQUIRED column in CSV
+        tip_action = determine_tip_action(transfer, i)
+
+        # Auto-convert 'keep' to 'drop' for multi_X1 mode (partial tip config doesn't support return_tip)
+        if mode == 'multi_X1' and tip_action == 'keep':
+            protocol.comment(f"Warning row {i+1}: Tip Action 'keep' not supported in multi_X1 mode. Auto-converting to 'drop'.")
+            tip_action = 'drop'
 
         # Get pipette volume range for splitting algorithm
         min_vol, max_vol = pipette_config['volume_range']
@@ -1431,10 +1430,6 @@ def run(protocol: protocol_api.ProtocolContext):
         # Reset contact flag if new tip was picked up
         if new_tip_picked:
             tip_contacted = False
-
-        # Update last source labware for global 'per_source' strategy
-        if tip_reuse == 'per_source':
-            last_source_labware = source_labware_name
 
         # Execute transfer in chunks (may be single chunk if volume within range)
         for chunk_idx, chunk_vol in enumerate(sub_volumes):
