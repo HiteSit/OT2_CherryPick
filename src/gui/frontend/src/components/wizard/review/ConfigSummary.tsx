@@ -23,13 +23,6 @@ export function ConfigSummary() {
             </div>
 
             <div>
-              <Text size="sm" fw={500}>Tip Strategy:</Text>
-              <Badge color="grape" size="lg">
-                {general?.tip_reuse || 'Not set'}
-              </Badge>
-            </div>
-
-            <div>
               <Text size="sm" fw={500}>Head Speed:</Text>
               <Text size="sm">{general?.head_speed?.speed || 400} mm/min</Text>
             </div>

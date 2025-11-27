@@ -1,6 +1,5 @@
 export interface GeneralSettings {
-  tip_reuse: 'always' | 'never' | 'per_source'
-  mode: 'multi' | 'multi_X1' | 'single_X1'
+  mode: 'multi' | 'multi_X1' | 'single_X1' | 'dual'
   starting_tip_well: string
   head_speed: {
     speed: number
@@ -40,6 +39,7 @@ export interface WorkingPlateEntry {
   labware_id?: string
   position_rack?: string
   connection?: string
+  mode?: 'multi' | 'multi_X1' | 'single_X1'
   module_type?: string
   target_temperature?: number
   target_shake_speed?: number

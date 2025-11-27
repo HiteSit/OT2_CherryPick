@@ -9,6 +9,7 @@ interface WorkingPlateTableProps {
   onUpdate: (index: number, field: keyof WorkingPlateEntry, value: string | number | boolean | null) => void
   onRemove?: (index: number) => void
   onMove?: (index: number, direction: 'up' | 'down') => void
+  generalMode?: string
 }
 
 const typeOptions = [
@@ -24,7 +25,13 @@ const connectionOptions = [
   { value: 'Pipette_1', label: 'Pipette_1 (single)' },
 ]
 
-export function WorkingPlateTable({ entries, labware, onUpdate, onRemove, onMove }: WorkingPlateTableProps) {
+const tipModeOptions = [
+  { value: 'multi', label: 'Multi (8-tip)' },
+  { value: 'multi_X1', label: 'Multi X1 (1-tip)' },
+  { value: 'single_X1', label: 'Single X1' },
+]
+
+export function WorkingPlateTable({ entries, labware, onUpdate, onRemove, onMove, generalMode }: WorkingPlateTableProps) {
   const labwareOptions = labware.map((lw) => ({
     value: lw.labware_id,
     label: `${lw.labware_id} (${lw.category})`,
@@ -35,6 +42,8 @@ export function WorkingPlateTable({ entries, labware, onUpdate, onRemove, onMove
     setExpandedModules((prev) => ({ ...prev, [index]: !prev[index] }))
   }
 
+  const isDualMode = generalMode === 'dual'
+
   return (
     <Table striped highlightOnHover withTableBorder>
       <Table.Thead>
@@ -43,6 +52,7 @@ export function WorkingPlateTable({ entries, labware, onUpdate, onRemove, onMove
           <Table.Th>Labware</Table.Th>
           <Table.Th>Deck Slot</Table.Th>
           <Table.Th>Connection</Table.Th>
+          {isDualMode && <Table.Th>Tip Mode</Table.Th>}
           <Table.Th style={{ width: 120 }}>Actions</Table.Th>
         </Table.Tr>
       </Table.Thead>
@@ -92,6 +102,22 @@ export function WorkingPlateTable({ entries, labware, onUpdate, onRemove, onMove
                   disabled={entry.type === 'module'}
                 />
               </Table.Td>
+              {isDualMode && (
+                <Table.Td>
+                  {entry.type === 'tip' ? (
+                    <Select
+                      data={tipModeOptions}
+                      value={entry.mode ?? null}
+                      placeholder="Select mode"
+                      allowDeselect
+                      clearable
+                      onChange={(value) => onUpdate(index, 'mode', value ?? null)}
+                    />
+                  ) : (
+                    <Text c="dimmed" size="sm">-</Text>
+                  )}
+                </Table.Td>
+              )}
               <Table.Td>
                 <Group gap="xs">
                   {entry.type === 'module' && (
@@ -137,7 +163,7 @@ export function WorkingPlateTable({ entries, labware, onUpdate, onRemove, onMove
             </Table.Tr>
             {entry.type === 'module' && expandedModules[index] && (
               <Table.Tr>
-                <Table.Td colSpan={5}>
+                <Table.Td colSpan={isDualMode ? 6 : 5}>
                   <Stack gap="xs">
                     <Text size="sm" c="dimmed">
                       Module settings

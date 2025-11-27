@@ -46,6 +46,7 @@ class WorkingPlateEntryPayload(BaseModel):
     labware_id: Optional[str] = Field(None, description="Labware identifier")
     position_rack: Optional[str] = Field(None, description="Deck slot")
     connection: Optional[str] = Field(None, description="Pipette connection or module link")
+    mode: Optional[str] = Field(None, description="Tip rack mode for dual pipette mode (multi/multi_X1/single_X1)")
 
 
 class WorkingPlateMovePayload(BaseModel):

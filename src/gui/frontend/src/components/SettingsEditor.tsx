@@ -30,16 +30,11 @@ import type { LabwareEntry } from '../api/types'
 import { SectionCard } from './SectionCard'
 import { WorkingPlateTable } from './WorkingPlateTable'
 
-const tipReuseOptions = [
-  { label: 'Always', value: 'always' },
-  { label: 'Per Source', value: 'per_source' },
-  { label: 'Never', value: 'never' },
-]
-
 const modeOptions = [
   { label: 'Multi Channel', value: 'multi' },
   { label: 'Multi X1', value: 'multi_X1' },
   { label: 'Single X1', value: 'single_X1' },
+  { label: 'Dual Pipette', value: 'dual' },
 ]
 
 const mixingLocationOptions = [
@@ -164,14 +159,6 @@ export function SettingsEditor() {
         <Grid>
           <Grid.Col span={{ base: 12, md: 6 }}>
             <Select
-              label="Tip reuse"
-              data={tipReuseOptions}
-              value={general.tip_reuse}
-              onChange={(value) => value && handlePatch('settings.general.tip_reuse', value)}
-            />
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Select
               label="Mode"
               data={modeOptions}
               value={general.mode}
@@ -200,6 +187,38 @@ export function SettingsEditor() {
             </Grid.Col>
           )}
         </Grid>
+      </SectionCard>
+
+      <SectionCard
+        title="Deck Layout"
+        description={
+          <Grid align="center">
+            <Grid.Col span={{ base: 12, md: 8 }}>
+              <Text c="dimmed">Assign each working plate to a labware definition from your catalog.</Text>
+            </Grid.Col>
+            <Grid.Col span={{ base: 12, md: 4 }} style={{ textAlign: 'right' }}>
+              <Button
+                size="xs"
+                onClick={handleAddWorkingPlate}
+                loading={addWorkingPlateMutation.isPending}
+                disabled={!labwareOptions.length}
+              >
+                Add labware
+              </Button>
+            </Grid.Col>
+          </Grid>
+        }
+      >
+        <div style={{ overflowX: 'auto' }}>
+          <WorkingPlateTable
+            entries={workingPlate}
+            labware={labwareOptions}
+            onUpdate={handleWorkingPlateUpdate}
+            onRemove={(index) => handleRemoveWorkingPlate(index)}
+            onMove={handleMoveWorkingPlate}
+            generalMode={general.mode}
+          />
+        </div>
       </SectionCard>
 
       <SectionCard title="Pre-aspirate Contact">
@@ -341,37 +360,6 @@ export function SettingsEditor() {
             />
           </Grid.Col>
         </Grid>
-      </SectionCard>
-
-      <SectionCard
-        title="Deck Layout"
-        description={
-          <Grid align="center">
-            <Grid.Col span={{ base: 12, md: 8 }}>
-              <Text c="dimmed">Assign each working plate to a labware definition from your catalog.</Text>
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 4 }} style={{ textAlign: 'right' }}>
-              <Button
-                size="xs"
-                onClick={handleAddWorkingPlate}
-                loading={addWorkingPlateMutation.isPending}
-                disabled={!labwareOptions.length}
-              >
-                Add labware
-              </Button>
-            </Grid.Col>
-          </Grid>
-        }
-      >
-        <div style={{ overflowX: 'auto' }}>
-          <WorkingPlateTable
-            entries={workingPlate}
-            labware={labwareOptions}
-            onUpdate={handleWorkingPlateUpdate}
-            onRemove={(index) => handleRemoveWorkingPlate(index)}
-            onMove={handleMoveWorkingPlate}
-          />
-        </div>
       </SectionCard>
 
       <Accordion variant="contained">

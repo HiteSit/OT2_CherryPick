@@ -4,16 +4,11 @@
  */
 
 export const HELP_TEXT = {
-  tipReuse: {
-    always: "Use one tip for entire protocol. Best for: Transferring same liquid type, minimizing tip waste",
-    never: "New tip for every transfer. Best for: Preventing cross-contamination, different sample types",
-    per_source: "New tip when source labware changes. Best for: Multiple source plates with different contents"
-  },
-
   mode: {
     single_X1: "Single-channel pipette - one transfer at a time. Maximum flexibility for cherry-picking.",
     multi_X1: "8-channel pipette in single-tip mode. Cherry-picking with multi-channel hardware. Uses only one tip (configured by starting_tip_well).",
-    multi: "8-channel pipette, full 8-tip operation. Each CSV row = 8 simultaneous transfers (entire column). Only works with 96-well and 384-well plates."
+    multi: "8-channel pipette, full 8-tip operation. Each CSV row = 8 simultaneous transfers (entire column). Only works with 96-well and 384-well plates.",
+    dual: "Two pipettes (Pipette_1 on left, Pipette_8 on right). CSV 'Mode' column controls which pipette/mode handles each transfer (multi, multi_X1, single_X1)."
   },
 
   startingTipWell: `Specifies which tip position on the 8-channel pipette to use when operating in multi_X1 mode.
@@ -107,7 +102,7 @@ Best practice: Use consistent heights for same labware type throughout CSV. All 
       flowDispense: "Dispense speed multiplier. Default 1.0 = normal. Use 0.8 for slow (gentle), 2.0 for fast.",
       airGap: "Air gap volume to prevent dripping (µL). Default 0. Typical: 5-20µL for preventing cross-contamination during transport.",
       airGapRate: "Air gap aspiration speed multiplier. Default 1.0.",
-      tipAction: "Override tip management: 'new' = get fresh tip, 'keep' = reuse current tip, 'drop' = drop tip after this transfer, 'auto' = use tip_reuse setting (default)"
+      tipAction: "Override tip management: 'new' = get fresh tip, 'keep' = reuse current tip, 'drop' = drop tip after this transfer. REQUIRED column - must specify for every transfer."
     }
   },
 

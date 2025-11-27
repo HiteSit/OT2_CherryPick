@@ -29,6 +29,7 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
   const [type, setType] = useState<string>(normalizeType(existingLabware?.type))
   const [labwareId, setLabwareId] = useState<string>(existingLabware?.labware_id || '')
   const [connection, setConnection] = useState<string>(existingLabware?.connection || '')
+  const [tipMode, setTipMode] = useState<string>(existingLabware?.mode || '')
   const [moduleType, setModuleType] = useState<string>(normalizeModuleType(existingLabware?.module_type))
   const [targetTemperature, setTargetTemperature] = useState<number | string>(
     existingLabware?.target_temperature ?? ''
@@ -40,11 +41,15 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
     existingLabware?.persist_after_protocol ?? false
   )
 
+  // Check if dual mode is enabled
+  const isDualMode = state.settings?.settings?.general?.mode === 'dual'
+
   // Re-sync when opening a different labware card; prevents stale state and crashes
   useEffect(() => {
     setType(normalizeType(existingLabware?.type))
     setLabwareId(existingLabware?.labware_id || '')
     setConnection(existingLabware?.connection || '')
+    setTipMode(existingLabware?.mode || '')
     setModuleType(normalizeModuleType(existingLabware?.module_type))
     setTargetTemperature(existingLabware?.target_temperature ?? '')
     setTargetShakeSpeed(existingLabware?.target_shake_speed ?? '')
@@ -58,9 +63,15 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
       position_rack: String(slot),
     }
 
-    // Add optional fields
-    if (type === 'tip' && connection) {
-      newEntry.connection = connection
+    // Add optional fields for tip racks
+    if (type === 'tip') {
+      if (connection) {
+        newEntry.connection = connection
+      }
+      // Add mode field when in dual mode (required for tip allocation per CSV Mode column)
+      if (isDualMode && tipMode) {
+        newEntry.mode = tipMode as 'multi' | 'multi_X1' | 'single_X1'
+      }
     }
     if (type === 'module') {
       if (moduleType) newEntry.module_type = moduleType
@@ -178,16 +189,32 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
         />
 
         {type === 'tip' && (
-          <Select
-            label="Pipette Connection"
-            description="Which pipette will use these tips"
-            data={[
-              { value: 'Pipette_1', label: 'Pipette 1 (Single Channel)' },
-              { value: 'Pipette_8', label: 'Pipette 8 (Multi Channel)' },
-            ]}
-            value={connection}
-            onChange={(v) => setConnection(v || '')}
-          />
+          <>
+            <Select
+              label="Pipette Connection"
+              description="Which pipette will use these tips"
+              data={[
+                { value: 'Pipette_1', label: 'Pipette 1 (Single Channel)' },
+                { value: 'Pipette_8', label: 'Pipette 8 (Multi Channel)' },
+              ]}
+              value={connection}
+              onChange={(v) => setConnection(v || '')}
+            />
+            {isDualMode && (
+              <Select
+                label="Tip Mode"
+                description="Which transfer mode uses this tip rack (required in dual mode)"
+                data={[
+                  { value: 'multi', label: 'Multi (8-tip)' },
+                  { value: 'multi_X1', label: 'Multi X1 (1-tip from 8-channel)' },
+                  { value: 'single_X1', label: 'Single X1 (1-channel pipette)' },
+                ]}
+                value={tipMode}
+                onChange={(v) => setTipMode(v || '')}
+                required
+              />
+            )}
+          </>
         )}
 
         {type === 'module' && (

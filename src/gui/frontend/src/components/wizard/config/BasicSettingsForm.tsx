@@ -37,7 +37,7 @@ export function BasicSettingsForm() {
         label={
           <Group gap={4}>
             Pipette Mode
-            <Tooltip label={HELP_TEXT.mode.single_X1 + '\n\n' + HELP_TEXT.mode.multi_X1 + '\n\n' + HELP_TEXT.mode.multi} maw={400} multiline>
+            <Tooltip label={HELP_TEXT.mode.single_X1 + '\n\n' + HELP_TEXT.mode.multi_X1 + '\n\n' + HELP_TEXT.mode.multi + '\n\n' + HELP_TEXT.mode.dual} maw={400} multiline>
               <ActionIcon size="xs" variant="subtle" color="gray">
                 <IconHelp size={14} />
               </ActionIcon>
@@ -47,30 +47,11 @@ export function BasicSettingsForm() {
         data={[
           { value: 'single_X1', label: 'Single Channel (single_X1)' },
           { value: 'multi_X1', label: 'Multi Single-Tip (multi_X1)' },
-          { value: 'multi', label: 'Multi Full 8-Tip (multi)' }
+          { value: 'multi', label: 'Multi Full 8-Tip (multi)' },
+          { value: 'dual', label: 'Dual Pipette (dual)' }
         ]}
         value={settings?.settings?.general?.mode || 'single_X1'}
         onChange={(v) => v && handleChange('settings.general.mode', v)}
-      />
-
-      <Select
-        label={
-          <Group gap={4}>
-            Tip Reuse Strategy
-            <Tooltip label={HELP_TEXT.tipReuse.always + '\n\n' + HELP_TEXT.tipReuse.never + '\n\n' + HELP_TEXT.tipReuse.per_source} maw={400} multiline>
-              <ActionIcon size="xs" variant="subtle" color="gray">
-                <IconHelp size={14} />
-              </ActionIcon>
-            </Tooltip>
-          </Group>
-        }
-        data={[
-          { value: 'always', label: 'Always (One tip for all)' },
-          { value: 'never', label: 'Never (New tip each transfer)' },
-          { value: 'per_source', label: 'Per Source (New tip per labware)' }
-        ]}
-        value={settings?.settings?.general?.tip_reuse || 'never'}
-        onChange={(v) => v && handleChange('settings.general.tip_reuse', v)}
       />
 
       <NumberInput
