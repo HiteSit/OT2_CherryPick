@@ -1,5 +1,6 @@
 # IDE
-.claude/
+.claude/*
+!.claude/commands/
 .serena/*
 !.serena/memories
 .idea/
@@ -13,3 +14,4 @@ projects/
 **TMP.csv
 guide/*.html
 **.zip
+.playwright-mcp
