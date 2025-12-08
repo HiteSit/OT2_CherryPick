@@ -1,4 +1,4 @@
-import { Stack, Alert, Text, Select, Group, Tooltip, ActionIcon, Paper, Title } from '@mantine/core'
+import { Stack, Alert, Text, Select, Group, Tooltip, ActionIcon, Paper, Title, TextInput } from '@mantine/core'
 import { IconAlertCircle, IconHelp } from '@tabler/icons-react'
 import { DeckGrid } from '../deck/DeckGrid'
 import { useWizard } from '../WizardContext'
@@ -43,6 +43,30 @@ export function DeckSetupStep() {
 
   const currentMode = settings?.settings?.general?.mode || 'single_X1'
   const isDualMode = currentMode === 'dual'
+  const isMultiX1Mode = currentMode === 'multi_X1'
+
+  const handleStartingTipWellChange = (value: string) => {
+    patchMutation.mutate(
+      { path: 'settings.general.starting_tip_well', value },
+      {
+        onSuccess: () => {
+          notifications.show({
+            color: 'teal',
+            message: 'Starting tip well updated',
+            position: 'top-right'
+          })
+        },
+        onError: (error) => {
+          notifications.show({
+            color: 'red',
+            title: 'Failed to update starting tip well',
+            message: error instanceof Error ? error.message : 'Unknown error',
+            position: 'top-right'
+          })
+        }
+      }
+    )
+  }
 
   return (
     <Stack gap="lg">
@@ -75,6 +99,24 @@ export function DeckSetupStep() {
                 <strong>Dual mode enabled:</strong> When adding tip racks, you must specify which transfer mode (multi, multi_X1, single_X1) each tip rack is assigned to.
               </Text>
             </Alert>
+          )}
+          {isMultiX1Mode && (
+            <TextInput
+              label={
+                <Group gap={4}>
+                  Starting Tip Well
+                  <Tooltip label={HELP_TEXT.startingTipWell} maw={400} multiline>
+                    <ActionIcon size="xs" variant="subtle" color="gray">
+                      <IconHelp size={14} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Group>
+              }
+              description="Nozzle position for single-tip mode (e.g., H1 for bottom nozzle)"
+              value={settings?.settings?.general?.starting_tip_well || 'H1'}
+              onChange={(e) => handleStartingTipWellChange(e.target.value)}
+              placeholder="H1 or A1"
+            />
           )}
         </Stack>
       </Paper>
