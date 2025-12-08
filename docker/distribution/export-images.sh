@@ -141,7 +141,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    restart: unless-stopped
+    restart: "no"
 
   # Nginx Reverse Proxy + Frontend
   frontend:
@@ -154,7 +154,7 @@ services:
       - "${HOST_PORT:-80}:80"
     networks:
       - ot2-network
-    restart: unless-stopped
+    restart: "no"
 
 volumes:
   gui_state:
