@@ -4,9 +4,12 @@ set -e
 # ============================================================================
 # OT-2 CherryPick Docker Image Export Script
 # ============================================================================
-# Purpose: Build, export, and package Docker images for offline distribution
+# Purpose: Export existing Docker images and package for offline distribution
 # Usage: ./export-images.sh [version]
 # Example: ./export-images.sh 1.0.0
+#
+# Prerequisites: Run 'docker compose up -d' in the docker/ directory first
+#                to build and verify the images work correctly.
 # ============================================================================
 
 # Configuration
@@ -57,6 +60,27 @@ check_docker() {
     log_success "Docker is installed and running"
 }
 
+# Check that required images exist
+check_images_exist() {
+    log_info "Checking for existing Docker images..."
+
+    if ! docker image inspect ot2cherrypick/backend:latest &> /dev/null; then
+        log_error "Image 'ot2cherrypick/backend:latest' not found."
+        log_error "Please build the images first by running:"
+        log_error "  cd ${DOCKER_DIR} && docker compose up -d"
+        exit 1
+    fi
+
+    if ! docker image inspect ot2cherrypick/frontend:latest &> /dev/null; then
+        log_error "Image 'ot2cherrypick/frontend:latest' not found."
+        log_error "Please build the images first by running:"
+        log_error "  cd ${DOCKER_DIR} && docker compose up -d"
+        exit 1
+    fi
+
+    log_success "Both images found and ready to export"
+}
+
 # Clean up previous builds
 cleanup_previous() {
     log_info "Cleaning up previous distribution files..."
@@ -65,21 +89,6 @@ cleanup_previous() {
     rm -f "${SCRIPT_DIR}/ot2cherrypick-backend.tar.gz"
     rm -f "${SCRIPT_DIR}/ot2cherrypick-frontend.tar.gz"
     log_success "Cleanup complete"
-}
-
-# Build Docker images
-build_images() {
-    log_info "Building Docker images (this may take 5-10 minutes)..."
-    cd "${DOCKER_DIR}"
-
-    if docker compose build --no-cache; then
-        log_success "Docker images built successfully"
-    else
-        log_error "Failed to build Docker images"
-        exit 1
-    fi
-
-    cd "${SCRIPT_DIR}"
 }
 
 # Export images to TAR files
@@ -104,8 +113,59 @@ create_package_structure() {
     mv "${SCRIPT_DIR}/ot2cherrypick-backend.tar.gz" "${OUTPUT_DIR}/images/"
     mv "${SCRIPT_DIR}/ot2cherrypick-frontend.tar.gz" "${OUTPUT_DIR}/images/"
 
-    # Copy docker-compose.yml
-    cp "${DOCKER_DIR}/docker-compose.yml" "${OUTPUT_DIR}/"
+    # Generate clean docker-compose.yml (no build sections, image-only)
+    log_info "Generating production docker-compose.yml..."
+    cat > "${OUTPUT_DIR}/docker-compose.yml" << 'EOF'
+version: '3.9'
+
+services:
+  # FastAPI Backend
+  backend:
+    image: ot2cherrypick/backend:latest
+    container_name: ot2-cherrypick-backend
+    environment:
+      OT2_GUI_WORKSPACE: ${OT2_GUI_WORKSPACE}
+      OT2_PROJECT_DIR: ${OT2_PROJECT_DIR}
+      PYTHONUNBUFFERED: "1"
+      LABWARE_PATH: ${LABWARE_PATH_MOUNT}
+    volumes:
+      - gui_state:/app/gui_state
+      - logs:/app/logs
+      - ${LABWARE_PATH_HOST}:${LABWARE_PATH_MOUNT}
+      - ${PROTOCOLS_DIR_HOST}:${PROTOCOLS_DIR_MOUNT}
+    networks:
+      - ot2-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/settings')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy + Frontend
+  frontend:
+    image: ot2cherrypick/frontend:latest
+    container_name: ot2-cherrypick-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${HOST_PORT:-80}:80"
+    networks:
+      - ot2-network
+    restart: unless-stopped
+
+volumes:
+  gui_state:
+    driver: local
+  logs:
+    driver: local
+
+networks:
+  ot2-network:
+    driver: bridge
+EOF
 
     # Create .env.example from .env or template
     if [ -f "${DOCKER_DIR}/.env" ]; then
@@ -334,15 +394,28 @@ if ! docker info &> /dev/null; then
     exit 1
 fi
 
-echo "✓ Docker is installed and running"
+echo "Docker is installed and running"
 echo ""
 
-# Load images
+# Stop any running containers first
+if docker compose ps -q 2>/dev/null | grep -q .; then
+    echo "Stopping existing containers..."
+    docker compose down
+    echo ""
+fi
+
+# Remove old images to ensure fresh install
+echo "Removing old images (if any)..."
+docker rmi ot2cherrypick/backend:latest 2>/dev/null || true
+docker rmi ot2cherrypick/frontend:latest 2>/dev/null || true
+echo ""
+
+# Load new images
 echo "Loading Docker images (this may take 2-3 minutes)..."
 docker load -i images/ot2cherrypick-backend.tar.gz
 docker load -i images/ot2cherrypick-frontend.tar.gz
 
-echo "✓ Images loaded successfully"
+echo "Images loaded successfully"
 echo ""
 
 # Check if .env exists
@@ -350,7 +423,7 @@ if [ ! -f .env ]; then
     echo "Creating .env configuration file..."
     cp .env.example .env
     echo ""
-    echo "⚠️  IMPORTANT: Please edit .env file and configure your paths:"
+    echo "IMPORTANT: Please edit .env file and configure your paths:"
     echo "   - LABWARE_PATH_HOST (path to Opentrons labware directory)"
     echo "   - PROTOCOLS_DIR_HOST (path to Opentrons protocols directory)"
     echo ""
@@ -358,9 +431,9 @@ if [ ! -f .env ]; then
     exit 0
 fi
 
-# Start services
+# Start services with force-recreate to ensure new images are used
 echo "Starting services..."
-docker compose up -d
+docker compose up -d --force-recreate
 
 echo ""
 echo "=== Installation Complete ==="
@@ -396,15 +469,26 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo ✓ Docker is installed and running
+echo Docker is installed and running
 echo.
 
-REM Load images
+REM Stop any running containers first
+echo Stopping existing containers (if any)...
+docker compose down >nul 2>&1
+echo.
+
+REM Remove old images to ensure fresh install
+echo Removing old images (if any)...
+docker rmi ot2cherrypick/backend:latest >nul 2>&1
+docker rmi ot2cherrypick/frontend:latest >nul 2>&1
+echo.
+
+REM Load new images
 echo Loading Docker images (this may take 2-3 minutes)...
 docker load -i images\ot2cherrypick-backend.tar.gz
 docker load -i images\ot2cherrypick-frontend.tar.gz
 
-echo ✓ Images loaded successfully
+echo Images loaded successfully
 echo.
 
 REM Check if .env exists
@@ -412,7 +496,7 @@ if not exist .env (
     echo Creating .env configuration file...
     copy .env.example .env
     echo.
-    echo ⚠️  IMPORTANT: Please edit .env file and configure your paths:
+    echo IMPORTANT: Please edit .env file and configure your paths:
     echo    - LABWARE_PATH_HOST (path to Opentrons labware directory)
     echo    - PROTOCOLS_DIR_HOST (path to Opentrons protocols directory)
     echo.
@@ -421,9 +505,9 @@ if not exist .env (
     exit /b 0
 )
 
-REM Start services
+REM Start services with force-recreate to ensure new images are used
 echo Starting services...
-docker compose up -d
+docker compose up -d --force-recreate
 
 echo.
 echo === Installation Complete ===
@@ -487,7 +571,7 @@ print_summary() {
     echo ""
     echo "Package Contents:"
     echo "  - Docker images (backend + frontend)"
-    echo "  - docker-compose.yml"
+    echo "  - docker-compose.yml (production-ready, no build sections)"
     echo "  - .env.example"
     echo "  - Installation scripts (Linux/Mac + Windows)"
     echo "  - README.md"
@@ -511,8 +595,8 @@ main() {
     echo ""
 
     check_docker
+    check_images_exist
     cleanup_previous
-    build_images
     export_images
     create_package_structure
     create_readme
