@@ -72,7 +72,7 @@ build_images() {
     log_info "Building Docker images (this may take 5-10 minutes)..."
     cd "${DOCKER_DIR}"
 
-    if docker compose build; then
+    if docker compose build --no-cache; then
         log_success "Docker images built successfully"
     else
         log_error "Failed to build Docker images"
