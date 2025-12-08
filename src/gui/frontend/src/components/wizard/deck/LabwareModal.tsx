@@ -59,8 +59,12 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
   const handleSave = () => {
     const newEntry: WorkingPlateEntry = {
       type,
-      labware_id: labwareId,
       position_rack: String(slot),
+    }
+
+    // Add labware_id only if it's set (optional for modules)
+    if (labwareId) {
+      newEntry.labware_id = labwareId
     }
 
     // Add optional fields for tip racks
@@ -75,6 +79,10 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
     }
     if (type === 'module') {
       if (moduleType) newEntry.module_type = moduleType
+      // Hardcode adapter_id for heater-shaker modules
+      if (moduleType === 'heaterShaker') {
+        newEntry.adapter_id = 'opentrons_universal_flat_adapter'
+      }
       if (typeof targetTemperature === 'number') {
         newEntry.target_temperature = targetTemperature
       }
@@ -184,7 +192,7 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
           value={labwareId}
           onChange={(v) => setLabwareId(v || '')}
           searchable
-          required
+          required={type !== 'module'}
           maxDropdownHeight={400}
         />
 
@@ -222,10 +230,7 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
             <Select
               label="Module Type"
               data={[
-                { value: 'temperature', label: 'Temperature Module' },
-                { value: 'thermocycler', label: 'Thermocycler' },
                 { value: 'heaterShaker', label: 'Heater Shaker' },
-                { value: 'magnetic', label: 'Magnetic Module' },
               ]}
               value={moduleType}
               onChange={(v) => setModuleType(v || '')}
@@ -237,7 +242,7 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
                 description="Temperature to maintain during protocol"
                 value={typeof targetTemperature === 'number' ? targetTemperature : undefined}
                 onChange={setTargetTemperature}
-                min={4}
+                min={30}
                 max={95}
               />
             )}
@@ -264,7 +269,7 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
 
         <Button
           onClick={handleSave}
-          disabled={!labwareId}
+          disabled={type !== 'module' && !labwareId}
           loading={patchSettings.isPending}
         >
           {existingLabware ? 'Update' : 'Add'} Labware

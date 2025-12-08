@@ -41,6 +41,7 @@ export interface WorkingPlateEntry {
   connection?: string
   mode?: 'multi' | 'multi_X1' | 'single_X1'
   module_type?: string
+  adapter_id?: string
   target_temperature?: number
   target_shake_speed?: number
   persist_after_protocol?: boolean

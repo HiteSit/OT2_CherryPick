@@ -388,9 +388,9 @@ def initialize_heater_shaker_module(protocol, plate_config):
     target_rpm = plate_config['target_shake_speed']
     persist = plate_config['persist_after_protocol']
     
-    # Validate temperature range (0 = disabled, 37-95 = active range)
-    if target_temp < 0 or (0 < target_temp < 37) or target_temp > 95:
-        raise ValueError(f"Invalid target_temperature: {target_temp}. Must be 0 (disabled) or 37-95°C")
+    # Validate temperature range (0 = disabled, 30-95 = active range)
+    if target_temp < 0 or (0 < target_temp < 30) or target_temp > 95:
+        raise ValueError(f"Invalid target_temperature: {target_temp}. Must be 0 (disabled) or 30-95°C")
     
     # Validate shake speed range (0 = disabled, 200-3000 = active range)
     if target_rpm < 0 or (0 < target_rpm < 200) or target_rpm > 3000:
