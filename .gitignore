@@ -15,3 +15,4 @@ projects/
 guide/*.html
 **.zip
 .playwright-mcp
+docker/distribution/ot2-cherrypick-v1.0.0.zip
