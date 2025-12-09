@@ -90,9 +90,9 @@ CSV_CONFIG_MAP: dict[str, list[str]] = {
     # Multi mode requires full 8-channel
     "example_multi_mode.csv": ["multi"],
 
-    # Distribution CSVs
-    "example_distribution.csv": ["multi"],  # Distribution mode works best with multi
-    "example_mixed_modes.csv": ["multi"],  # Mixed modes work with multi
+    # Distribution CSVs - work with multi (full 8-channel) or distribution profile
+    "example_distribution.csv": ["multi", "distribution"],
+    "example_mixed_modes.csv": ["multi", "distribution"],
 
     # Dual-pipette mode CSVs
     "test_dual_all_three_modes.csv": ["dual"],

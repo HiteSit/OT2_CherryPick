@@ -10,12 +10,20 @@ from fastmcp import FastMCP
 from ..utils.errors import ConfigurationError
 from ..utils.paths import resolve_project_path
 
-CSV_HEADERS = [
+CSV_BASE_HEADERS = [
     "Source Labware",
     "Source Well",
-    "Volume (ul)",
     "Dest Labware",
     "Dest Well",
+]
+
+CSV_VOLUME_HEADERS = [
+    "Volume (ul)",
+    "Distribution Volume (ul)",
+]
+
+CSV_HEADERS = CSV_BASE_HEADERS + [
+    "Volume (ul)",
     "Source Height",
     "Dest Top",
 ]
@@ -102,10 +110,19 @@ def save_csv_content(
         raise ConfigurationError("csv_content must not be empty")
 
     header = content.splitlines()[0]
-    missing = [column for column in CSV_HEADERS if column not in header]
-    if missing:
+
+    # Check base required columns
+    missing_base = [column for column in CSV_BASE_HEADERS if column not in header]
+    if missing_base:
         raise ConfigurationError(
-            "csv_content is missing expected columns: " + ", ".join(missing)
+            "csv_content is missing required columns: " + ", ".join(missing_base)
+        )
+
+    # Check that at least one volume column exists
+    has_volume = any(vol_col in header for vol_col in CSV_VOLUME_HEADERS)
+    if not has_volume:
+        raise ConfigurationError(
+            f"csv_content must have at least one volume column: {', '.join(CSV_VOLUME_HEADERS)}"
         )
 
     output_directory = resolve_project_path(output_dir)

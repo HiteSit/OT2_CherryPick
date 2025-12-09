@@ -1,0 +1,58 @@
+# Distribution mode configuration for e2e tests
+# Uses multi_X1 mode (p300_multi_gen2 in SINGLE nozzle layout)
+# Deck layout matches test CSV labware references:
+#   - tube_rack_96_1500ul_1 (source)
+#   - 384_pp_standard_100ul_2 (destination)
+
+[settings.general]
+tip_reuse = "never"
+mode = "multi_X1"
+starting_tip_well = "H1"
+
+[settings.general.head_speed]
+speed = 400
+
+[settings.liquid_handling]
+
+[settings.liquid_handling.pre_aspirate_contact]
+enabled = false
+position_offset_percent = 20
+aspirate_volume = 0
+
+[settings.liquid_handling.post_aspirate_wick]
+enabled = false
+radius = 1
+v_offset_mm = -1.5
+speed = 20
+
+[settings.liquid_handling.delays]
+post_aspirate = 0
+
+[settings.liquid_handling.push_out]
+enabled = true
+volume_ul = 5
+
+[settings.liquid_handling.mixing]
+location = "none"
+repetitions = 3
+source_remixing = "once"
+
+# Deck layout for distribution test CSVs
+# Source: tube_rack_96_1500ul at slot 1 -> referenced as tube_rack_96_1500ul_1
+[[settings.working_plate]]
+type = "source"
+labware_id = "tube_rack_96_1500ul"
+position_rack = "1"
+
+# Destination: 384_pp_standard_100ul at slot 2 -> referenced as 384_pp_standard_100ul_2
+[[settings.working_plate]]
+type = "destination"
+labware_id = "384_pp_standard_100ul"
+position_rack = "2"
+
+# Tip rack for Pipette_8 (p300_multi_gen2)
+[[settings.working_plate]]
+type = "tip"
+labware_id = "opentrons_96_tiprack_300ul"
+connection = "Pipette_8"
+position_rack = "5"

@@ -5,6 +5,8 @@ interface TransferRow {
   'Source Labware'?: string
   'Source Well'?: string
   'Volume (ul)'?: string
+  'Distribution Volume (ul)'?: string
+  'Distribution'?: string
   'Dest Labware'?: string
   'Dest Well'?: string
   [key: string]: string | undefined
@@ -34,27 +36,46 @@ export function TransferPreview({ csvContent }: { csvContent: string }) {
 
       <ScrollArea h={400}>
         <Stack gap="xs">
-          {previewRows.map((row, i) => (
-            <Paper key={i} withBorder p="xs" style={{ fontSize: '0.85rem' }}>
-              <Text size="sm" fw={500} mb={4}>
-                Transfer {i + 1}
-              </Text>
-              <Text size="xs" c="dimmed" style={{ fontFamily: 'monospace' }}>
-                {row['Source Labware']} [{row['Source Well']}]
-              </Text>
-              <Text size="xs" c="blue" style={{ fontFamily: 'monospace' }}>
-                → {row['Dest Labware']} [{row['Dest Well']}]
-              </Text>
-              <Text size="xs" fw={500} mt={4}>
-                Vol: {row['Volume (ul)']}µL
-              </Text>
-              {row['Mix Volume'] && (
-                <Text size="xs" c="dimmed">
-                  Mix: {row['Mix Volume']}µL
+          {previewRows.map((row, i) => {
+            // Detect distribution row
+            const destWell = row['Dest Well'] || ''
+            const hasPipe = destWell.includes('|')
+            const hasDistVolume = !!row['Distribution Volume (ul)']
+            const isDistribution = hasPipe || hasDistVolume
+
+            const volume = isDistribution ? row['Distribution Volume (ul)'] : row['Volume (ul)']
+            const wellCount = hasPipe ? destWell.split('|').length : 1
+
+            return (
+              <Paper key={i} withBorder p="xs" style={{ fontSize: '0.85rem' }}>
+                <Text size="sm" fw={500} mb={4}>
+                  Transfer {i + 1}
+                  {isDistribution && <Text span c="dimmed" ml={4}>(Distribution)</Text>}
                 </Text>
-              )}
-            </Paper>
-          ))}
+                <Text size="xs" c="dimmed" style={{ fontFamily: 'monospace' }}>
+                  {row['Source Labware']} [{row['Source Well']}]
+                </Text>
+                <Text size="xs" c="blue" style={{ fontFamily: 'monospace' }}>
+                  → {row['Dest Labware']} [{row['Dest Well']}]
+                </Text>
+                {isDistribution ? (
+                  <Text size="xs" fw={500} mt={4} c="grape">
+                    Dist: {volume}µL × {wellCount} wells
+                    {row['Distribution'] && ` (${row['Distribution']})`}
+                  </Text>
+                ) : (
+                  <Text size="xs" fw={500} mt={4}>
+                    Vol: {volume}µL
+                  </Text>
+                )}
+                {row['Mix Volume'] && (
+                  <Text size="xs" c="dimmed">
+                    Mix: {row['Mix Volume']}µL
+                  </Text>
+                )}
+              </Paper>
+            )
+          })}
         </Stack>
       </ScrollArea>
 

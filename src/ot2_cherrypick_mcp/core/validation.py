@@ -11,15 +11,21 @@ from typing import Dict, List
 from ..utils.errors import ConfigurationError
 from ..utils.paths import resolve_project_path
 
-CSV_REQUIRED_COLUMNS = {
+CSV_BASE_REQUIRED = {
     "Source Labware",
     "Source Well",
-    "Volume (ul)",
     "Dest Labware",
     "Dest Well",
 }
 
+CSV_VOLUME_COLUMNS = {
+    "Volume (ul)",
+    "Distribution Volume (ul)",
+}
+
 WELL_PATTERN = re.compile(r"^[A-HP][1-9][0-9]*$", re.IGNORECASE)
+PIPE_DELIMITED_WELL_PATTERN = re.compile(r"^[A-HP][1-9][0-9]*(\|[A-HP][1-9][0-9]*)*$", re.IGNORECASE)
+DISTRIBUTION_PATTERN = re.compile(r"^(equal|geometric:\d+(\.\d+)?(:(asc|desc))?)$", re.IGNORECASE)
 
 
 def _load_toml(path: str | Path) -> Dict[str, object]:
@@ -80,22 +86,64 @@ def validate_configuration(
 
     with csv_file.open("r", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
-        missing_columns = CSV_REQUIRED_COLUMNS - set(reader.fieldnames or [])
-        if missing_columns:
-            errors.append(f"CSV file missing required columns: {sorted(missing_columns)}")
-        else:
-            for row_number, row in enumerate(reader, start=2):
-                try:
-                    volume = float(row["Volume (ul)"] or 0)
-                    if volume <= 0:
-                        errors.append(f"Row {row_number}: volume must be positive")
-                except ValueError:
-                    errors.append(f"Row {row_number}: volume is not a number")
+        fieldnames = set(reader.fieldnames or [])
 
-                for key in ("Source Well", "Dest Well"):
-                    well = (row.get(key) or "").strip()
-                    if well and not WELL_PATTERN.match(well):
-                        warnings.append(f"Row {row_number}: well '{well}' has unexpected format for column '{key}'")
+        # Check base required columns
+        missing_base = CSV_BASE_REQUIRED - fieldnames
+        if missing_base:
+            errors.append(f"CSV file missing required columns: {sorted(missing_base)}")
+
+        # Check that at least one volume column exists
+        has_volume_column = bool(CSV_VOLUME_COLUMNS & fieldnames)
+        if not has_volume_column:
+            errors.append(f"CSV file must have at least one volume column: {sorted(CSV_VOLUME_COLUMNS)}")
+
+        if not missing_base and has_volume_column:
+            for row_number, row in enumerate(reader, start=2):
+                # Detect if this is a distribution row
+                dest_well = (row.get("Dest Well") or "").strip()
+                has_pipe = "|" in dest_well
+                has_dist_volume = bool(row.get("Distribution Volume (ul)", "").strip())
+                is_distribution = has_pipe or has_dist_volume
+
+                # Validate appropriate volume column
+                if is_distribution:
+                    # Distribution row - check Distribution Volume (ul)
+                    if "Distribution Volume (ul)" in fieldnames:
+                        try:
+                            volume = float(row.get("Distribution Volume (ul)") or 0)
+                            if volume <= 0:
+                                errors.append(f"Row {row_number}: distribution volume must be positive")
+                        except ValueError:
+                            errors.append(f"Row {row_number}: distribution volume is not a number")
+                    else:
+                        errors.append(f"Row {row_number}: distribution row requires 'Distribution Volume (ul)' column")
+
+                    # Validate Distribution pattern if present
+                    dist_pattern = (row.get("Distribution") or "").strip()
+                    if dist_pattern and not DISTRIBUTION_PATTERN.match(dist_pattern):
+                        warnings.append(f"Row {row_number}: distribution pattern '{dist_pattern}' has unexpected format")
+                else:
+                    # Regular cherry-pick row - check Volume (ul)
+                    if "Volume (ul)" in fieldnames:
+                        try:
+                            volume = float(row.get("Volume (ul)") or 0)
+                            if volume <= 0:
+                                errors.append(f"Row {row_number}: volume must be positive")
+                        except ValueError:
+                            errors.append(f"Row {row_number}: volume is not a number")
+                    else:
+                        errors.append(f"Row {row_number}: cherry-pick row requires 'Volume (ul)' column")
+
+                # Validate well formats
+                source_well = (row.get("Source Well") or "").strip()
+                if source_well and not WELL_PATTERN.match(source_well):
+                    warnings.append(f"Row {row_number}: source well '{source_well}' has unexpected format")
+
+                # Dest Well can be either single well or pipe-delimited
+                if dest_well:
+                    if not (WELL_PATTERN.match(dest_well) or PIPE_DELIMITED_WELL_PATTERN.match(dest_well)):
+                        warnings.append(f"Row {row_number}: dest well '{dest_well}' has unexpected format")
 
                 for key in ("Source Labware", "Dest Labware"):
                     labware_value = (row.get(key) or "").strip()
@@ -117,4 +165,11 @@ def _result(errors: List[str], warnings: List[str]) -> Dict[str, object]:
     }
 
 
-__all__ = ["validate_configuration"]
+__all__ = [
+    "validate_configuration",
+    "CSV_BASE_REQUIRED",
+    "CSV_VOLUME_COLUMNS",
+    "WELL_PATTERN",
+    "PIPE_DELIMITED_WELL_PATTERN",
+    "DISTRIBUTION_PATTERN",
+]

@@ -24,6 +24,53 @@ Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest
 tube_rack_96_1500ul_4,A1,60,384_ppv_55ul_2,B1,1,-4,5,Yes
 """.strip()
 
+# Distribution CSV test data - matches fixtures/distribution/ settings
+CSV_DISTRIBUTION_VALID = """\
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top,Air Gap,Tip Action
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|A2|B2|A3|B3|A4|B4|A5|B5|A6|B6,10,equal,6,-0.5,20,keep
+tube_rack_96_1500ul_1,A2,384_pp_standard_100ul_2,A7|B7|A8|B8|A9|B9|A10|B10|A11|B11|A12|B12,10,equal,6,-0.5,20,keep
+tube_rack_96_1500ul_1,A3,384_pp_standard_100ul_2,A13|B13|A14|B14|A15|B15|A16|B16|A17|B17|A18|B18,10,equal,6,-0.5,20,keep
+tube_rack_96_1500ul_1,A4,384_pp_standard_100ul_2,A19|B19|A20|B20|A21|B21|A22|B22|A23|B23|A24|B24,10,equal,6,-0.5,20,drop
+""".strip()
+
+CSV_DISTRIBUTION_GEOMETRIC = """\
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,100,geometric:0.5,6,-0.5
+tube_rack_96_1500ul_1,A2,384_pp_standard_100ul_2,E1|F1|G1|H1,50,geometric:2,6,-0.5
+""".strip()
+
+CSV_MIXED_MODE = """\
+Source Labware,Source Well,Volume (ul),Distribution Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Distribution
+tube_rack_96_1500ul_1,A1,50,,384_pp_standard_100ul_2,A1,6,-0.5,
+tube_rack_96_1500ul_1,A2,,25,384_pp_standard_100ul_2,B1|B2|B3|B4,6,-0.5,equal
+tube_rack_96_1500ul_1,A3,75,,384_pp_standard_100ul_2,C1,6,-0.5,
+""".strip()
+
+CSV_DISTRIBUTION_INVALID_WELLS = """\
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|INVALID|B1,10,equal
+""".strip()
+
+CSV_DISTRIBUTION_MISSING_VOLUME = """\
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1,equal
+""".strip()
+
+CSV_DISTRIBUTION_INVALID_PATTERN = """\
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1,10,invalid_pattern
+""".strip()
+
+# Validation test scenarios for parametrized tests
+DISTRIBUTION_VALIDATION_SCENARIOS: List[Tuple[str, str, str | None, str]] = [
+    # (csv_content, expected_status, expected_error_substr, description)
+    (CSV_DISTRIBUTION_VALID, "ok", None, "valid_equal_distribution"),
+    (CSV_DISTRIBUTION_GEOMETRIC, "ok", None, "valid_geometric_distribution"),
+    (CSV_MIXED_MODE, "ok", None, "mixed_cherrypick_and_distribution"),
+    (CSV_DISTRIBUTION_INVALID_WELLS, "ok", None, "invalid_wells_warning_only"),
+    (CSV_DISTRIBUTION_MISSING_VOLUME, "error", "volume", "missing_distribution_volume"),
+]
+
 
 UPDATE_SETTINGS_SCENARIOS: List[Tuple[str, str, str, str]] = [
     (

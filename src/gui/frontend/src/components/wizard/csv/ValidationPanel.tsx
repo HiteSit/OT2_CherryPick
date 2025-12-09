@@ -35,11 +35,16 @@ export function ValidationPanel({ csvContent, deckLayout }: ValidationPanelProps
 
     // Check required columns
     const headers = parsed.meta.fields || []
-    const required = ['Source Labware', 'Source Well', 'Volume (ul)', 'Dest Labware', 'Dest Well']
-    const missing = required.filter(r => !headers.includes(r))
+    const baseRequired = ['Source Labware', 'Source Well', 'Dest Labware', 'Dest Well']
+    const volumeColumns = ['Volume (ul)', 'Distribution Volume (ul)']
 
-    if (missing.length > 0) {
-      newResults.push({ type: 'error', message: `Missing required columns: ${missing.join(', ')}` })
+    const missingBase = baseRequired.filter(r => !headers.includes(r))
+    const hasVolumeColumn = volumeColumns.some(v => headers.includes(v))
+
+    if (missingBase.length > 0) {
+      newResults.push({ type: 'error', message: `Missing required columns: ${missingBase.join(', ')}` })
+    } else if (!hasVolumeColumn) {
+      newResults.push({ type: 'error', message: `Must have at least one volume column: ${volumeColumns.join(' or ')}` })
     } else {
       newResults.push({ type: 'valid', message: 'All required columns present' })
     }
@@ -71,7 +76,14 @@ export function ValidationPanel({ csvContent, deckLayout }: ValidationPanelProps
     rows.forEach((row, i) => {
       const sourceLab = row['Source Labware']
       const destLab = row['Dest Labware']
-      const volume = row['Volume (ul)']
+      const destWell = row['Dest Well'] || ''
+
+      // Detect distribution row (pipe in Dest Well or Distribution Volume present)
+      const hasPipe = destWell.includes('|')
+      const hasDistVolume = !!row['Distribution Volume (ul)']
+      const isDistribution = hasPipe || hasDistVolume
+
+      const volume = isDistribution ? row['Distribution Volume (ul)'] : row['Volume (ul)']
 
       // Skip empty rows
       if (!sourceLab && !destLab && !volume) return
@@ -94,33 +106,56 @@ export function ValidationPanel({ csvContent, deckLayout }: ValidationPanelProps
         })
       }
 
-      // Volume validation
+      // Volume validation - check appropriate column based on row type
       if (volume && (isNaN(parseFloat(volume)) || parseFloat(volume) <= 0)) {
         newResults.push({
           type: 'error',
-          message: `Invalid volume: ${volume}`,
+          message: `Invalid ${isDistribution ? 'distribution ' : ''}volume: ${volume}`,
+          row: i + 2
+        })
+      } else if (!volume && (isDistribution ? hasDistVolume : row['Volume (ul)'] !== undefined)) {
+        newResults.push({
+          type: 'error',
+          message: `Missing ${isDistribution ? 'distribution ' : ''}volume`,
           row: i + 2
         })
       }
 
-      // Well format validation (basic)
+      // Validate Distribution pattern if present
+      if (isDistribution && row['Distribution']) {
+        const distPattern = row['Distribution']
+        if (!/^(equal|geometric:\d+(\.\d+)?(:(asc|desc))?)$/i.test(distPattern)) {
+          newResults.push({
+            type: 'warning',
+            message: `Distribution pattern "${distPattern}" has unexpected format`,
+            row: i + 2
+          })
+        }
+      }
+
+      // Well format validation
       const sourceWell = row['Source Well']
-      const destWell = row['Dest Well']
 
-      if (sourceWell && !/^[A-H]\d{1,2}$/i.test(sourceWell)) {
+      if (sourceWell && !/^[A-P]\d{1,2}$/i.test(sourceWell)) {
         newResults.push({
           type: 'warning',
-          message: `Source well "${sourceWell}" may have invalid format (expected: A1-H12)`,
+          message: `Source well "${sourceWell}" may have invalid format (expected: A1-P24)`,
           row: i + 2
         })
       }
 
-      if (destWell && !/^[A-P]\d{1,2}$/i.test(destWell)) {
-        newResults.push({
-          type: 'warning',
-          message: `Dest well "${destWell}" may have invalid format`,
-          row: i + 2
-        })
+      // Dest Well can be single well or pipe-delimited (A1|B1|C1)
+      if (destWell) {
+        const singleWellPattern = /^[A-P]\d{1,2}$/i
+        const pipeDelimitedPattern = /^[A-P]\d{1,2}(\|[A-P]\d{1,2})*$/i
+
+        if (!singleWellPattern.test(destWell) && !pipeDelimitedPattern.test(destWell)) {
+          newResults.push({
+            type: 'warning',
+            message: `Dest well "${destWell}" may have invalid format`,
+            row: i + 2
+          })
+        }
       }
     })
 
