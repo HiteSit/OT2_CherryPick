@@ -29,7 +29,8 @@ enabled = true
 volume_ul = 5
 
 [settings.liquid_handling.mixing]
-location = "none"
+enabled = false
+location = "destination"
 repetitions = 3
 source_remixing = "once"
 

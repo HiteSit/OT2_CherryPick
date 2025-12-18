@@ -61,7 +61,8 @@ volume_ul = 20                   # Fixed push-out volume in µL
 # Mixing Configuration
 # Controls WHERE and WHEN mixing occurs during transfers
 [settings.liquid_handling.mixing]
-location = "none"               # Options: "destination", "source", "none"
+enabled = false                 # Master switch - set to true to enable mixing functionality
+location = "destination"        # Options: "destination", "source", "none" (only used if enabled = true)
                                 # "destination": Mix after dispensing (default, current behavior)
                                 #                Use for: dilutions, reagent addition, compound screening
                                 # "source": Mix before aspirating (resuspends stock before sampling)
@@ -99,7 +100,7 @@ pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_
 post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
 delays = { post_aspirate = 0 }
 push_out = { enabled = false }
-mixing = { location = "destination", repetitions = 3, source_remixing = "once" }
+mixing = { enabled = true, location = "destination", repetitions = 3, source_remixing = "once" }
 
 # Viscous Liquids (like original cherry_pick_protocol_DMSO.py)
 # Contact + delays for settling + push-out for complete ejection
@@ -108,7 +109,7 @@ pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_
 post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
 delays = { post_aspirate = 2.0 }
 push_out = { enabled = true, volume_ul = 5 }
-mixing = { location = "destination", repetitions = 5, source_remixing = "once" }
+mixing = { enabled = true, location = "destination", repetitions = 5, source_remixing = "once" }
 
 # Hydrophobic/Slippery Liquids (like original cherrypick_slipery.py)
 # Pre-wet tip conditioning + standard handling
@@ -117,7 +118,7 @@ pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_
 post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
 delays = { post_aspirate = 0 }
 push_out = { enabled = false }
-mixing = { location = "destination", repetitions = 3, source_remixing = "once" }
+mixing = { enabled = true, location = "destination", repetitions = 3, source_remixing = "once" }
 
 # High Precision Mode
 # Minimal interventions, maximum precision
@@ -126,7 +127,7 @@ pre_aspirate_contact = { enabled = false }
 post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
 delays = { post_aspirate = 0 }
 push_out = { enabled = false }
-mixing = { location = "destination", repetitions = 3, source_remixing = "once" }
+mixing = { enabled = true, location = "destination", repetitions = 3, source_remixing = "once" }
 
 # Aggressive Handling
 # All features enabled for challenging liquids
@@ -135,7 +136,7 @@ pre_aspirate_contact = { enabled = true, position_offset_percent = 30, aspirate_
 post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 15 }
 delays = { post_aspirate = 3.0 }
 push_out = { enabled = true, volume_ul = 5 }
-mixing = { location = "destination", repetitions = 7, source_remixing = "once" }
+mixing = { enabled = true, location = "destination", repetitions = 7, source_remixing = "once" }
 
 # Cell Resuspension / Bead Mixing
 # Mix source wells before sampling to ensure homogeneous suspensions
@@ -144,7 +145,7 @@ pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_
 post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
 delays = { post_aspirate = 0 }
 push_out = { enabled = false }
-mixing = { location = "source", repetitions = 5, source_remixing = "once" }  # Mix at source before aspirating
+mixing = { enabled = true, location = "source", repetitions = 5, source_remixing = "once" }  # Mix at source before aspirating
 
 # =============================================================================
 # DECK LAYOUT CONFIGURATION

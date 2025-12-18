@@ -634,118 +634,29 @@ def calculate_distribution_volumes(base_volume, num_wells, distribution_pattern)
     else:
         raise ValueError(f"Unknown distribution pattern: '{distribution_pattern}'. Valid options: 'equal', 'geometric:factor', 'geometric:factor:desc'")
 
-def plan_distribution_trips(dest_volumes, max_volume_per_trip, air_gap_volume, min_vol, max_vol):
-    """
-    Split distribution into multiple source trips if total volume exceeds capacity
-    
-    Each trip represents one aspirate from source followed by multiple dispenses to destinations.
-    Automatically splits across trips when:
-    - Total volume exceeds max_volume_per_trip
-    - Total volume (including air gaps) exceeds pipette capacity
-    
-    Args:
-        dest_volumes: List of volumes for each destination [vol1, vol2, vol3, ...]
-        max_volume_per_trip: Maximum volume to aspirate per trip (from CSV 'Volume (ul)' or pipette max)
-        air_gap_volume: Air gap volume to aspirate between dispenses (µL)
-        min_vol: Pipette minimum volume (µL)
-        max_vol: Pipette maximum volume (µL)
-    
-    Returns:
-        list: List of trip dictionaries:
-        [
-            {
-                'aspirate_volume': 250,  # Total volume to aspirate from source
-                'dispenses': [(0, 50), (1, 50), (2, 50), (3, 100)]  # (dest_index, volume) tuples
-            },
-            ...
-        ]
-    
-    Examples:
-        >>> # All fits in one trip
-        >>> plan_distribution_trips([50, 50, 50], 300, 10, 30, 300)
-        [{'aspirate_volume': 170, 'dispenses': [(0, 50), (1, 50), (2, 50)]}]
-        
-        >>> # Requires two trips due to capacity
-        >>> plan_distribution_trips([100, 100, 100, 100], 250, 10, 30, 300)
-        [
-            {'aspirate_volume': 240, 'dispenses': [(0, 100), (1, 100)]},
-            {'aspirate_volume': 210, 'dispenses': [(2, 100), (3, 100)]}
-        ]
-    """
-    import math
-    
-    trips = []
-    current_dispenses = []
-    current_liquid_volume = 0
-    current_total_volume = 0  # Includes air gaps
-    
-    for dest_idx, volume in enumerate(dest_volumes):
-        # Validate volume does not exceed pipette maximum
-        # Note: Minimum volume is a precision guideline, not a hard limit (pipette can transfer below min)
-        if volume > max_vol:
-            raise ValueError(f"Destination volume {volume}µL exceeds pipette maximum ({max_vol}µL). "
-                           f"Reduce 'Distribution Volume (ul)' or adjust distribution pattern.")
-        
-        # Calculate volume needed for this destination (liquid + air gap after dispense)
-        # Note: Air gap is aspirated AFTER each dispense, not before first
-        is_first_in_trip = len(current_dispenses) == 0
-        volume_with_gap = volume if is_first_in_trip else volume + air_gap_volume
-        
-        # Check if adding this destination would exceed capacity
-        would_exceed_max = current_total_volume + volume_with_gap > max_volume_per_trip
-        would_exceed_pipette = current_total_volume + volume_with_gap > max_vol
-        
-        if (would_exceed_max or would_exceed_pipette) and len(current_dispenses) > 0:
-            # Start new trip - save current trip
-            trips.append({
-                'aspirate_volume': current_total_volume,
-                'dispenses': current_dispenses
-            })
-            
-            # Reset for new trip
-            current_dispenses = []
-            current_liquid_volume = 0
-            current_total_volume = 0
-            
-            # This destination starts the new trip (no air gap before first)
-            volume_with_gap = volume
-        
-        # Add destination to current trip
-        current_dispenses.append((dest_idx, volume))
-        current_liquid_volume += volume
-        current_total_volume += volume_with_gap
-    
-    # Add final trip
-    if current_dispenses:
-        trips.append({
-            'aspirate_volume': current_total_volume,
-            'dispenses': current_dispenses
-        })
-    
-    # Validate all trips do not exceed maximum volume
-    # Note: Minimum volume not checked - pipette can transfer below rated minimum (less precise)
-    for trip_idx, trip in enumerate(trips):
-        if trip['aspirate_volume'] > max_vol:
-            raise ValueError(f"Trip {trip_idx+1} aspirate volume ({trip['aspirate_volume']}µL) "
-                           f"exceeds pipette maximum ({max_vol}µL)")
-    
-    return trips
+# plan_distribution_trips() function has been REMOVED
+# The built-in pipette.distribute() API handles trip planning automatically via carryover=True parameter
 
 def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liquid_contact_config,
-                        wick_config, delay_config, push_out_config, mixing_config, mixing_repetitions,
-                        mixing_location, source_remixing, mixed_source_wells, general_settings,
+                        wick_config, delay_config, mixing_config, mixing_repetitions,
+                        source_remixing, mixed_source_wells, general_settings,
                         protocol, mode, row_index):
     """
     Execute distribution transfer: one source well → multiple destination wells with varying volumes
-    
+
+    Uses built-in pipette.distribute() API for automatic trip planning and execution.
+
     Handles:
     - Equal distribution (same volume to all destinations)
     - Geometric distribution (varying volumes: growth or decay patterns)
-    - Multiple trips to source if total volume exceeds pipette capacity
+    - Automatic multi-trip handling via distribute() API
     - Tip management per CSV 'Tip Action' parameter
-    - Mixing at source (before aspirate) and/or destination (after dispense)
-    - All existing liquid handling parameters (air gaps, wick, delays, push-out)
-    
+    - Source mixing (before aspirate) if configured
+    - Air gap support between destinations
+
+    NOTE: Per-destination mixing is NOT supported in distribution mode (distribute() ignores mix_after).
+          Use cherry-pick mode if destination mixing is required.
+
     Args:
         transfer: CSV row dict with distribution parameters
         pipette: OpenTrons pipette object
@@ -754,10 +665,8 @@ def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liqu
         liquid_contact_config: Pre-aspirate contact settings
         wick_config: Post-aspirate wick settings
         delay_config: Delay settings
-        push_out_config: Push-out settings
         mixing_config: Mixing configuration
         mixing_repetitions: Number of mix cycles
-        mixing_location: Where to mix ("source", "destination", "none")
         source_remixing: How often to remix source ("once", "always")
         mixed_source_wells: Set tracking which source wells have been mixed
         general_settings: General protocol settings
@@ -774,158 +683,107 @@ def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liqu
     dest_labware_name = transfer['Dest Labware']
     dest_wells_str = transfer['Dest Well']
     dest_well_names = dest_wells_str.split('|')  # Split pipe-delimited list
-    
+
     base_volume = float(transfer['Distribution Volume (ul)'])
     distribution_pattern = transfer.get('Distribution', 'equal').strip().lower()
-    max_volume_specified = transfer.get('Volume (ul)', '').strip()
-    
+
     # Rate multipliers (optional, default 1.0)
     rate_aspirate = float(transfer.get('Flow Aspirate', 1.0))
     rate_dispense = float(transfer.get('Flow Dispense', 1.0))
-    
+
     # Air gap parameters
     air_gap_volume = float(transfer.get('Air Gap', 0)) if transfer.get('Air Gap') else 0
-    air_gap_rate = float(transfer.get('Air Gap Rate', 1.0))
-    
+
     # Mixing parameters
     mix_volume = float(transfer.get('Mix Volume', 0)) if transfer.get('Mix Volume') else 0
-    
+
     # ========== Calculate distribution volumes ==========
     try:
         dest_volumes = calculate_distribution_volumes(base_volume, len(dest_well_names), distribution_pattern)
     except ValueError as e:
         protocol.comment(f"Distribution volume calculation failed: {e}")
         raise
-    
-    # ========== Determine max volume per trip ==========
-    min_vol, max_vol = pipette_config['volume_range']
-    
-    if max_volume_specified and max_volume_specified != '':
-        max_per_trip = float(max_volume_specified)
-    else:
-        max_per_trip = max_vol  # Use pipette maximum
-    
-    # ========== Plan trips ==========
-    try:
-        trips = plan_distribution_trips(dest_volumes, max_per_trip, air_gap_volume, min_vol, max_vol)
-    except ValueError as e:
-        protocol.comment(f"Distribution trip planning failed: {e}")
-        raise
-    
-    protocol.comment(f"Distribution: {source_well} → {len(dest_well_names)} wells, pattern: {distribution_pattern}, {len(trips)} trip(s)")
-    
+
+    protocol.comment(f"Distribution: {source_well} → {len(dest_well_names)} wells, pattern: {distribution_pattern}")
+
     # ========== Get labware objects ==========
     source_labware = loaded_labware[source_labware_name]
     dest_labware = loaded_labware[dest_labware_name]
-    
-    # Get source well object (handle multi mode)
-    if mode == "multi":
-        # Get well count for source labware
-        source_labware_id = source_labware_name.rsplit('_', 1)[0] if '_' in source_labware_name else source_labware_name
-        # For multi mode, would need well count lookup, but distribution typically uses single mode
-        # For now, assume single well access in distribution mode
-        source_well_obj = source_labware[source_well]
-    else:
-        source_well_obj = source_labware[source_well]
-    
-    # ========== Execute each trip ==========
+
+    # Get source well object
+    source_well_obj = source_labware[source_well]
+
+    # Build destination well objects list
+    dest_well_objs = [dest_labware[well_name] for well_name in dest_well_names]
+
+    # ========== Source mixing (before aspirate) ==========
     tip_contacted = False
     source_well_key = f"{source_labware_name}:{source_well}"
-    
-    for trip_idx, trip in enumerate(trips):
-        is_first_trip = (trip_idx == 0)
-        
-        # ===== Source mixing (before aspirate) =====
-        should_mix_source = (
-            mix_volume > 0 and 
-            mixing_location == 'source' and
-            (source_remixing == 'always' or (is_first_trip and source_well_key not in mixed_source_wells))
-        )
-        
-        if should_mix_source:
-            # Ensure we have a tip for mixing
-            if not pipette.has_tip:
-                pipette.pick_up_tip()
-                tip_contacted = False
-            
-            source_mix_location, source_mix_desc = determine_well_position(transfer, source_well_obj, 'mix')
-            protocol.comment(f"Mixing source {source_well} at {source_mix_desc}: {mixing_repetitions}x with {mix_volume}µL")
-            pipette.mix(mixing_repetitions, mix_volume, source_mix_location)
-            
-            if is_first_trip:
-                mixed_source_wells.add(source_well_key)
-        
-        # ===== Tip management for this trip =====
-        tip_action = determine_tip_action(transfer, row_index)
+    mixing_location = mixing_config.get('location', 'none')
+    mixing_enabled = mixing_config.get('enabled', False)
 
-        # Auto-convert 'keep' to 'drop' for multi_X1 mode (partial tip config doesn't support return_tip)
-        if mode == 'multi_X1' and tip_action == 'keep':
-            protocol.comment(f"Warning row {row_index+1}: Tip Action 'keep' not supported in multi_X1 mode. Auto-converting to 'drop'.")
-            tip_action = 'drop'
+    should_mix_source = (
+        mixing_enabled and
+        mix_volume > 0 and
+        mixing_location == 'source' and
+        (source_remixing == 'always' or source_well_key not in mixed_source_wells)
+    )
 
-        action_taken, new_tip_picked = execute_tip_action(tip_action, pipette, protocol, f"Distribution trip {trip_idx+1}/{len(trips)}")
-        
-        # Reset contact flag if new tip picked up
-        if new_tip_picked:
-            tip_contacted = False
-        
-        # ===== Liquid contact (only on first trip with new tip) =====
-        if is_first_trip and not tip_contacted and liquid_contact_config.get('enabled', False):
-            perform_liquid_contact(pipette, source_well_obj, transfer, protocol, liquid_contact_config)
-            tip_contacted = True
-        
-        # ===== Aspirate from source =====
-        source_location, source_pos_desc = determine_well_position(transfer, source_well_obj, 'source')
-        protocol.comment(f"Trip {trip_idx+1}/{len(trips)}: Aspirating {trip['aspirate_volume']}µL from {source_well} at {source_pos_desc}")
-        pipette.aspirate(trip['aspirate_volume'], source_location, rate=rate_aspirate)
-        
-        # ===== Post-aspirate actions (wick + delay) =====
-        perform_post_aspirate_actions(
-            pipette, source_well_obj, protocol,
-            wick_config, delay_config.get('post_aspirate', 0)
-        )
-        
-        # ===== Dispense to each destination in this trip =====
-        for dispense_idx, (dest_idx, volume) in enumerate(trip['dispenses']):
-            dest_well_name = dest_well_names[dest_idx]
-            dest_well_obj = dest_labware[dest_well_name]
-            dest_location, dest_pos_desc = determine_well_position(transfer, dest_well_obj, 'dest')
-            
-            protocol.comment(f"  Dispensing {volume}µL → {dest_well_name} at {dest_pos_desc}")
-            
-            # Dispense (no air gap here - handled separately below)
-            perform_dispense_with_options(
-                pipette, volume, dest_location, rate_dispense,
-                protocol, push_out_config, mix_volume, 0  # air_gap=0, handled separately
-            )
-            
-            # ===== Destination mixing (after dispense) =====
-            if mix_volume > 0 and mixing_location == 'destination':
-                dest_mix_location, dest_mix_desc = determine_well_position(transfer, dest_well_obj, 'mix')
-                protocol.comment(f"  Mixing destination {dest_well_name} at {dest_mix_desc}: {mixing_repetitions}x with {mix_volume}µL")
-                pipette.mix(mixing_repetitions, mix_volume, dest_mix_location)
-            
-            # ===== Air gap between destinations (except last in trip) =====
-            is_last_in_trip = (dispense_idx == len(trip['dispenses']) - 1)
-            if air_gap_volume > 0 and not is_last_in_trip:
-                pipette.air_gap(volume=air_gap_volume, rate=air_gap_rate)
-        
-        # ===== Blow out after last dispense in trip =====
-        last_dest_idx = trip['dispenses'][-1][0]
-        last_dest_well_name = dest_well_names[last_dest_idx]
-        last_dest_well_obj = dest_labware[last_dest_well_name]
-        last_dest_location, _ = determine_well_position(transfer, last_dest_well_obj, 'dest')
-        pipette.blow_out(last_dest_location)
-        
-        # ===== Handle tip after trip based on tip_action =====
-        # If 'drop' action, drop tip after trip
-        # If 'keep' action, keep tip for next trip (or return at end)
-        # If 'new' action, will drop at start of next trip
-        if tip_action == 'drop' and pipette.has_tip:
-            pipette.drop_tip()
-            tip_contacted = False
-    
-    # ===== Return tracking variables =====
+    # Build mix_before tuple for distribute() call
+    mix_tuple = None
+    if should_mix_source:
+        source_mix_location, source_mix_desc = determine_well_position(transfer, source_well_obj, 'mix')
+        protocol.comment(f"Mixing source {source_well} at {source_mix_desc}: {mixing_repetitions}x with {mix_volume}µL")
+        mix_tuple = (mixing_repetitions, mix_volume, source_mix_location)
+        mixed_source_wells.add(source_well_key)
+
+    # ========== Tip management =====
+    tip_action = determine_tip_action(transfer, row_index)
+
+    # Auto-convert 'keep' to 'drop' for multi_X1 mode (partial tip config doesn't support return_tip)
+    if mode == 'multi_X1' and tip_action == 'keep':
+        protocol.comment(f"Warning row {row_index+1}: Tip Action 'keep' not supported in multi_X1 mode. Auto-converting to 'drop'.")
+        tip_action = 'drop'
+
+    # Ensure we have a tip for distribution
+    if not pipette.has_tip:
+        pipette.pick_up_tip()
+        tip_contacted = False
+
+    # ========== Liquid contact (optional) =====
+    if not tip_contacted and liquid_contact_config.get('enabled', False):
+        perform_liquid_contact(pipette, source_well_obj, transfer, protocol, liquid_contact_config)
+        tip_contacted = True
+
+    # ========== Get source position ==========
+    source_location, source_pos_desc = determine_well_position(transfer, source_well_obj, 'source')
+
+    # ========== Execute distribution using built-in API ==========
+    protocol.comment(f"Distributing from {source_well} at {source_pos_desc}")
+
+    # Note: distribute() handles trip planning automatically
+    # disposal_volume = 0 (user decision - keep simple)
+    pipette.distribute(
+        volume=dest_volumes,
+        source=source_location,
+        dest=dest_well_objs,
+        air_gap=air_gap_volume,
+        disposal_volume=0,
+        mix_before=mix_tuple,
+        blow_out=True,
+        blowout_location='source well',
+        new_tip='never',  # We manage tips manually via tip_action
+        carryover=True  # Enable multi-trip if volumes exceed capacity
+    )
+
+    # ========== Post-distribution tip management =====
+    if tip_action == 'drop' and pipette.has_tip:
+        pipette.drop_tip()
+        tip_contacted = False
+    elif tip_action == 'keep':
+        # Keep tip for next operation (or return at protocol end)
+        pass
+
     return tip_contacted
 
 def run(protocol: protocol_api.ProtocolContext):
@@ -964,7 +822,8 @@ def run(protocol: protocol_api.ProtocolContext):
     push_out_config = liquid_handling.get('push_out', {'enabled': False, 'volume_ul': 5})
 
     # Extract mixing configuration
-    mixing_config = liquid_handling.get('mixing', {'location': 'destination', 'repetitions': 3, 'source_remixing': 'once'})
+    mixing_config = liquid_handling.get('mixing', {'enabled': False, 'location': 'destination', 'repetitions': 3, 'source_remixing': 'once'})
+    mixing_enabled = mixing_config.get('enabled', False)
     mixing_location = mixing_config.get('location', 'destination')
     mixing_repetitions = mixing_config.get('repetitions', 3)
     source_remixing = mixing_config.get('source_remixing', 'once')
@@ -976,6 +835,11 @@ def run(protocol: protocol_api.ProtocolContext):
         raise ValueError(f"Invalid mixing repetitions: '{mixing_repetitions}'. Must be an integer >= 1")
     if source_remixing not in ['once', 'always']:
         raise ValueError(f"Invalid source_remixing: '{source_remixing}'. Must be 'once' or 'always'")
+
+    # Warn about distribution mode + mixing (mixing is ignored in distribution)
+    if mixing_enabled and mixing_location == 'destination':
+        protocol.comment("⚠️  NOTE: Destination mixing is NOT supported in distribution mode (ignored by distribute() API).")
+        protocol.comment("    If you need per-destination mixing, use cherry-pick mode instead.")
 
     # Extract general settings
     general_settings = settings['settings']['general']
@@ -1342,10 +1206,8 @@ def run(protocol: protocol_api.ProtocolContext):
                     liquid_contact_config=liquid_contact_config,
                     wick_config=wick_config,
                     delay_config=delay_config,
-                    push_out_config=push_out_config,
                     mixing_config=mixing_config,
                     mixing_repetitions=mixing_repetitions,
-                    mixing_location=mixing_location,
                     source_remixing=source_remixing,
                     mixed_source_wells=mixed_source_wells,
                     general_settings=general_settings,
@@ -1442,7 +1304,7 @@ def run(protocol: protocol_api.ProtocolContext):
                 tip_contacted = True
 
             # Source mixing (before aspiration, only on first chunk)
-            if is_first_chunk and mix_volume > 0 and mixing_location == 'source':
+            if is_first_chunk and mixing_enabled and mix_volume > 0 and mixing_location == 'source':
                 source_well_key = f"{source_labware_name}:{source_well}"
 
                 # Determine if we should mix based on source_remixing setting
@@ -1482,8 +1344,8 @@ def run(protocol: protocol_api.ProtocolContext):
                     protocol, push_out_config, mix_volume, chunk_air_gap
                 )
 
-                # Mix at destination ONLY if location setting is "destination" (only on last chunk)
-                if is_last_chunk and mix_volume > 0 and mixing_location == 'destination':
+                # Mix at destination ONLY if enabled and location setting is "destination" (only on last chunk)
+                if is_last_chunk and mixing_enabled and mix_volume > 0 and mixing_location == 'destination':
                     if mode == "multi":
                         # Use first destination well for mixing in multi mode
                         dest_mix_location, dest_mix_desc = determine_well_position(transfer, dest_wells[0], 'mix')
