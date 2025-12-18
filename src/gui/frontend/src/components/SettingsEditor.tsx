@@ -332,15 +332,23 @@ export function SettingsEditor() {
 
       <SectionCard title="Mixing">
         <Grid>
-          <Grid.Col span={{ base: 12, md: 4 }}>
+          <Grid.Col span={{ base: 12, md: 3 }}>
+            <Switch
+              label="Enabled"
+              checked={lh.mixing.enabled}
+              onChange={(event) => handlePatch('settings.liquid_handling.mixing.enabled', event.currentTarget.checked)}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 3 }}>
             <Select
               label="Location"
               data={mixingLocationOptions}
               value={lh.mixing.location}
               onChange={(value) => value && handlePatch('settings.liquid_handling.mixing.location', value)}
+              disabled={!lh.mixing.enabled}
             />
           </Grid.Col>
-          <Grid.Col span={{ base: 12, md: 4 }}>
+          <Grid.Col span={{ base: 12, md: 3 }}>
             <NumberInput
               label="Repetitions"
               min={0}
@@ -349,14 +357,16 @@ export function SettingsEditor() {
               onChange={(value) =>
                 value !== '' && handlePatch('settings.liquid_handling.mixing.repetitions', Number(value))
               }
+              disabled={!lh.mixing.enabled}
             />
           </Grid.Col>
-          <Grid.Col span={{ base: 12, md: 4 }}>
+          <Grid.Col span={{ base: 12, md: 3 }}>
             <Select
               label="Source remixing"
               data={sourceRemixOptions}
               value={lh.mixing.source_remixing}
               onChange={(value) => value && handlePatch('settings.liquid_handling.mixing.source_remixing', value)}
+              disabled={!lh.mixing.enabled}
             />
           </Grid.Col>
         </Grid>

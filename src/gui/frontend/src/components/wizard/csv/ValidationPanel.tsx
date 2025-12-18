@@ -3,6 +3,7 @@ import { IconCheck, IconAlertTriangle, IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 import Papa from 'papaparse'
 import type { WorkingPlateEntry } from '../../../api/types'
+import { useWizard } from '../WizardContext'
 
 interface ValidationResult {
   type: 'valid' | 'warning' | 'error'
@@ -16,6 +17,7 @@ interface ValidationPanelProps {
 }
 
 export function ValidationPanel({ csvContent, deckLayout }: ValidationPanelProps) {
+  const { state } = useWizard()
   const [results, setResults] = useState<ValidationResult[]>([])
   const [validated, setValidated] = useState(false)
 
@@ -72,6 +74,7 @@ export function ValidationPanel({ csvContent, deckLayout }: ValidationPanelProps
     // Check labware references and volumes
     const rows = parsed.data as any[]
     let validTransfers = 0
+    let hasAnyDistributionRow = false
 
     rows.forEach((row, i) => {
       const sourceLab = row['Source Labware']
@@ -82,6 +85,7 @@ export function ValidationPanel({ csvContent, deckLayout }: ValidationPanelProps
       const hasPipe = destWell.includes('|')
       const hasDistVolume = !!row['Distribution Volume (ul)']
       const isDistribution = hasPipe || hasDistVolume
+      if (isDistribution) hasAnyDistributionRow = true
 
       const volume = isDistribution ? row['Distribution Volume (ul)'] : row['Volume (ul)']
 
@@ -157,12 +161,45 @@ export function ValidationPanel({ csvContent, deckLayout }: ValidationPanelProps
           })
         }
       }
+
+      // Multi-channel distribution validation
+      // In multi mode, all destination wells must have the same row letter
+      const currentMode = state.settings?.settings?.general?.mode
+      if (hasPipe && currentMode === 'multi') {
+        const wellNames = destWell.split('|').map((w: string) => w.trim().toUpperCase())
+        const rowLetters = new Set(
+          wellNames
+            .filter((w: string) => w.length > 0)
+            .map((w: string) => w.replace(/\d+/g, ''))  // Extract row letter(s)
+        )
+
+        if (rowLetters.size > 1) {
+          const sortedLetters = Array.from(rowLetters).sort().join(', ')
+          newResults.push({
+            type: 'error',
+            message: `Distribution wells "${destWell}" incompatible with multi-channel mode. Found mixed row letters: ${sortedLetters}. In multi mode, all wells must have the SAME row letter (e.g., A1|A2|A3 or B1|B2|B3).`,
+            row: i + 2
+          })
+        }
+      }
     })
 
     if (validTransfers === 0) {
       newResults.push({ type: 'error', message: 'No valid transfers found in CSV' })
     } else {
       newResults.push({ type: 'valid', message: `${validTransfers} transfer rows found` })
+    }
+
+    // Check for distribution + destination mixing incompatibility
+    // The Opentrons distribute() API ignores mix_after parameter
+    if (hasAnyDistributionRow && state.settings?.settings?.liquid_handling?.mixing?.enabled) {
+      const mixingLocation = state.settings.settings.liquid_handling.mixing.location
+      if (mixingLocation === 'destination') {
+        newResults.push({
+          type: 'error',
+          message: 'Destination mixing is NOT supported in distribution mode. The distribute() API ignores mix_after. Either disable mixing, change mixing location to "source", or use cherry-pick mode.'
+        })
+      }
     }
 
     setResults(newResults)

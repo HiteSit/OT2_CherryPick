@@ -69,6 +69,7 @@ Not used when mixing follows dispense (mixing already agitates sufficiently).`
   },
 
   mixing: {
+    enabled: "Master switch to enable/disable mixing functionality. When disabled, all mixing parameters are ignored regardless of other settings. Note: In distribution mode, destination mixing is NOT supported by the Opentrons API - use cherry-pick mode if per-destination mixing is required.",
     location: "Where to perform mixing: at destination well after dispense, at source well before aspiration, or no mixing",
     repetitions: "Number of times to aspirate and dispense for mixing (1-10 typical)",
     sourceRemixing: "When mixing at source: 'once' = mix only on first visit to that well, 'always' = mix every time"

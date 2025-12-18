@@ -90,9 +90,11 @@ CSV_CONFIG_MAP: dict[str, list[str]] = {
     # Multi mode requires full 8-channel
     "example_multi_mode.csv": ["multi"],
 
-    # Distribution CSVs - work with multi (full 8-channel) or distribution profile
-    "example_distribution.csv": ["multi", "distribution"],
-    "example_mixed_modes.csv": ["multi", "distribution"],
+    # Distribution CSVs - work with multi mode ONLY if each distribution uses consistent row letters
+    # (e.g., A1|A2|A3 or B1|B2|B3, NOT A1|B2|A3 which mixes interleaving patterns)
+    # Both CSVs use consistent row letters per distribution, so they're multi-compatible
+    "example_distribution.csv": ["multi", "single_X1", "multi_X1"],
+    "example_mixed_modes.csv": ["multi", "single_X1", "multi_X1"],
 
     # Dual-pipette mode CSVs
     "test_dual_all_three_modes.csv": ["dual"],

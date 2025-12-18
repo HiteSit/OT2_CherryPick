@@ -201,6 +201,21 @@ export function AdvancedSettingsAccordion() {
         <Accordion.Control>Mixing Settings</Accordion.Control>
         <Accordion.Panel>
           <Stack gap="sm">
+            <Switch
+              label={
+                <Group gap={4}>
+                  Enabled
+                  <Tooltip label={HELP_TEXT.mixing.enabled} maw={350} multiline>
+                    <ActionIcon size="xs" variant="subtle" color="gray">
+                      <IconHelp size={14} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Group>
+              }
+              checked={lh?.mixing?.enabled || false}
+              onChange={(e) => handleChange('settings.liquid_handling.mixing.enabled', e.target.checked)}
+            />
+
             <Select
               label={
                 <Group gap={4}>
@@ -217,8 +232,9 @@ export function AdvancedSettingsAccordion() {
                 { value: 'source', label: 'Mix at source' },
                 { value: 'destination', label: 'Mix at destination' }
               ]}
-              value={lh?.mixing?.location || 'none'}
+              value={lh?.mixing?.location || 'destination'}
               onChange={(v) => v && handleChange('settings.liquid_handling.mixing.location', v)}
+              disabled={!lh?.mixing?.enabled}
             />
 
             <NumberInput
@@ -236,6 +252,7 @@ export function AdvancedSettingsAccordion() {
               onChange={(v) => typeof v === 'number' && handleChange('settings.liquid_handling.mixing.repetitions', v)}
               min={0}
               max={10}
+              disabled={!lh?.mixing?.enabled}
             />
 
             <Select
@@ -255,6 +272,7 @@ export function AdvancedSettingsAccordion() {
               ]}
               value={lh?.mixing?.source_remixing || 'once'}
               onChange={(v) => v && handleChange('settings.liquid_handling.mixing.source_remixing', v)}
+              disabled={!lh?.mixing?.enabled}
             />
           </Stack>
         </Accordion.Panel>

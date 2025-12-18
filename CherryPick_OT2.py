@@ -1,6 +1,6 @@
 def get_values(*names):
     import json
-    _all_values = json.loads("""{"labware_dict":{"pipettes":[{"name":"Pipette_8","opentrons_id":"p300_multi_gen2","channels":8,"volume_range":[30,300],"preferred_mount":"right","tip_connections":["opentrons_96_tiprack_300ul"]},{"name":"Pipette_1","opentrons_id":"p1000_single_gen2","channels":1,"volume_range":[100,1000],"preferred_mount":"left","tip_connections":["tip_rack_geb_1000ul"]}],"labware":[{"category":"tip_rack","labware_id":"tip_rack_yellow_100ul","well_count":96,"well_volume":100},{"category":"tip_rack","labware_id":"opentrons_96_tiprack_300ul","well_count":96,"well_volume":300},{"category":"tip_rack","labware_id":"tip_rack_geb_1000ul","well_count":96,"well_volume":1000},{"category":"reservoir","labware_id":"reservoir_horizontal","well_count":12,"well_volume":15000},{"category":"plate","labware_id":"384_pp_standard_100ul","well_count":384,"well_volume":100},{"category":"plate","labware_id":"384_pp_high_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ppv_55ul","well_count":384,"well_volume":55},{"category":"plate","labware_id":"384_ppv_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ldv_12ul","well_count":384,"well_volume":12},{"category":"tube_rack","labware_id":"tube_rack_96_2000ul","well_count":96,"well_volume":2000},{"category":"tube_rack","labware_id":"tube_rack_96_1500ul","well_count":96,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_24_4000ul","well_count":24,"well_volume":4000},{"category":"tube_rack","labware_id":"tube_rack_48_1500ul","well_count":48,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_54_1500ul","well_count":54,"well_volume":1500}]},"settings":{"settings":{"general":{"tip_reuse":"always","mode":"dual","starting_tip_well":"H1","head_speed":{"speed":400}},"liquid_handling":{"pre_aspirate_contact":{"enabled":false,"position_offset_percent":20,"aspirate_volume":20},"post_aspirate_wick":{"enabled":false,"radius":1,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":true,"volume_ul":20},"mixing":{"location":"none","repetitions":2,"source_remixing":"once"},"presets":{"standard":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"viscous":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":2.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"location":"destination","repetitions":5,"source_remixing":"once"}},"slippery":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":5},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"minimal":{"pre_aspirate_contact":{"enabled":false},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"destination","repetitions":3,"source_remixing":"once"}},"aggressive":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":30,"aspirate_volume":10},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":15},"delays":{"post_aspirate":3.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"location":"destination","repetitions":7,"source_remixing":"once"}},"cell_resuspension":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"location":"source","repetitions":5,"source_remixing":"once"}}}},"working_plate":[{"type":"module","module_type":"heaterShaker","position_rack":"10","adapter_id":"opentrons_universal_flat_adapter","labware_id":"","target_temperature":0,"target_shake_speed":0,"persist_after_protocol":true},{"type":"reservoir","labware_id":"384_ppv_55ul","position_rack":"2"},{"type":"reservoir","labware_id":"tube_rack_96_1500ul","position_rack":"4"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","mode":"multi","position_rack":"1"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","mode":"multi_X1","position_rack":"3"},{"type":"tip","labware_id":"tip_rack_geb_1000ul","connection":"Pipette_1","mode":"single_X1","position_rack":"9"}]}},"csv_data":"Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mode\\ntube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-5,multi\\ntube_rack_96_1500ul_4,A2,600,384_ppv_55ul_2,A2,2,-5,single_X1\\ntube_rack_96_1500ul_4,A3,150,384_ppv_55ul_2,A3,2,-5,multi_X1\\ntube_rack_96_1500ul_4,A4,50,384_ppv_55ul_2,A4,2,-5,multi\\ntube_rack_96_1500ul_4,B1,800,384_ppv_55ul_2,B1,2,-5,single_X1\\ntube_rack_96_1500ul_4,B2,200,384_ppv_55ul_2,B2,2,-5,multi_X1\\ntube_rack_96_1500ul_4,C1,500,384_ppv_55ul_2,C1,2,-5,single_X1\\ntube_rack_96_1500ul_4,C2,50,384_ppv_55ul_2,C2,2,-5,multi\\ntube_rack_96_1500ul_4,D1,250,384_ppv_55ul_2,D1,2,-5,multi_X1"}""")
+    _all_values = json.loads("""{"labware_dict":{"pipettes":[{"name":"Pipette_8","opentrons_id":"p300_multi_gen2","channels":8,"volume_range":[30,300],"preferred_mount":"right","tip_connections":["opentrons_96_tiprack_300ul"]},{"name":"Pipette_1","opentrons_id":"p1000_single_gen2","channels":1,"volume_range":[100,1000],"preferred_mount":"left","tip_connections":["tip_rack_geb_1000ul"]}],"labware":[{"category":"tip_rack","labware_id":"tip_rack_yellow_100ul","well_count":96,"well_volume":100},{"category":"tip_rack","labware_id":"opentrons_96_tiprack_300ul","well_count":96,"well_volume":300},{"category":"tip_rack","labware_id":"tip_rack_geb_1000ul","well_count":96,"well_volume":1000},{"category":"reservoir","labware_id":"reservoir_horizontal","well_count":12,"well_volume":15000},{"category":"plate","labware_id":"384_pp_standard_100ul","well_count":384,"well_volume":100},{"category":"plate","labware_id":"384_pp_high_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ppv_55ul","well_count":384,"well_volume":55},{"category":"plate","labware_id":"384_ppv_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ldv_12ul","well_count":384,"well_volume":12},{"category":"tube_rack","labware_id":"tube_rack_96_2000ul","well_count":96,"well_volume":2000},{"category":"tube_rack","labware_id":"tube_rack_96_1500ul","well_count":96,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_24_4000ul","well_count":24,"well_volume":4000},{"category":"tube_rack","labware_id":"tube_rack_48_1500ul","well_count":48,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_54_1500ul","well_count":54,"well_volume":1500}]},"settings":{"settings":{"general":{"mode":"multi","starting_tip_well":"H1","head_speed":{"speed":400}},"liquid_handling":{"pre_aspirate_contact":{"enabled":false,"position_offset_percent":20,"aspirate_volume":20},"post_aspirate_wick":{"enabled":false,"radius":1,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":true,"volume_ul":20},"mixing":{"enabled":false,"location":"destination","repetitions":2,"source_remixing":"once"},"presets":{"standard":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"destination","repetitions":3,"source_remixing":"once"}},"viscous":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":2.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"enabled":true,"location":"destination","repetitions":5,"source_remixing":"once"}},"slippery":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":5},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"destination","repetitions":3,"source_remixing":"once"}},"minimal":{"pre_aspirate_contact":{"enabled":false},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"destination","repetitions":3,"source_remixing":"once"}},"aggressive":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":30,"aspirate_volume":10},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":15},"delays":{"post_aspirate":3.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"enabled":true,"location":"destination","repetitions":7,"source_remixing":"once"}},"cell_resuspension":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"source","repetitions":5,"source_remixing":"once"}}}},"working_plate":[{"type":"module","module_type":"heaterShaker","position_rack":"10","adapter_id":"opentrons_universal_flat_adapter","labware_id":"","target_temperature":0,"target_shake_speed":0,"persist_after_protocol":true},{"type":"reservoir","labware_id":"384_ppv_55ul","position_rack":"2"},{"type":"reservoir","labware_id":"tube_rack_96_1500ul","position_rack":"4"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","mode":"multi","position_rack":"1"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","mode":"multi_X1","position_rack":"3"},{"type":"tip","labware_id":"tip_rack_geb_1000ul","connection":"Pipette_1","mode":"multi","position_rack":"9"}]}},"csv_data":"Source Labware,Source Well,Volume (ul),Distribution Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Distribution,Mix Volume,Tip Action\\ntube_rack_96_1500ul_4,A1,,50,384_ppv_55ul_2,A1|B2|A3|B4,2,-5,equal,,drop"}""")
     return [_all_values[n] for n in names]
 
 
@@ -637,6 +637,57 @@ def calculate_distribution_volumes(base_volume, num_wells, distribution_pattern)
 # plan_distribution_trips() function has been REMOVED
 # The built-in pipette.distribute() API handles trip planning automatically via carryover=True parameter
 
+def validate_distribution_wells_for_multi_mode(dest_wells: list, mode: str, row_index: int):
+    """
+    Validate that destination wells are compatible with multi-channel pipette operation.
+
+    In multi mode (8-channel with all nozzles active), each well name represents a COLUMN operation:
+    - 96-well plate: A1 means column 1 (all 8 wells A1-H1)
+    - 384-well plate: A1 means column 1 with A-interleaving (A1,C1,E1,G1,I1,K1,M1,O1)
+                      B1 means column 1 with B-interleaving (B1,D1,F1,H1,J1,L1,N1,P1)
+
+    For distribution to work correctly with multi-channel:
+    - All destination wells MUST have the same row letter (same interleaving pattern)
+    - Valid: A1|A2|A3|A4 (all A-row = distribute to columns 1,2,3,4)
+    - Valid: B1|B2|B3 (all B-row = distribute to columns 1,2,3 with B-interleaving)
+    - INVALID: A1|B2|A3 (mixing rows = physically impossible with 8-channel)
+
+    Args:
+        dest_wells: List of destination well names (e.g., ['A1', 'A2', 'A3'])
+        mode: Pipette mode ('single_X1', 'multi_X1', 'multi')
+        row_index: CSV row index for error messages (0-based)
+
+    Raises:
+        ValueError: If wells are incompatible with multi-channel operation
+    """
+    if mode != 'multi':
+        return  # Only validate for full multi-channel mode
+
+    if not dest_wells:
+        return
+
+    # Extract row letters from all destination wells
+    row_letters = set()
+    for well in dest_wells:
+        well = well.strip().upper()
+        if not well:
+            continue
+        # Well format is like A1, B12, P24 - first character(s) are row letter(s)
+        row_letter = ''.join(c for c in well if c.isalpha())
+        if row_letter:
+            row_letters.add(row_letter)
+
+    # All wells must have the same row letter for multi-channel distribution
+    if len(row_letters) > 1:
+        wells_str = '|'.join(dest_wells)
+        raise ValueError(
+            f"Row {row_index + 2}: Distribution wells '{wells_str}' are incompatible with multi-channel mode. "
+            f"Found mixed row letters: {sorted(row_letters)}. "
+            f"In multi mode, ALL destination wells must have the SAME row letter (e.g., A1|A2|A3 or B1|B2|B3) "
+            f"because each well represents a full column operation. "
+            f"Use single_X1 or multi_X1 mode for individual well distribution."
+        )
+
 def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liquid_contact_config,
                         wick_config, delay_config, mixing_config, mixing_repetitions,
                         source_remixing, mixed_source_wells, general_settings,
@@ -683,6 +734,9 @@ def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liqu
     dest_labware_name = transfer['Dest Labware']
     dest_wells_str = transfer['Dest Well']
     dest_well_names = dest_wells_str.split('|')  # Split pipe-delimited list
+
+    # ========== Validate wells for multi-channel compatibility ==========
+    validate_distribution_wells_for_multi_mode(dest_well_names, mode, row_index)
 
     base_volume = float(transfer['Distribution Volume (ul)'])
     distribution_pattern = transfer.get('Distribution', 'equal').strip().lower()

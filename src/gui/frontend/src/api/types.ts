@@ -29,6 +29,7 @@ export interface PushOutSettings {
 }
 
 export interface MixingSettings {
+  enabled: boolean
   location: 'destination' | 'source' | 'none'
   repetitions: number
   source_remixing: 'once' | 'always'
