@@ -293,12 +293,156 @@ Key parameters:
 
 **Important**: For multi-channel pipettes on 384-well plates, only A-row or B-row wells are valid targets.
 
+## Multi-Channel Distribution Validation (Added 2025-12-18)
+
+### The Hidden Problem: Simulator Lies
+
+After the initial refactoring, we discovered a critical issue: **the Opentrons simulator silently accepts physically impossible operations**.
+
+When running `example_distribution.csv` with `mode = "multi"`, the simulation showed:
+```
+Using legacy mode: multi
+Picking up tip from A1 of Opentrons OT-2 96 Tip Rack 300 µL on slot 1
+Dispensing 50.0 uL into A1 of 384_ppv_55ul on slot 2
+Dispensing 50.0 uL into A2 of 384_ppv_55ul on slot 2
+Dispensing 50.0 uL into A3 of 384_ppv_55ul on slot 2
+...
+Protocol complete: 4 transfers
+=== Simulation successful!
+```
+
+**The lie**: In `multi` mode, "Picking up tip from A1" means **8 tips at once** (A1-H1). But the simulation showed individual well dispensing (A1, A2, A3, A4) - which is **physically impossible** with 8 tips loaded.
+
+The real robot would either:
+1. Crash with an error
+2. Dispense to wrong wells (8 at a time instead of 1)
+3. Behave unpredictably
+
+### The Validation Fix
+
+We added validation at **two layers** to catch this before it ever reaches the misleading simulator.
+
+#### 1. Protocol Level (`CherryPick_OT2.py` lines 640-689)
+
+New function `validate_distribution_wells_for_multi_mode()`:
+
+```python
+def validate_distribution_wells_for_multi_mode(dest_wells: list, mode: str, row_index: int):
+    """
+    Validate that destination wells are compatible with multi-channel pipette operation.
+
+    In multi mode (8-channel with all nozzles active), each well name represents a COLUMN:
+    - 96-well plate: A1 means column 1 (all 8 wells A1-H1)
+    - 384-well plate: A1 means column 1 with A-interleaving (A1,C1,E1,G1,I1,K1,M1,O1)
+                      B1 means column 1 with B-interleaving (B1,D1,F1,H1,J1,L1,N1,P1)
+
+    For distribution to work correctly with multi-channel:
+    - All destination wells MUST have the same row letter (same interleaving pattern)
+    - Valid: A1|A2|A3|A4 (all A-row = distribute to columns 1,2,3,4)
+    - Valid: B1|B2|B3 (all B-row = distribute to columns 1,2,3 with B-interleaving)
+    - INVALID: A1|B2|A3 (mixing rows = physically impossible with 8-channel)
+    """
+    if mode != 'multi':
+        return  # Only validate for full multi-channel mode
+
+    # Extract row letters from all destination wells
+    row_letters = set()
+    for well in dest_wells:
+        row_letter = ''.join(c for c in well.strip().upper() if c.isalpha())
+        if row_letter:
+            row_letters.add(row_letter)
+
+    if len(row_letters) > 1:
+        raise ValueError(
+            f"Row {row_index + 2}: Distribution wells are incompatible with multi-channel mode. "
+            f"Found mixed row letters: {sorted(row_letters)}. "
+            f"In multi mode, ALL destination wells must have the SAME row letter."
+        )
+```
+
+Called immediately after parsing destination wells in `perform_distribution()`:
+
+```python
+dest_well_names = dest_wells_str.split('|')
+validate_distribution_wells_for_multi_mode(dest_well_names, mode, row_index)  # NEW
+```
+
+#### 2. GUI Level (`ValidationPanel.tsx` lines 165-184)
+
+Added validation in the CSV validation panel:
+
+```typescript
+// Multi-channel distribution validation
+const currentMode = state.settings?.settings?.general?.mode
+if (hasPipe && currentMode === 'multi') {
+  const wellNames = destWell.split('|').map((w: string) => w.trim().toUpperCase())
+  const rowLetters = new Set(
+    wellNames
+      .filter((w: string) => w.length > 0)
+      .map((w: string) => w.replace(/\d+/g, ''))  // Extract row letter(s)
+  )
+
+  if (rowLetters.size > 1) {
+    newResults.push({
+      type: 'error',
+      message: `Distribution wells incompatible with multi-channel mode. Found mixed row letters. In multi mode, all wells must have the SAME row letter.`,
+      row: i + 2
+    })
+  }
+}
+```
+
+### The Surprise: example_distribution.csv Was Already Valid
+
+Upon investigation, the existing `example_distribution.csv` **is actually valid** for multi mode:
+
+| Row | Dest Well | Row Letters | Valid for Multi? |
+|-----|-----------|-------------|------------------|
+| 2 | A1\|A2\|A3\|A4 | A only | ✅ Yes |
+| 3 | A5\|A6\|A7\|A8 | A only | ✅ Yes |
+| 4 | B1\|B2\|B3\|B4\|B5 | B only | ✅ Yes |
+| 5 | B6\|B7\|B8\|B9 | B only | ✅ Yes |
+
+Each distribution line uses consistent row letters within itself. The A-row and B-row distributions are **separate operations**, each targeting their respective interleaving pattern.
+
+An **invalid** CSV would be:
+```csv
+Dest Well
+A1|B2|A3|B4   # INVALID: Mixed A and B rows in single distribution
+```
+
+### Test Results
+
+Three scenarios tested:
+
+1. **single_X1 + distribution CSV** → ✅ PASS (4 transfers, individual wells)
+2. **multi + valid distribution CSV** → ✅ PASS (4 transfers, column operations)
+3. **multi + invalid mixed-row CSV** → ✅ FAIL with clear error:
+   ```
+   ValueError [line 683]: Row 2: Distribution wells 'A1|B2|A3|B4' are incompatible
+   with multi-channel mode. Found mixed row letters: ['A', 'B']. In multi mode,
+   ALL destination wells must have the SAME row letter.
+   ```
+
+### Updated Test Configuration
+
+Updated `tests/e2e/conftest.py` with clearer documentation:
+
+```python
+# Distribution CSVs - work with multi mode ONLY if each distribution uses consistent row letters
+# (e.g., A1|A2|A3 or B1|B2|B3, NOT A1|B2|A3 which mixes interleaving patterns)
+# Both CSVs use consistent row letters per distribution, so they're multi-compatible
+"example_distribution.csv": ["multi", "single_X1", "multi_X1"],
+"example_mixed_modes.csv": ["multi", "single_X1", "multi_X1"],
+```
+
 ## Next Steps
 
-- [ ] Consider adding validation in `validate_csv_labware_match()` to check for invalid multi-channel well targets
+- [x] ~~Consider adding validation in `validate_csv_labware_match()` to check for invalid multi-channel well targets~~ **DONE** (implemented as `validate_distribution_wells_for_multi_mode()` + GUI validation)
 - [ ] Document the CSV format difference between single-channel and multi-channel distribution in CLAUDE.md
 - [ ] Fix pre-existing unit test failures (empty `labware_id` in heaterShaker module)
 
 ---
 
 *Consolidated from conversation on 2025-12-18*
+*Updated 2025-12-18 with multi-channel distribution validation*
