@@ -90,6 +90,12 @@ well_count = 12
 well_volume = 15000
 
 [[labware]]
+category = "reservoir"
+labware_id = "reservoir_vertical"
+well_count = 2
+well_volume = 50000
+
+[[labware]]
 category = "plate"
 labware_id = "384_pp_standard_100ul"
 well_count = 384

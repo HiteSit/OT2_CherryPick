@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "git": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-git"
+      ],
+      "env": {}
+    },
+    "serena_jetbrains": {
+      "type": "stdio",
+      "command": "/mnt/c/Users/ricca/.local/bin/uvx.exe",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "claude-code",
+        "--project",
+        "D:\\Amadteus_Main\\OpenTron\\OT2_CherryPick",
+        "--language-backend",
+        "JetBrains"
+      ],
+      "env": {}
+    },
+    "mermaid-mcp": {
+      "url": "https://mcp.mermaid.ai/sse",
+      "type": "sse"
+    }
+  }
+}
