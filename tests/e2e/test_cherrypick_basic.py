@@ -65,3 +65,31 @@ class TestVolumeSplitting:
         output_lower = result.output.lower()
         # 400µL is within P1000 range, should not need splitting
         assert result.success
+
+
+class TestHomeControl:
+    """Tests for HOME control row feature."""
+
+    @pytest.mark.parametrize("config_profile", ["single_X1", "multi_X1"])
+    def test_home_control_simulates_successfully(self, e2e_workspace_factory, config_profile):
+        """Protocol with HOME control row should simulate successfully."""
+        workspace: E2EWorkspace = e2e_workspace_factory(config_profile)
+        result = run_full_workflow(workspace, "example_home_control.csv")
+        result.assert_success(f"HOME control simulation failed with {config_profile} mode")
+
+    @pytest.mark.parametrize("config_profile", ["single_X1", "multi_X1"])
+    def test_home_control_all_compatible_modes(self, e2e_workspace_factory, config_profile):
+        """HOME control should work with all compatible profiles."""
+        workspace: E2EWorkspace = e2e_workspace_factory(config_profile)
+        result = run_full_workflow(workspace, "example_home_control.csv")
+        result.assert_success(f"HOME control failed with {config_profile} mode")
+
+    def test_home_control_protocol_completes(self, e2e_workspace_factory):
+        """Protocol should complete execution successfully with HOME row."""
+        workspace: E2EWorkspace = e2e_workspace_factory("single_X1")
+        result = run_full_workflow(workspace, "example_home_control.csv")
+
+        result.assert_success("Protocol should complete successfully with HOME row")
+        # Check that simulation completed without errors
+        assert result.success
+        assert result.returncode == 0

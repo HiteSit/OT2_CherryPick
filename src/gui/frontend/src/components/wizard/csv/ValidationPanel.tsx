@@ -11,6 +11,14 @@ interface ValidationResult {
   row?: number
 }
 
+// Check if a CSV row is a HOME control row (all non-empty values are "HOME")
+function isHomeControlRow(row: Record<string, string>): boolean {
+  const values = Object.values(row)
+    .map(v => String(v ?? '').trim().toUpperCase())
+    .filter(v => v.length > 0)
+  return values.length > 0 && values.every(v => v === 'HOME')
+}
+
 interface ValidationPanelProps {
   csvContent: string
   deckLayout: WorkingPlateEntry[]
@@ -180,6 +188,22 @@ export function ValidationPanel({ csvContent, deckLayout }: ValidationPanelProps
             message: `Distribution wells "${destWell}" incompatible with multi-channel mode. Found mixed row letters: ${sortedLetters}. In multi mode, all wells must have the SAME row letter (e.g., A1|A2|A3 or B1|B2|B3).`,
             row: i + 2
           })
+        }
+      }
+
+      // HOME control row validation
+      // Row after HOME MUST have Tip Action: new (firmware requirement)
+      if (i > 0) {
+        const prevRow = rows[i - 1] as Record<string, string>
+        if (isHomeControlRow(prevRow) && !isHomeControlRow(row)) {
+          const tipAction = (row['Tip Action'] || '').trim().toLowerCase()
+          if (tipAction !== 'new') {
+            newResults.push({
+              type: 'error',
+              message: `Row after HOME control MUST have Tip Action: new (got '${tipAction || 'empty'}'). Robot drops tips when homing.`,
+              row: i + 2
+            })
+          }
         }
       }
     })
