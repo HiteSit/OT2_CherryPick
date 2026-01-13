@@ -145,6 +145,30 @@ tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,new
 
         assert result["status"] == "ok", f"Expected OK but got errors: {result['errors']}"
 
+    def test_home_row_with_missing_columns_is_valid(self, tmp_path: Path) -> None:
+        """HOME row with missing optional columns should still be detected."""
+        repo_root = Path(__file__).resolve().parents[1]
+        settings_copy = _copy_file(repo_root / "settings.toml", tmp_path / "settings.toml")
+        labware_copy = _copy_file(repo_root / "labware_dict.toml", tmp_path / "labware_dict.toml")
+
+        csv_content = """\
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action,Source Top,Dest Height
+tube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-5,new
+HOME,HOME,HOME,HOME,HOME,HOME,HOME,HOME
+tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,new
+""".strip()
+
+        csv_path = tmp_path / "valid_home_missing_columns.csv"
+        csv_path.write_text(csv_content, encoding="utf-8")
+
+        result = validate_configuration(
+            settings_path=settings_copy,
+            labware_path=labware_copy,
+            csv_path=csv_path,
+        )
+
+        assert result["status"] == "ok", f"Expected OK but got errors: {result['errors']}"
+
     def test_home_followed_by_keep_tip_is_error(self, tmp_path: Path) -> None:
         """HOME row followed by Tip Action: keep should fail validation."""
         repo_root = Path(__file__).resolve().parents[1]

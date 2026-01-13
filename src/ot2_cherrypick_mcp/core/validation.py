@@ -33,7 +33,19 @@ def _is_home_control_row(row: Dict[str, str]) -> bool:
 
     A HOME row has "HOME" (case-insensitive) in ALL non-empty columns.
     """
-    values = [str(v).strip().upper() for v in row.values() if str(v).strip()]
+    values: List[str] = []
+    for value in row.values():
+        if value is None:
+            continue
+        if isinstance(value, list):
+            for item in value:
+                item_str = str(item).strip()
+                if item_str:
+                    values.append(item_str.upper())
+            continue
+        value_str = str(value).strip()
+        if value_str:
+            values.append(value_str.upper())
     if not values:
         return False
     return all(v == "HOME" for v in values)
