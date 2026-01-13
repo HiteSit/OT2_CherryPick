@@ -100,6 +100,10 @@ export function ValidationPanel({ csvContent, deckLayout }: ValidationPanelProps
       // Skip empty rows
       if (!sourceLab && !destLab && !volume) return
 
+      // Skip HOME control rows from labware/volume validation
+      // (they are special control commands, not actual transfers)
+      if (isHomeControlRow(row)) return
+
       validTransfers++
 
       if (sourceLab && !deckLabwareIds.has(sourceLab)) {
