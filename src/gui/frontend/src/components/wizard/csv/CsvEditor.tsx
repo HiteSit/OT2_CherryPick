@@ -6,6 +6,7 @@ import Spreadsheet from 'react-spreadsheet'
 import Papa from 'papaparse'
 import type { CellBase } from 'react-spreadsheet'
 import { useUploadCsv, useCsvListQuery, useCsvContentQuery } from '../../../api/hooks'
+import { UnsavedChangesModal } from './UnsavedChangesModal'
 
 export function CsvEditor() {
   const { state, setCSV } = useWizard()
@@ -13,9 +14,15 @@ export function CsvEditor() {
   const [editorContent, setEditorContent] = useState(state.csv.content)
   const [filename, setFilename] = useState(state.csv.filename || 'wizard.csv')
   const [selectedFile, setSelectedFile] = useState('')
+  const [originalContent, setOriginalContent] = useState('')
+  const [pendingFile, setPendingFile] = useState<string | null>(null)
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const uploadCsv = useUploadCsv()
   const csvListQuery = useCsvListQuery()
   const csvContentQuery = useCsvContentQuery(selectedFile)
+
+  // Derive dirty state
+  const isDirty = selectedFile && editorContent !== originalContent
 
   // Sync wizard context CSV state to local editor state
   // Note: setFilename and setEditorContent are stable useState setters, not needed in deps
@@ -32,6 +39,7 @@ export function CsvEditor() {
   useEffect(() => {
     if (csvContentQuery.data !== undefined && selectedFile) {
       setEditorContent(csvContentQuery.data)
+      setOriginalContent(csvContentQuery.data)
       setFilename(selectedFile)
       setCSV(selectedFile, csvContentQuery.data)
     }
@@ -92,6 +100,7 @@ export function CsvEditor() {
     setSelectedFile('')
     setFilename('wizard.csv')
     setEditorContent('')
+    setOriginalContent('')
     setCSV('wizard.csv', '')
   }
 
@@ -99,6 +108,19 @@ export function CsvEditor() {
     csvListQuery.refetch()
     // Per CONTEXT.md: refresh ALWAYS clears selection
     handleClearSelection()
+  }
+
+  const handleDiscardChanges = () => {
+    setShowUnsavedModal(false)
+    if (pendingFile !== null) {
+      setSelectedFile(pendingFile)
+    }
+    setPendingFile(null)
+  }
+
+  const handleCancelSwitch = () => {
+    setShowUnsavedModal(false)
+    setPendingFile(null)
   }
 
   // Memoized options for CSV file selector
@@ -153,7 +175,15 @@ export function CsvEditor() {
           searchable
           data={csvOptions}
           value={selectedFile || null}
-          onChange={(value) => setSelectedFile(value || '')}
+          onChange={(value) => {
+            const newValue = value || ''
+            if (isDirty && newValue !== selectedFile) {
+              setPendingFile(newValue)
+              setShowUnsavedModal(true)
+            } else {
+              setSelectedFile(newValue)
+            }
+          }}
           nothingFoundMessage="No matching files"
           disabled={csvListQuery.isLoading}
           rightSection={
@@ -268,6 +298,13 @@ export function CsvEditor() {
           />
         </Tabs.Panel>
       </Tabs>
+
+      <UnsavedChangesModal
+        opened={showUnsavedModal}
+        onDiscard={handleDiscardChanges}
+        onCancel={handleCancelSwitch}
+        targetFile={pendingFile || ''}
+      />
     </Stack>
   )
 }
