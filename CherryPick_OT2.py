@@ -1,6 +1,6 @@
 def get_values(*names):
     import json
-    _all_values = json.loads("""{"labware_dict":{"pipettes":[{"name":"Pipette_8","opentrons_id":"p300_multi_gen2","channels":8,"volume_range":[30,300],"preferred_mount":"right","tip_connections":["opentrons_96_tiprack_300ul"]},{"name":"Pipette_1","opentrons_id":"p1000_single_gen2","channels":1,"volume_range":[100,1000],"preferred_mount":"left","tip_connections":["tip_rack_geb_1000ul"]}],"labware":[{"category":"tip_rack","labware_id":"tip_rack_yellow_100ul","well_count":96,"well_volume":100},{"category":"tip_rack","labware_id":"opentrons_96_tiprack_300ul","well_count":96,"well_volume":300},{"category":"tip_rack","labware_id":"tip_rack_geb_1000ul","well_count":96,"well_volume":1000},{"category":"reservoir","labware_id":"reservoir_horizontal","well_count":12,"well_volume":15000},{"category":"plate","labware_id":"384_pp_standard_100ul","well_count":384,"well_volume":100},{"category":"plate","labware_id":"384_pp_high_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ppv_55ul","well_count":384,"well_volume":55},{"category":"plate","labware_id":"384_ppv_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ldv_12ul","well_count":384,"well_volume":12},{"category":"tube_rack","labware_id":"tube_rack_96_2000ul","well_count":96,"well_volume":2000},{"category":"tube_rack","labware_id":"tube_rack_96_1500ul","well_count":96,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_24_4000ul","well_count":24,"well_volume":4000},{"category":"tube_rack","labware_id":"tube_rack_48_1500ul","well_count":48,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_54_1500ul","well_count":54,"well_volume":1500}]},"settings":{"settings":{"general":{"mode":"multi","starting_tip_well":"H1","head_speed":{"speed":400}},"liquid_handling":{"pre_aspirate_contact":{"enabled":false,"position_offset_percent":20,"aspirate_volume":20},"post_aspirate_wick":{"enabled":false,"radius":1,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":true,"volume_ul":20},"mixing":{"enabled":false,"location":"destination","repetitions":2,"source_remixing":"once"},"presets":{"standard":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"destination","repetitions":3,"source_remixing":"once"}},"viscous":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":2.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"enabled":true,"location":"destination","repetitions":5,"source_remixing":"once"}},"slippery":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":5},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"destination","repetitions":3,"source_remixing":"once"}},"minimal":{"pre_aspirate_contact":{"enabled":false},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"destination","repetitions":3,"source_remixing":"once"}},"aggressive":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":30,"aspirate_volume":10},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":15},"delays":{"post_aspirate":3.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"enabled":true,"location":"destination","repetitions":7,"source_remixing":"once"}},"cell_resuspension":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"source","repetitions":5,"source_remixing":"once"}}}},"working_plate":[{"type":"module","module_type":"heaterShaker","position_rack":"10","adapter_id":"opentrons_universal_flat_adapter","labware_id":"","target_temperature":0,"target_shake_speed":0,"persist_after_protocol":true},{"type":"reservoir","labware_id":"384_ppv_55ul","position_rack":"2"},{"type":"reservoir","labware_id":"tube_rack_96_1500ul","position_rack":"4"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","mode":"multi","position_rack":"1"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","mode":"multi_X1","position_rack":"3"},{"type":"tip","labware_id":"tip_rack_geb_1000ul","connection":"Pipette_1","mode":"multi","position_rack":"9"}]}},"csv_data":"Source Labware,Source Well,Volume (ul),Distribution Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Distribution,Mix Volume,Tip Action\\ntube_rack_96_1500ul_4,A1,,50,384_ppv_55ul_2,A1|B2|A3|B4,2,-5,equal,,drop"}""")
+    _all_values = json.loads("""{"labware_dict":{"pipettes":[{"name":"Pipette_8","opentrons_id":"p300_multi_gen2","channels":8,"volume_range":[30,300],"preferred_mount":"right","tip_connections":["opentrons_96_tiprack_300ul"]},{"name":"Pipette_1","opentrons_id":"p1000_single_gen2","channels":1,"volume_range":[100,1000],"preferred_mount":"left","tip_connections":["tip_rack_geb_1000ul"]}],"labware":[{"category":"tip_rack","labware_id":"tip_rack_yellow_100ul","well_count":96,"well_volume":100},{"category":"tip_rack","labware_id":"opentrons_96_tiprack_300ul","well_count":96,"well_volume":300},{"category":"tip_rack","labware_id":"tip_rack_geb_1000ul","well_count":96,"well_volume":1000},{"category":"reservoir","labware_id":"reservoir_horizontal","well_count":12,"well_volume":15000},{"category":"reservoir","labware_id":"reservoir_vertical","well_count":2,"well_volume":50000},{"category":"plate","labware_id":"384_pp_standard_100ul","well_count":384,"well_volume":100},{"category":"plate","labware_id":"384_pp_high_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ppv_55ul","well_count":384,"well_volume":55},{"category":"plate","labware_id":"384_ppv_150ul","well_count":384,"well_volume":150},{"category":"plate","labware_id":"384_ldv_12ul","well_count":384,"well_volume":12},{"category":"tube_rack","labware_id":"tube_rack_96_2000ul","well_count":96,"well_volume":2000},{"category":"tube_rack","labware_id":"tube_rack_96_1500ul","well_count":96,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_24_4000ul","well_count":24,"well_volume":4000},{"category":"tube_rack","labware_id":"tube_rack_48_1500ul","well_count":48,"well_volume":1500},{"category":"tube_rack","labware_id":"tube_rack_54_1500ul","well_count":54,"well_volume":1500}]},"settings":{"settings":{"general":{"mode":"multi","starting_tip_well":"H1","head_speed":{"speed":400}},"liquid_handling":{"pre_aspirate_contact":{"enabled":false,"position_offset_percent":20,"aspirate_volume":20},"post_aspirate_wick":{"enabled":false,"radius":1,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":true,"volume_ul":20},"mixing":{"enabled":false,"location":"destination","repetitions":2,"source_remixing":"once"},"presets":{"standard":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"destination","repetitions":3,"source_remixing":"once"}},"viscous":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":2.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"enabled":true,"location":"destination","repetitions":5,"source_remixing":"once"}},"slippery":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":5},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"destination","repetitions":3,"source_remixing":"once"}},"minimal":{"pre_aspirate_contact":{"enabled":false},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"destination","repetitions":3,"source_remixing":"once"}},"aggressive":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":30,"aspirate_volume":10},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":15},"delays":{"post_aspirate":3.0},"push_out":{"enabled":true,"volume_ul":5},"mixing":{"enabled":true,"location":"destination","repetitions":7,"source_remixing":"once"}},"cell_resuspension":{"pre_aspirate_contact":{"enabled":true,"position_offset_percent":20,"aspirate_volume":0},"post_aspirate_wick":{"enabled":true,"radius":0.8,"v_offset_mm":-1.5,"speed":20},"delays":{"post_aspirate":0},"push_out":{"enabled":false},"mixing":{"enabled":true,"location":"source","repetitions":5,"source_remixing":"once"}}}},"working_plate":[{"type":"module","module_type":"heaterShaker","position_rack":"10","adapter_id":"opentrons_universal_flat_adapter","labware_id":"","target_temperature":0,"target_shake_speed":0,"persist_after_protocol":true},{"type":"reservoir","labware_id":"384_ppv_55ul","position_rack":"2"},{"type":"reservoir","labware_id":"tube_rack_96_1500ul","position_rack":"4"},{"type":"reservoir","labware_id":"reservoir_vertical","position_rack":"5"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","mode":"multi","position_rack":"1"},{"type":"tip","labware_id":"opentrons_96_tiprack_300ul","connection":"Pipette_8","mode":"multi_X1","position_rack":"3"},{"type":"tip","labware_id":"tip_rack_geb_1000ul","connection":"Pipette_1","mode":"single_X1","position_rack":"9"}]}},"csv_data":"Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action\\nreservoir_vertical_5,A1,50,384_ppv_55ul_2,A1,-5,-3,new\\nreservoir_vertical_5,A1,50,384_ppv_55ul_2,A2,-5,-3,keep\\nreservoir_vertical_5,A2,50,384_ppv_55ul_2,A3,-5,-3,keep\\nreservoir_vertical_5,A2,50,384_ppv_55ul_2,A4,-5,-3,drop"}""")
     return [_all_values[n] for n in names]
 
 
@@ -19,6 +19,12 @@ Distribution features:
 
 Pipette modes: single-channel, 8-channel multi, 8-channel single-tip (multi_X1)
 Configurable via settings.toml and CSV transfer maps
+
+HOME CONTROL ROW:
+A special row where ALL columns contain "HOME" (case-insensitive).
+When encountered, the robot re-homes to correct precision drift.
+Example: HOME,HOME,HOME,HOME,HOME,HOME,HOME,HOME
+Use this in long protocols (100+ transfers) to maintain accuracy.
 """
 from opentrons import protocol_api
 from opentrons.protocol_api import SINGLE, ALL
@@ -35,14 +41,21 @@ metadata = {
 requirements = {"robotType": "OT-2", "apiLevel": "2.24"}
 
 def validate_multi_mode_compatibility(labware_dict, settings):
-    """Validate that multi mode is only used with compatible plates"""
+    """Validate that multi mode is only used with compatible labware.
+
+    Compatible labware includes:
+    - 96-well plates (full column access)
+    - 384-well plates (every-other-row access)
+    - Reservoirs (1, 2, 8, 12 wells) - Opentrons API centers all 8 tips via labware quirks
+    """
     if settings['settings']['general']['mode'] != 'multi':
         return True
 
-    compatible_well_counts = {96, 384}
+    # 96/384-well plates + common reservoir well counts (1, 2, 8, 12)
+    compatible_well_counts = {1, 2, 8, 12, 96, 384}
 
     for plate_config in settings['settings']['working_plate']:
-        if plate_config['type'] in ['source', 'dest']:
+        if plate_config['type'] in ['source', 'dest', 'reservoir']:
             labware_id = plate_config['labware_id']
 
             # Find labware definition in table array and check well count
@@ -51,13 +64,25 @@ def validate_multi_mode_compatibility(labware_dict, settings):
                     if labware_item['labware_id'] == labware_id:
                         well_count = labware_item.get('well_count')
                         if well_count and well_count not in compatible_well_counts:
-                            raise ValueError(f"Multi mode requires 96 or 384-well plates. Found {well_count}-well plate: {labware_id}")
+                            raise ValueError(f"Multi mode requires 96/384-well plates or reservoirs (1,2,8,12 wells). Found {well_count}-well labware: {labware_id}")
                         break
     return True
 
 def get_multi_channel_wells(labware, well_name, well_count):
-    """Map single well to 8-channel pattern based on plate type"""
-    if well_count == 96:
+    """Map single well to 8-channel pattern based on plate type.
+
+    For reservoirs (1, 2, 8, 12 wells): Returns single well as list.
+    The Opentrons API handles multi-channel centering via 'centerMultichannelOnWells' quirk.
+    All 8 tips will center on the single rectangular well automatically.
+
+    For 96-well plates: Returns full column (8 wells).
+    For 384-well plates: Returns every-other-row pattern (8 wells).
+    """
+    # Reservoir handling: 1, 2, 8, or 12 wells
+    # Opentrons API centers all 8 tips on the single well via labware quirks
+    if well_count in [1, 2, 8, 12]:
+        return [labware[well_name]]
+    elif well_count == 96:
         # Full column access for 96-well plates
         column_name = well_name[1:]  # Extract column number (A1 → 1)
         return labware.columns_by_name()[column_name]
@@ -82,6 +107,40 @@ def get_multi_channel_wells(labware, well_name, well_count):
             return target_wells
     else:
         raise ValueError(f"Multi mode not supported for {well_count}-well plates")
+
+def is_home_control_row(transfer: dict) -> bool:
+    """
+    Check if a CSV row is a HOME control row.
+
+    A HOME row has "HOME" (case-insensitive) in ALL non-empty columns.
+    This triggers protocol.home() to re-home the robot mid-protocol,
+    useful for correcting precision drift during long runs.
+
+    Args:
+        transfer: Dictionary representing one CSV row
+
+    Returns:
+        True if this is a valid HOME control row, False otherwise
+    """
+    values = []
+    for value in transfer.values():
+        if value is None:
+            continue
+        if isinstance(value, list):
+            for item in value:
+                item_str = str(item).strip()
+                if item_str:
+                    values.append(item_str.upper())
+            continue
+        value_str = str(value).strip()
+        if value_str:
+            values.append(value_str.upper())
+
+    if not values:
+        return False
+
+    return all(v == "HOME" for v in values)
+
 
 def determine_tip_action(transfer, row_index):
     """
@@ -317,15 +376,18 @@ def validate_csv_labware_match(settings, transfers):
         # Skip modules - they are background-only and not CSV-accessible
         if plate_config.get('type') == 'module':
             continue
-        
+
         labware_id = plate_config['labware_id']
         slot = plate_config['position_rack']
         expected_name = f"{labware_id}_{slot}"
         expected_labware.add(expected_name)
 
-    # Extract all labware references from CSV
+    # Extract all labware references from CSV (skip HOME control rows)
     csv_labware_refs = set()
     for transfer in transfers:
+        # Skip HOME control rows - they don't contain valid labware references
+        if is_home_control_row(transfer):
+            continue
         csv_labware_refs.add(transfer['Source Labware'])
         csv_labware_refs.add(transfer['Dest Labware'])
 
@@ -1190,9 +1252,31 @@ def run(protocol: protocol_api.ProtocolContext):
     tip_contacted = False  # Track if current tip has contacted liquid
     last_tip_action = None  # Track the last transfer's tip action for final cleanup
     mixed_source_wells = set()  # Track which source wells have been mixed (for source_remixing='once')
+    prev_row_was_home = False  # Track if previous row was HOME control
 
     # Execute each transfer
     for i, transfer in enumerate(transfers):
+        # === HOME CONTROL ROW CHECK ===
+        # If all non-empty columns contain "HOME", re-home the robot and skip this row
+        if is_home_control_row(transfer):
+            protocol.comment(f"Row {i+1}: HOME control - Re-homing robot to correct any precision drift")
+            protocol.home()
+            prev_row_was_home = True
+            continue
+        # === END HOME CONTROL CHECK ===
+
+        # === HOME→NEW VALIDATION (Firmware requirement) ===
+        # Robot drops tips when homing, so next row MUST pick up new tip
+        if prev_row_was_home:
+            tip_action = transfer.get('Tip Action', '').strip().lower()
+            if tip_action != 'new':
+                raise ValueError(
+                    f"Row {i+1}: Row after HOME control MUST have Tip Action: new (got '{tip_action or 'empty'}'). "
+                    f"This is a firmware requirement - the robot drops tips when homing."
+                )
+            prev_row_was_home = False
+        # === END HOME→NEW VALIDATION ===
+
         # Parse transfer parameters
         source_labware_name = transfer['Source Labware']
         source_well = transfer['Source Well']

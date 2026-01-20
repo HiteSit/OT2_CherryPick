@@ -103,6 +103,9 @@ CSV_CONFIG_MAP: dict[str, list[str]] = {
 
     # Custom deck layout
     "fill_analytics_plate.csv": ["fill_analytics"],
+
+    # HOME control row feature
+    "example_home_control.csv": ["single_X1", "multi_X1"],
 }
 
 

@@ -24,6 +24,18 @@
         "JetBrains"
       ],
       "env": {}
+    },
+    "mermaid-mcp": {
+      "url": "https://mcp.mermaid.ai/sse",
+      "type": "sse"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--browser",
+        "firefox"
+      ]
     }
   }
 }
