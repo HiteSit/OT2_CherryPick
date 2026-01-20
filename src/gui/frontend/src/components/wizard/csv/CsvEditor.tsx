@@ -28,6 +28,16 @@ export function CsvEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.csv.filename, state.csv.content])
 
+  // Sync selected file content to local state and wizard context
+  useEffect(() => {
+    if (csvContentQuery.data !== undefined && selectedFile) {
+      setEditorContent(csvContentQuery.data)
+      setFilename(selectedFile)
+      setCSV(selectedFile, csvContentQuery.data)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [csvContentQuery.data, selectedFile])
+
   const handleTextChange = (value: string) => {
     const targetFilename = filename || 'wizard.csv'
     setEditorContent(value)
