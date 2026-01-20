@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Core Selection
 
-- [ ] **SEL-01**: Dropdown showing CSV files from gui_state/CSVs directory
-- [ ] **SEL-02**: Selecting a file immediately loads content into SpreadSheet and Text views
-- [ ] **SEL-03**: Manual refresh button to re-scan directory for new files
-- [ ] **SEL-04**: Type-ahead filtering (searchable dropdown) for finding files
+- [x] **SEL-01**: Dropdown showing CSV files from gui_state/CSVs directory
+- [x] **SEL-02**: Selecting a file immediately loads content into SpreadSheet and Text views
+- [x] **SEL-03**: Manual refresh button to re-scan directory for new files
+- [x] **SEL-04**: Type-ahead filtering (searchable dropdown) for finding files
 
 ### Data Safety
 
@@ -54,10 +54,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEL-01 | Phase 1 | Pending |
-| SEL-02 | Phase 1 | Pending |
-| SEL-03 | Phase 1 | Pending |
-| SEL-04 | Phase 1 | Pending |
+| SEL-01 | Phase 1 | Complete |
+| SEL-02 | Phase 1 | Complete |
+| SEL-03 | Phase 1 | Complete |
+| SEL-04 | Phase 1 | Complete |
 | SAFE-01 | Phase 2 | Pending |
 | SAFE-02 | Phase 2 | Pending |
 | EMPTY-01 | Phase 3 | Pending |
@@ -70,4 +70,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-20*
-*Last updated: 2026-01-20 after roadmap creation*
+*Last updated: 2026-01-20 - Phase 1 requirements complete*
