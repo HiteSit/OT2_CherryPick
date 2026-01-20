@@ -25,12 +25,10 @@ This feature adds a dropdown-based CSV file selector to the OT2 CherryPick GUI C
   2. User can type in dropdown to filter the file list (type-ahead search)
   3. Selecting a file immediately loads content into SpreadSheet and Text views
   4. User can click refresh button to re-scan directory and update file list
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 01-01: FileSelector component with Mantine Select and react-query integration
-- [ ] 01-02: Load on selection (wire to SpreadSheet/Text views)
-- [ ] 01-03: Refresh button to invalidate file list cache
+- [ ] 01-01-PLAN.md — File selector with search, clear, refresh, and immediate content loading
 
 ### Phase 2: Data Safety
 **Goal**: Users are protected from accidentally losing unsaved changes when switching files
@@ -68,7 +66,7 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core Selection | 0/3 | Not started | - |
+| 1. Core Selection | 0/1 | Planned | - |
 | 2. Data Safety | 0/2 | Not started | - |
 | 3. Polish | 0/2 | Not started | - |
 
