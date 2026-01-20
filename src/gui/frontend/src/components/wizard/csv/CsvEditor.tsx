@@ -190,6 +190,10 @@ export function CsvEditor() {
         />
       )}
 
+      {csvContentQuery.isFetching && selectedFile && (
+        <Text size="sm" c="dimmed">Loading file content...</Text>
+      )}
+
       {/* Row 1: Filename and Upload */}
       <Group align="flex-end">
         <TextInput
