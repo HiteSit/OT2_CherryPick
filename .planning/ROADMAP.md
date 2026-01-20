@@ -11,7 +11,7 @@ This feature adds a dropdown-based CSV file selector to the OT2 CherryPick GUI C
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Core Selection** - Dropdown with file list, immediate load, refresh button
-- [ ] **Phase 2: Data Safety** - Unsaved changes detection and warning dialog
+- [x] **Phase 2: Data Safety** - Unsaved changes detection and warning dialog
 - [ ] **Phase 3: Polish** - Empty state handling and startup auto-selection
 
 ## Phase Details
@@ -42,7 +42,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 02-01-PLAN.md — Dirty state detection and UnsavedChangesModal with Discard/Cancel actions
+- [x] 02-01-PLAN.md — Dirty state detection and UnsavedChangesModal with Discard/Cancel actions
 
 ### Phase 3: Polish
 **Goal**: Edge cases handled gracefully with appropriate user feedback
@@ -66,9 +66,9 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Core Selection | 1/1 | ✓ Complete | 2026-01-20 |
-| 2. Data Safety | 0/1 | Planned | - |
+| 2. Data Safety | 1/1 | ✓ Complete | 2026-01-20 |
 | 3. Polish | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-20 - Phase 2 planned*
+*Last updated: 2026-01-20 - Phase 2 complete*

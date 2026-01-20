@@ -16,8 +16,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Data Safety
 
-- [ ] **SAFE-01**: Unsaved changes warning dialog before switching files when content is dirty
-- [ ] **SAFE-02**: Dialog has clear Discard/Cancel button labels
+- [x] **SAFE-01**: Unsaved changes warning dialog before switching files when content is dirty
+- [x] **SAFE-02**: Dialog has clear Discard/Cancel button labels
 
 ### Empty State
 
@@ -58,8 +58,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEL-02 | Phase 1 | Complete |
 | SEL-03 | Phase 1 | Complete |
 | SEL-04 | Phase 1 | Complete |
-| SAFE-01 | Phase 2 | Pending |
-| SAFE-02 | Phase 2 | Pending |
+| SAFE-01 | Phase 2 | Complete |
+| SAFE-02 | Phase 2 | Complete |
 | EMPTY-01 | Phase 3 | Pending |
 | START-01 | Phase 3 | Pending |
 
@@ -70,4 +70,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-20*
-*Last updated: 2026-01-20 - Phase 1 requirements complete*
+*Last updated: 2026-01-20 - Phase 2 requirements complete*
