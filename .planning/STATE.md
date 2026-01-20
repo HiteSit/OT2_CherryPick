@@ -10,30 +10,30 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Phase: 1 of 3 (Core Selection)
-Plan: 0 of 1 in current phase
-Status: Ready to execute
-Last activity: 2026-01-20 - Phase 1 planned (consolidated to 1 plan)
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-01-20 - Completed 01-01-PLAN.md
 
-Progress: [----------] 0%
+Progress: [██--------] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 1 min
+- Total execution time: 0.02 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1. Core Selection | 0/1 | - | - |
+| 1. Core Selection | 1/1 | 1 min | 1 min |
 | 2. Data Safety | 0/2 | - | - |
 | 3. Polish | 0/2 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: -
-- Trend: -
+- Last 5 plans: 1 min
+- Trend: Just started
 
 *Updated after each plan completion*
 
@@ -45,6 +45,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 - **2026-01-20**: Consolidated Phase 1 from 3 plans to 1 plan (research showed all infrastructure exists, work is cohesive)
+- **2026-01-20**: Custom rightSection Group for both X and refresh buttons (avoids Mantine clearable conflict)
+- **2026-01-20**: Refresh always clears selection to prevent stale content
+- **2026-01-20**: Case-insensitive substring search (Mantine Select default)
+- **2026-01-20**: Alphabetical file sorting for predictable UI
 
 ### Pending Todos
 
@@ -57,5 +61,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Phase 1 planned, ready to execute
-Resume file: .planning/phases/01-core-selection/01-01-PLAN.md
+Stopped at: Completed 01-01-PLAN.md, Phase 1 complete
+Resume file: None - ready for Phase 2 planning
