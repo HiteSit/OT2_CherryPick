@@ -39,11 +39,10 @@ Plans:
   2. Dialog presents clear "Discard" and "Cancel" button labels
   3. Clicking "Cancel" keeps current file and unsaved changes intact
   4. Clicking "Discard" switches to new file and loads its content
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 02-01: Dirty state detection (compare editor content vs server content)
-- [ ] 02-02: UnsavedChangesModal with Discard/Cancel actions
+- [ ] 02-01-PLAN.md — Dirty state detection and UnsavedChangesModal with Discard/Cancel actions
 
 ### Phase 3: Polish
 **Goal**: Edge cases handled gracefully with appropriate user feedback
@@ -67,9 +66,9 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Core Selection | 1/1 | ✓ Complete | 2026-01-20 |
-| 2. Data Safety | 0/2 | Not started | - |
+| 2. Data Safety | 0/1 | Planned | - |
 | 3. Polish | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-20 - Phase 1 complete*
+*Last updated: 2026-01-20 - Phase 2 planned*
