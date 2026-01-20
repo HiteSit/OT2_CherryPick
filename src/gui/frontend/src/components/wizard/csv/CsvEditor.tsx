@@ -1,18 +1,21 @@
-import { Tabs, Textarea, Button, Group, Stack, FileInput, Text, TextInput } from '@mantine/core'
-import { IconUpload, IconPlus, IconMinus } from '@tabler/icons-react'
+import { Tabs, Textarea, Button, Group, Stack, FileInput, Text, TextInput, Select, ActionIcon, Loader } from '@mantine/core'
+import { IconUpload, IconPlus, IconMinus, IconRefresh, IconX } from '@tabler/icons-react'
 import { useEffect, useState, useMemo } from 'react'
 import { useWizard } from '../WizardContext'
 import Spreadsheet from 'react-spreadsheet'
 import Papa from 'papaparse'
 import type { CellBase } from 'react-spreadsheet'
-import { useUploadCsv } from '../../../api/hooks'
+import { useUploadCsv, useCsvListQuery, useCsvContentQuery } from '../../../api/hooks'
 
 export function CsvEditor() {
   const { state, setCSV } = useWizard()
   const [activeTab, setActiveTab] = useState<string | null>('spreadsheet')
   const [editorContent, setEditorContent] = useState(state.csv.content)
   const [filename, setFilename] = useState(state.csv.filename || 'wizard.csv')
+  const [selectedFile, setSelectedFile] = useState('')
   const uploadCsv = useUploadCsv()
+  const csvListQuery = useCsvListQuery()
+  const csvContentQuery = useCsvContentQuery(selectedFile)
 
   // Sync wizard context CSV state to local editor state
   // Note: setFilename and setEditorContent are stable useState setters, not needed in deps
@@ -75,6 +78,27 @@ export function CsvEditor() {
     uploadCsv.mutate({ name: targetFilename, content: editorContent })
   }
 
+  const handleClearSelection = () => {
+    setSelectedFile('')
+    setFilename('wizard.csv')
+    setEditorContent('')
+    setCSV('wizard.csv', '')
+  }
+
+  const handleRefresh = () => {
+    csvListQuery.refetch()
+    // Per CONTEXT.md: refresh ALWAYS clears selection
+    handleClearSelection()
+  }
+
+  // Memoized options for CSV file selector
+  const csvOptions = useMemo(
+    () => (csvListQuery.data?.files ?? [])
+      .sort((a, b) => a.localeCompare(b))
+      .map((name) => ({ value: name, label: name })),
+    [csvListQuery.data],
+  )
+
   // Parse CSV to spreadsheet data
   const sheetData = useMemo(() => {
     if (activeTab !== 'spreadsheet') return []
@@ -106,6 +130,56 @@ export function CsvEditor() {
 
   return (
     <Stack>
+      {/* CSV File Selector */}
+      {csvListQuery.isLoading ? (
+        <Group gap="xs">
+          <Loader size="sm" />
+          <Text c="dimmed" size="sm">Loading CSV files...</Text>
+        </Group>
+      ) : (
+        <Select
+          label="Select CSV file"
+          placeholder="Choose a file or type to search"
+          searchable
+          data={csvOptions}
+          value={selectedFile || null}
+          onChange={(value) => setSelectedFile(value || '')}
+          nothingFoundMessage="No matching files"
+          disabled={csvListQuery.isLoading}
+          rightSection={
+            <Group gap={4} wrap="nowrap">
+              {selectedFile && (
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleClearSelection()
+                  }}
+                  aria-label="Clear selection"
+                >
+                  <IconX size={14} />
+                </ActionIcon>
+              )}
+              <ActionIcon
+                size="sm"
+                variant="subtle"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleRefresh()
+                }}
+                loading={csvListQuery.isFetching}
+                aria-label="Refresh file list"
+              >
+                <IconRefresh size={14} />
+              </ActionIcon>
+            </Group>
+          }
+          rightSectionPointerEvents="all"
+          style={{ flex: 1, maxWidth: 400 }}
+        />
+      )}
+
       {/* Row 1: Filename and Upload */}
       <Group align="flex-end">
         <TextInput
