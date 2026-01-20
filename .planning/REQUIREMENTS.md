@@ -54,20 +54,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEL-01 | Phase ? | Pending |
-| SEL-02 | Phase ? | Pending |
-| SEL-03 | Phase ? | Pending |
-| SEL-04 | Phase ? | Pending |
-| SAFE-01 | Phase ? | Pending |
-| SAFE-02 | Phase ? | Pending |
-| EMPTY-01 | Phase ? | Pending |
-| START-01 | Phase ? | Pending |
+| SEL-01 | Phase 1 | Pending |
+| SEL-02 | Phase 1 | Pending |
+| SEL-03 | Phase 1 | Pending |
+| SEL-04 | Phase 1 | Pending |
+| SAFE-01 | Phase 2 | Pending |
+| SAFE-02 | Phase 2 | Pending |
+| EMPTY-01 | Phase 3 | Pending |
+| START-01 | Phase 3 | Pending |
 
 **Coverage:**
 - v1 requirements: 8 total
-- Mapped to phases: 0
-- Unmapped: 8 ⚠️
+- Mapped to phases: 8
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-20*
-*Last updated: 2026-01-20 after initial definition*
+*Last updated: 2026-01-20 after roadmap creation*
