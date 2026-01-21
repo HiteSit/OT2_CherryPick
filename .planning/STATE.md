@@ -2,68 +2,61 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-20)
+See: .planning/PROJECT.md (updated 2026-01-21)
 
-**Core value:** Users can select CSV files from a dropdown and immediately see content loaded
-**Current focus:** Milestone complete - all phases verified
+**Core value:** Users can select CSV files from a dropdown and immediately see content loaded with protection against data loss
+**Current focus:** v1.0 milestone complete — ready to plan next milestone
 
 ## Current Position
 
-Phase: 3 of 3 (Polish)
-Plan: 1 of 1 in current phase
-Status: Phase complete, verified
-Last activity: 2026-01-21 - Completed phase 3: Empty state handling
+Phase: N/A
+Plan: N/A
+Status: Milestone v1.0 complete
+Last activity: 2026-01-21 — v1.0 CSV File Selector shipped
 
-Progress: [██████████] 100%
+Progress: v1.0 complete (3 phases, 3 plans, 7 tasks)
 
 ## Performance Metrics
 
-**Velocity:**
+**v1.0 Milestone:**
 - Total plans completed: 3
-- Average duration: 4 min
-- Total execution time: 0.22 hours
+- Total tasks: 7
+- Average duration: 4 min per plan
+- Total execution time: 13 minutes
+- Timeline: 1 day (2026-01-20 → 2026-01-21)
 
 **By Phase:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1. Core Selection | 1/1 | 1 min | 1 min |
-| 2. Data Safety | 1/1 | 7 min | 7 min |
-| 3. Polish | 1/1 | 5 min | 5 min |
+| Phase | Plans | Tasks | Duration | Completed |
+|-------|-------|-------|----------|-----------|
+| 1. Core Selection | 1/1 | 3 | 1 min | 2026-01-20 |
+| 2. Data Safety | 1/1 | 2 | 7 min | 2026-01-20 |
+| 3. Polish | 1/1 | 2 | 5 min | 2026-01-21 |
 
-**Recent Trend:**
-- Last 3 plans: 1 min, 7 min, 5 min
-- Trend: Consistent delivery
-
-*Updated after each plan completion*
+**Velocity Trend:**
+- Consistent delivery across all phases
+- No blockers encountered
+- All phase goals verified
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+All decisions from v1.0 milestone are now in PROJECT.md Key Decisions table with outcomes marked ✓ Good.
 
-- **2026-01-20**: Consolidated Phase 1 from 3 plans to 1 plan (research showed all infrastructure exists, work is cohesive)
-- **2026-01-20**: Custom rightSection Group for both X and refresh buttons (avoids Mantine clearable conflict)
-- **2026-01-20**: Refresh always clears selection to prevent stale content
-- **2026-01-20**: Case-insensitive substring search (Mantine Select default)
-- **2026-01-20**: Alphabetical file sorting for predictable UI
-- **2026-01-20**: Dirty state derived from editorContent !== originalContent comparison (02-01)
-- **2026-01-20**: Modal only appears when isDirty AND file selection differs from current (02-01)
-- **2026-01-20**: Confirmation modal pattern with pending state for user decisions (02-01)
-- **2026-01-21**: isEmpty derivation from csvListQuery.data.files.length === 0 (03-01)
-- **2026-01-21**: Conditional placeholder: "No CSV files found" vs "Choose a file or type to search" (03-01)
-- **2026-01-21**: Filled variant for FileInput when empty to emphasize upload action (03-01)
-- **2026-01-21**: Disabled dropdown when isEmpty or isLoading to prevent interaction (03-01)
+Recent implementation patterns established:
+- Custom Mantine rightSection pattern for multiple action buttons
+- Confirmation modal pattern with pending state for user decisions
+- isEmpty derivation pattern for conditional rendering
+- Dirty state tracking with originalContent baseline comparison
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-None yet.
+None.
 
 ### Quick Tasks Completed
 
@@ -74,5 +67,7 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-21
-Stopped at: Phase 3 execution complete, milestone complete
-Resume file: .planning/ROADMAP.md (ready for milestone audit)
+Stopped at: v1.0 milestone complete and archived
+Resume file: .planning/MILESTONES.md (see v1.0 entry for full details)
+
+**Next steps:** Run `/gsd:new-milestone` to start planning next milestone (questioning → research → requirements → roadmap)

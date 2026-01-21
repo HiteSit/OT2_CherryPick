@@ -2,32 +2,35 @@
 
 ## What This Is
 
-Improving the web GUI for the OT-2 CherryPick protocol generator to provide a better user experience when selecting and loading CSV transfer files. The GUI already exists (React 19 + Mantine, FastAPI backend) — this enhances the Configuration tab with a proper file selector instead of manual text entry.
+Web GUI enhancement for the OT-2 CherryPick protocol generator. Provides a dropdown-based CSV file selector in the Configuration tab with immediate content loading, unsaved changes protection, and graceful empty state handling. Built with React 19 + Mantine UI on existing FastAPI backend.
 
 ## Core Value
 
-Users can select CSV files from a dropdown and immediately see the content loaded in the editor views — no manual path typing, no guessing filenames.
+Users can select CSV files from a dropdown and immediately see the content loaded in the editor views — no manual path typing, no guessing filenames, with protection against accidental data loss.
 
 ## Requirements
 
 ### Validated
 
-- ✓ Protocol generation from TOML + CSV — existing
-- ✓ Web GUI with Configuration tab — existing
-- ✓ SpreadSheet View for CSV editing — existing
-- ✓ Text View for raw CSV content — existing
-- ✓ Workflow execution (generate → simulate → deploy) — existing
-- ✓ gui_state workspace isolation — existing
+**v1.0 (Shipped 2026-01-21):**
+- ✓ CSV file dropdown selector in Configuration tab — v1.0
+- ✓ Backend endpoint to list CSVs from gui_state/CSVs directory — v1.0
+- ✓ Immediate load on selection (SpreadSheet + Text views) — v1.0
+- ✓ Manual refresh button to re-scan directory — v1.0
+- ✓ Unsaved changes warning dialog before switching files — v1.0
+- ✓ Disabled dropdown with "No CSV files found" when empty — v1.0
+
+**Existing (Pre-v1.0):**
+- ✓ Protocol generation from TOML + CSV
+- ✓ Web GUI with Configuration tab
+- ✓ SpreadSheet View for CSV editing
+- ✓ Text View for raw CSV content
+- ✓ Workflow execution (generate → simulate → deploy)
+- ✓ gui_state workspace isolation
 
 ### Active
 
-- [ ] CSV file dropdown selector in Configuration tab
-- [ ] Backend endpoint to list CSVs from gui_state/CSVs directory
-- [ ] Immediate load on selection (SpreadSheet + Text views)
-- [ ] Manual refresh button to re-scan directory
-- [ ] Unsaved changes warning dialog before switching files
-- [ ] Disabled dropdown with "No CSV files found" when empty
-- [ ] Default selection: first file alphabetically, auto-loaded on startup
+(None — next milestone will define fresh requirements)
 
 ### Out of Scope
 
@@ -38,17 +41,19 @@ Users can select CSV files from a dropdown and immediately see the content loade
 
 ## Context
 
-**Technical environment:**
+**Current State (v1.0):**
+- 170 lines TypeScript/React added across 2 files
+- CsvEditor.tsx: File selector with search, dirty detection, empty state handling
+- UnsavedChangesModal.tsx: Confirmation dialog for unsaved changes
+- Tech stack: React 19.2, Mantine 8.3+, FastAPI, TanStack Query
+- All v1.0 requirements validated through integration testing
+
+**Technical Environment:**
 - React 19.2 with Mantine 8.3+ component library
 - FastAPI backend with FileStateStore managing gui_state/
 - CSV directory: `gui_state/CSVs/` (dev) or volume mount (Docker)
 - Existing components: SpreadSheet view uses react-spreadsheet, Text view for raw content
 - PapaParse for CSV parsing
-
-**Current state:**
-- Configuration tab has text input field for CSV filename
-- Users must type filename manually or know what files exist
-- No discovery of available CSV files
 
 ## Constraints
 
@@ -60,10 +65,16 @@ Users can select CSV files from a dropdown and immediately see the content loade
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Dropdown over file browser | Simpler UX, scoped to known directory | — Pending |
-| Immediate load on select | Reduces clicks, feels responsive | — Pending |
-| Warn on unsaved changes | Prevent accidental data loss | — Pending |
-| Manual refresh only | Simpler than polling, user controls when | — Pending |
+| Custom rightSection Group for X and refresh buttons | Avoids Mantine clearable conflict | ✓ Good — clean UI, both buttons functional |
+| Refresh always clears selection | Prevent stale content display | ✓ Good — per CONTEXT.md requirement |
+| Case-insensitive substring search | Better UX for file discovery | ✓ Good — Mantine Select default works well |
+| Alphabetical file sorting | Predictable, scannable dropdown list | ✓ Good — users can find files easily |
+| Dirty state from editorContent !== originalContent | Passive dirty detection without blocking editing | ✓ Good — simple and reliable |
+| Modal only when isDirty AND file differs | Allows switching when no edits or same file | ✓ Good — prevents unnecessary warnings |
+| Confirmation modal with pending state | Store intended action until user confirms | ✓ Good — clean state management pattern |
+| isEmpty from csvListQuery.data.files.length === 0 | Defensive check (data !== undefined first) | ✓ Good — prevents false positives during loading |
+| Filled variant for FileInput when empty | Visual emphasis on upload when dropdown disabled | ✓ Good — clear call-to-action |
+| Disabled dropdown when isEmpty or isLoading | Prevent interaction with empty or loading state | ✓ Good — clear feedback, no confusion |
 
 ---
-*Last updated: 2026-01-20 after initialization*
+*Last updated: 2026-01-21 after v1.0 milestone*
