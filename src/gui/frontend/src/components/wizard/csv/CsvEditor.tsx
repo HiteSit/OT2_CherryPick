@@ -162,81 +162,64 @@ export function CsvEditor() {
 
   return (
     <Stack>
-      {/* CSV File Selector */}
-      {csvListQuery.isLoading ? (
-        <Group gap="xs">
-          <Loader size="sm" />
-          <Text c="dimmed" size="sm">Loading CSV files...</Text>
-        </Group>
-      ) : (
-        <Select
-          label="Select CSV file"
-          placeholder="Choose a file or type to search"
-          searchable
-          data={csvOptions}
-          value={selectedFile || null}
-          onChange={(value) => {
-            const newValue = value || ''
-            if (isDirty && newValue !== selectedFile) {
-              setPendingFile(newValue)
-              setShowUnsavedModal(true)
-            } else {
-              setSelectedFile(newValue)
-            }
-          }}
-          nothingFoundMessage="No matching files"
-          disabled={csvListQuery.isLoading}
-          rightSection={
-            <Group gap={4} wrap="nowrap">
-              {selectedFile && (
+      {/* Row 1: CSV File Selector and Upload */}
+      <Group align="flex-end">
+        {csvListQuery.isLoading ? (
+          <Group gap="xs">
+            <Loader size="sm" />
+            <Text c="dimmed" size="sm">Loading CSV files...</Text>
+          </Group>
+        ) : (
+          <Select
+            label="Select CSV file"
+            placeholder="Choose a file or type to search"
+            searchable
+            data={csvOptions}
+            value={selectedFile || null}
+            onChange={(value) => {
+              const newValue = value || ''
+              if (isDirty && newValue !== selectedFile) {
+                setPendingFile(newValue)
+                setShowUnsavedModal(true)
+              } else {
+                setSelectedFile(newValue)
+              }
+            }}
+            nothingFoundMessage="No matching files"
+            disabled={csvListQuery.isLoading}
+            rightSection={
+              <Group gap={4} wrap="nowrap">
+                {selectedFile && (
+                  <ActionIcon
+                    size="sm"
+                    variant="subtle"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleClearSelection()
+                    }}
+                    aria-label="Clear selection"
+                  >
+                    <IconX size={14} />
+                  </ActionIcon>
+                )}
                 <ActionIcon
                   size="sm"
                   variant="subtle"
                   onClick={(e) => {
                     e.stopPropagation()
-                    handleClearSelection()
+                    handleRefresh()
                   }}
-                  aria-label="Clear selection"
+                  loading={csvListQuery.isFetching}
+                  aria-label="Refresh file list"
                 >
-                  <IconX size={14} />
+                  <IconRefresh size={14} />
                 </ActionIcon>
-              )}
-              <ActionIcon
-                size="sm"
-                variant="subtle"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleRefresh()
-                }}
-                loading={csvListQuery.isFetching}
-                aria-label="Refresh file list"
-              >
-                <IconRefresh size={14} />
-              </ActionIcon>
-            </Group>
-          }
-          rightSectionPointerEvents="all"
-          style={{ flex: 1, maxWidth: 400 }}
-        />
-      )}
-
-      {csvContentQuery.isFetching && selectedFile && (
-        <Text size="sm" c="dimmed">Loading file content...</Text>
-      )}
-
-      {/* Row 1: Filename and Upload */}
-      <Group align="flex-end">
-        <TextInput
-          label="CSV filename"
-          placeholder="wizard.csv"
-          value={filename}
-          onChange={(e) => {
-            const next = e.target.value || 'wizard.csv'
-            setFilename(next)
-            setCSV(next, editorContent)
-          }}
-          style={{ flex: 1, maxWidth: 300 }}
-        />
+              </Group>
+            }
+            rightSectionPointerEvents="all"
+            style={{ flex: 1, maxWidth: 400 }}
+          />
+        )}
         <FileInput
           label="Upload CSV"
           placeholder="Choose file"
@@ -244,9 +227,26 @@ export function CsvEditor() {
           onChange={handleFileUpload}
           accept=".csv"
           clearable
-          style={{ flex: 1, maxWidth: 300 }}
+          style={{ flex: 1, maxWidth: 200 }}
         />
       </Group>
+
+      {csvContentQuery.isFetching && selectedFile && (
+        <Text size="sm" c="dimmed">Loading file content...</Text>
+      )}
+
+      {/* Row 2: Filename */}
+      <TextInput
+        label="CSV filename"
+        placeholder="wizard.csv"
+        value={filename}
+        onChange={(e) => {
+          const next = e.target.value || 'wizard.csv'
+          setFilename(next)
+          setCSV(next, editorContent)
+        }}
+        style={{ maxWidth: 300 }}
+      />
 
       {/* Row 2: Add/Remove Row */}
       <Group>

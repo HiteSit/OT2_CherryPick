@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 Phase: 2 of 3 (Data Safety)
 Plan: 1 of 1 in current phase
 Status: Phase complete, verified
-Last activity: 2026-01-20 - Completed Phase 2 execution
+Last activity: 2026-01-21 - Completed quick task 001: Move Upload CSV next to dropdown
 
 Progress: [██████░░░░] 66%
 
@@ -60,6 +60,12 @@ None yet.
 ### Blockers/Concerns
 
 None yet.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 001 | Move Upload CSV next to dropdown for cleaner layout | 2026-01-21 | 57b478d | [001-move-upload-csv-next-to-dropdown](./quick/001-move-upload-csv-next-to-dropdown/) |
 
 ## Session Continuity
 
