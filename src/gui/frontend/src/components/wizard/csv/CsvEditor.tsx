@@ -131,6 +131,9 @@ export function CsvEditor() {
     [csvListQuery.data],
   )
 
+  // Detect empty state - no CSV files exist in directory
+  const isEmpty = csvListQuery.data !== undefined && csvListQuery.data.files.length === 0
+
   // Parse CSV to spreadsheet data
   const sheetData = useMemo(() => {
     if (activeTab !== 'spreadsheet') return []
@@ -172,7 +175,7 @@ export function CsvEditor() {
         ) : (
           <Select
             label="Select CSV file"
-            placeholder="Choose a file or type to search"
+            placeholder={isEmpty ? "No CSV files found" : "Choose a file or type to search"}
             searchable
             data={csvOptions}
             value={selectedFile || null}
@@ -186,7 +189,7 @@ export function CsvEditor() {
               }
             }}
             nothingFoundMessage="No matching files"
-            disabled={csvListQuery.isLoading}
+            disabled={csvListQuery.isLoading || isEmpty}
             rightSection={
               <Group gap={4} wrap="nowrap">
                 {selectedFile && (
