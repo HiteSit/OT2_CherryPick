@@ -55,7 +55,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: Empty state UI (disabled dropdown, emphasized upload button)
+- [ ] 03-01-PLAN.md — Empty state detection with disabled dropdown and emphasized upload button
 
 ## Progress
 
@@ -66,8 +66,8 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Core Selection | 1/1 | ✓ Complete | 2026-01-20 |
 | 2. Data Safety | 1/1 | ✓ Complete | 2026-01-20 |
-| 3. Polish | 0/1 | Not started | - |
+| 3. Polish | 0/1 | Planned | - |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-21 - Phase 3 context gathered, auto-selection removed from scope*
+*Last updated: 2026-01-21 - Phase 3 planned*
