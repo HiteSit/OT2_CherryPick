@@ -12,7 +12,7 @@ This feature adds a dropdown-based CSV file selector to the OT2 CherryPick GUI C
 
 - [x] **Phase 1: Core Selection** - Dropdown with file list, immediate load, refresh button
 - [x] **Phase 2: Data Safety** - Unsaved changes detection and warning dialog
-- [ ] **Phase 3: Polish** - Empty state handling and startup auto-selection
+- [ ] **Phase 3: Polish** - Empty state handling
 
 ## Phase Details
 
@@ -45,18 +45,17 @@ Plans:
 - [x] 02-01-PLAN.md — Dirty state detection and UnsavedChangesModal with Discard/Cancel actions
 
 ### Phase 3: Polish
-**Goal**: Edge cases handled gracefully with appropriate user feedback
+**Goal**: Empty state handled gracefully with appropriate user feedback
 **Depends on**: Phase 1
-**Requirements**: EMPTY-01, START-01
+**Requirements**: EMPTY-01
 **Success Criteria** (what must be TRUE):
   1. User sees disabled dropdown with "No CSV files found" message when directory is empty
-  2. On page load, first file (alphabetically) is automatically selected and loaded
-  3. Auto-selection only triggers on initial load (not on every refresh)
-**Plans**: TBD
+  2. Upload CSV button is visually emphasized when dropdown is empty
+  3. Rest of editor remains fully functional for manual CSV creation
+**Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: Empty state UI (disabled dropdown with message)
-- [ ] 03-02: Auto-select first file on startup
+- [ ] 03-01: Empty state UI (disabled dropdown, emphasized upload button)
 
 ## Progress
 
@@ -67,8 +66,8 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Core Selection | 1/1 | ✓ Complete | 2026-01-20 |
 | 2. Data Safety | 1/1 | ✓ Complete | 2026-01-20 |
-| 3. Polish | 0/2 | Not started | - |
+| 3. Polish | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-20 - Phase 2 complete*
+*Last updated: 2026-01-21 - Phase 3 context gathered, auto-selection removed from scope*
