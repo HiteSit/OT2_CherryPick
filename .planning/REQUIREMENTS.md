@@ -21,7 +21,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Empty State
 
-- [ ] **EMPTY-01**: Disabled dropdown with "No CSV files found" message when directory is empty
+- [x] **EMPTY-01**: Disabled dropdown with "No CSV files found" message when directory is empty
 
 ### Startup Behavior
 
@@ -60,7 +60,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEL-04 | Phase 1 | Complete |
 | SAFE-01 | Phase 2 | Complete |
 | SAFE-02 | Phase 2 | Complete |
-| EMPTY-01 | Phase 3 | Pending |
+| EMPTY-01 | Phase 3 | Complete |
 | START-01 | Phase 3 | Pending |
 
 **Coverage:**
@@ -70,4 +70,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-20*
-*Last updated: 2026-01-20 - Phase 2 requirements complete*
+*Last updated: 2026-01-21 - Phase 3 requirements complete*
