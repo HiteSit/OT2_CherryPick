@@ -230,6 +230,7 @@ export function CsvEditor() {
           onChange={handleFileUpload}
           accept=".csv"
           clearable
+          variant={isEmpty ? "filled" : "default"}
           style={{ flex: 1, maxWidth: 200 }}
         />
       </Group>
