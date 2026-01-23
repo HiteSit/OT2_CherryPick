@@ -74,8 +74,17 @@ export interface LabwareEntry {
   offset_z?: number
 }
 
+export interface PipetteEntry {
+  name: string
+  opentrons_id: string
+  channels: number
+  volume_range: [number, number]
+  preferred_mount: 'left' | 'right'
+  tip_connections: string[]
+}
+
 export interface LabwareDocument {
-  pipettes?: unknown
+  pipettes: PipetteEntry[]
   labware: LabwareEntry[]
 }
 

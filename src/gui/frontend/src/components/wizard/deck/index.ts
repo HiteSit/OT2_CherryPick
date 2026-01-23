@@ -1,4 +1,5 @@
 export { DeckGrid } from './DeckGrid'
 export { EmptySlot } from './EmptySlot'
 export { LabwareCard } from './LabwareCard'
+export { LabwareEditor } from './LabwareEditor'
 export { LabwareModal } from './LabwareModal'

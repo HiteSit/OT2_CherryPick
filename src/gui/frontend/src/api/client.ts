@@ -3,6 +3,8 @@ import type {
   CsvListResponse,
   CsvUploadPayload,
   LabwareDocument,
+  LabwareEntry,
+  PipetteEntry,
   SettingsDocument,
   ShellSettings,
   ShellSettingsBrowseRequest,
@@ -64,6 +66,46 @@ export const moveWorkingPlateEntry = async (index: number, targetIndex: number):
 
 export const fetchLabware = async (): Promise<LabwareDocument> => {
   const { data } = await api.get<LabwareDocument>('/labware')
+  return data
+}
+
+export const patchLabware = async (payload: PatchPayload): Promise<LabwareDocument> => {
+  const { data } = await api.patch<LabwareDocument>('/labware', payload)
+  return data
+}
+
+export const replaceLabware = async (doc: Record<string, unknown>): Promise<LabwareDocument> => {
+  const { data } = await api.put<LabwareDocument>('/labware', { data: doc })
+  return data
+}
+
+export const addLabwareEntry = async (payload: Omit<LabwareEntry, 'offset_x' | 'offset_y' | 'offset_z'> & { offset_x?: number; offset_y?: number; offset_z?: number }): Promise<LabwareDocument> => {
+  const { data } = await api.post<LabwareDocument>('/labware/entries', payload)
+  return data
+}
+
+export const updateLabwareEntry = async (index: number, payload: LabwareEntry): Promise<LabwareDocument> => {
+  const { data } = await api.put<LabwareDocument>(`/labware/entries/${index}`, payload)
+  return data
+}
+
+export const deleteLabwareEntry = async (index: number): Promise<LabwareDocument> => {
+  const { data } = await api.delete<LabwareDocument>(`/labware/entries/${index}`)
+  return data
+}
+
+export const addPipetteEntry = async (payload: PipetteEntry): Promise<LabwareDocument> => {
+  const { data } = await api.post<LabwareDocument>('/labware/pipettes', payload)
+  return data
+}
+
+export const updatePipetteEntry = async (index: number, payload: PipetteEntry): Promise<LabwareDocument> => {
+  const { data } = await api.put<LabwareDocument>(`/labware/pipettes/${index}`, payload)
+  return data
+}
+
+export const deletePipetteEntry = async (index: number): Promise<LabwareDocument> => {
+  const { data } = await api.delete<LabwareDocument>(`/labware/pipettes/${index}`)
   return data
 }
 

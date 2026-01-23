@@ -121,6 +121,50 @@ class FileStateStore:
         self._bootstrap_file(self.repo_root / "labware_dict.toml", self.labware_path, force=True)
         return self.get_labware()
 
+    def add_labware_entry(self, payload: dict[str, Any]) -> dict[str, Any]:
+        current = self.get_labware()
+        labware_list = current.setdefault("labware", [])
+        labware_list.append(payload)
+        return self.write_labware(current)
+
+    def remove_labware_entry(self, index: int) -> dict[str, Any]:
+        current = self.get_labware()
+        labware_list = current.get("labware", [])
+        if index < 0 or index >= len(labware_list):
+            raise IndexError(f"Labware index {index} out of range (0-{len(labware_list) - 1})")
+        del labware_list[index]
+        return self.write_labware(current)
+
+    def update_labware_entry(self, index: int, payload: dict[str, Any]) -> dict[str, Any]:
+        current = self.get_labware()
+        labware_list = current.get("labware", [])
+        if index < 0 or index >= len(labware_list):
+            raise IndexError(f"Labware index {index} out of range (0-{len(labware_list) - 1})")
+        labware_list[index] = payload
+        return self.write_labware(current)
+
+    def add_pipette_entry(self, payload: dict[str, Any]) -> dict[str, Any]:
+        current = self.get_labware()
+        pipette_list = current.setdefault("pipettes", [])
+        pipette_list.append(payload)
+        return self.write_labware(current)
+
+    def remove_pipette_entry(self, index: int) -> dict[str, Any]:
+        current = self.get_labware()
+        pipette_list = current.get("pipettes", [])
+        if index < 0 or index >= len(pipette_list):
+            raise IndexError(f"Pipette index {index} out of range (0-{len(pipette_list) - 1})")
+        del pipette_list[index]
+        return self.write_labware(current)
+
+    def update_pipette_entry(self, index: int, payload: dict[str, Any]) -> dict[str, Any]:
+        current = self.get_labware()
+        pipette_list = current.get("pipettes", [])
+        if index < 0 or index >= len(pipette_list):
+            raise IndexError(f"Pipette index {index} out of range (0-{len(pipette_list) - 1})")
+        pipette_list[index] = payload
+        return self.write_labware(current)
+
     def reset_workspace(self) -> dict[str, Any]:
         """
         Reset both configuration files.

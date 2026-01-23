@@ -1,6 +1,7 @@
 import { Stack, Alert, Text, Select, Group, Tooltip, ActionIcon, Paper, Title, TextInput } from '@mantine/core'
 import { IconAlertCircle, IconHelp } from '@tabler/icons-react'
 import { DeckGrid } from '../deck/DeckGrid'
+import { LabwareEditor } from '../deck/LabwareEditor'
 import { useWizard } from '../WizardContext'
 import { useSettingsQuery, usePatchSetting } from '../../../api/hooks'
 import { notifications } from '@mantine/notifications'
@@ -122,6 +123,8 @@ export function DeckSetupStep() {
       </Paper>
 
       <DeckGrid />
+
+      <LabwareEditor />
 
       {!hasMinimumLabware && (
         <Alert

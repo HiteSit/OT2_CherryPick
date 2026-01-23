@@ -1,9 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { PatchPayload } from './client'
 import {
+  addLabwareEntry,
+  addPipetteEntry,
   addWorkingPlateEntry,
   browseShellSettings,
   deleteCsv,
+  deleteLabwareEntry,
+  deletePipetteEntry,
   deleteWorkingPlateEntry,
   fetchCsvContent,
   fetchCsvList,
@@ -15,11 +19,15 @@ import {
   patchSetting,
   replaceSettings,
   runWorkflow,
+  updateLabwareEntry,
+  updatePipetteEntry,
   updateShellSettings,
   uploadCsv,
 } from './client'
 import type {
   CsvUploadPayload,
+  LabwareEntry,
+  PipetteEntry,
   ShellSettingsBrowseRequest,
   ShellSettingsUpdate,
   WorkflowRequest,
@@ -42,6 +50,66 @@ export const useLabwareQuery = () =>
     queryKey: ['labware'],
     queryFn: fetchLabware,
   })
+
+export const useAddLabwareEntry = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: Omit<LabwareEntry, 'offset_x' | 'offset_y' | 'offset_z'> & { offset_x?: number; offset_y?: number; offset_z?: number }) => addLabwareEntry(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labware'] })
+    },
+  })
+}
+
+export const useUpdateLabwareEntry = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ index, payload }: { index: number; payload: LabwareEntry }) => updateLabwareEntry(index, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labware'] })
+    },
+  })
+}
+
+export const useDeleteLabwareEntry = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (index: number) => deleteLabwareEntry(index),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labware'] })
+    },
+  })
+}
+
+export const useAddPipetteEntry = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: PipetteEntry) => addPipetteEntry(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labware'] })
+    },
+  })
+}
+
+export const useUpdatePipetteEntry = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ index, payload }: { index: number; payload: PipetteEntry }) => updatePipetteEntry(index, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labware'] })
+    },
+  })
+}
+
+export const useDeletePipetteEntry = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (index: number) => deletePipetteEntry(index),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labware'] })
+    },
+  })
+}
 
 export const useCsvListQuery = () =>
   useQuery({
