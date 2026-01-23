@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 Phase: N/A
 Plan: N/A
 Status: Milestone v1.0 complete
-Last activity: 2026-01-21 — v1.0 CSV File Selector shipped
+Last activity: 2026-01-23 — Completed quick task 002: Add labware_dict.toml GUI editor
 
 Progress: v1.0 complete (3 phases, 3 plans, 7 tasks)
 
@@ -63,6 +63,7 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 001 | Move Upload CSV next to dropdown for cleaner layout | 2026-01-21 | 57b478d | [001-move-upload-csv-next-to-dropdown](./quick/001-move-upload-csv-next-to-dropdown/) |
+| 002 | Add labware_dict.toml GUI editor in Deck Setup | 2026-01-23 | 6da9487 | [002-labware-dict-gui-editor](./quick/002-labware-dict-gui-editor/) |
 
 ## Session Continuity
 
