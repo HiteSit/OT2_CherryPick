@@ -1,80 +1,141 @@
-# Research Summary: CSV File Selector
+# Project Research Summary
 
-**Project:** OT2 CherryPick GUI - File Selector Feature
-**Domain:** React/FastAPI GUI Enhancement
-**Researched:** 2026-01-20
-**Confidence:** HIGH
+**Project:** OT2 CherryPick GUI Enhancement
+**Domain:** OT-2 simulation log parsing and test verification
+**Researched:** 2026-01-24
+**Confidence:** MEDIUM
 
-## Stack Decision
+## Executive Summary
 
-Use **Mantine `Select`** component with the existing `@tanstack/react-query` hooks. No new libraries required. The codebase already contains the exact pattern needed: `useCsvListQuery()` provides file list, `useCsvContentQuery(name)` fetches content on selection. The `Select` component with `searchable` prop handles type-ahead filtering for long file lists. Reference implementation exists in `CsvManager.tsx` (lines 186-194).
+This project is a test validation layer for OT-2 protocol simulations: capture `opentrons_simulate` output, parse it into structured events, and assert that CSV-driven transfer intent matches what the simulator executed. Experts build this by treating the simulator as an external boundary, normalizing logs into a stable event model, and running semantic assertions rather than brittle string diffs.
 
-## Key UX Patterns
+The recommended approach is a parse-then-map pipeline in the core layer: capture stdout/stderr into fixtures, parse into Pydantic-modeled events, then map events to expected CSV transfers (mode-aware) before validating. Keep parsing in shared core modules so CLI, MCP tools, and GUI workflows all consume identical results. The main risks are log format drift, mode-specific mapping errors, and fixture decay. Mitigate by version-tagged fixtures, normalization of paths/order, and explicit separation between parsing and validation stages.
 
-**Table Stakes (required):**
-- Keyboard navigation (arrow keys, Enter, Escape)
-- Clear visual states (default, hover, selected, disabled)
-- Loading indicator during file list refresh
-- Empty state message when no CSVs exist ("No CSV files found")
-- Unsaved changes warning before switching files (prevent data loss)
+## Key Findings
 
-**Differentiators (recommended):**
-- Type-ahead filtering (essential if >10 files accumulate)
-- File metadata tooltip (date modified helps identify correct file)
-- Persist last selection across sessions (localStorage)
-- Truncate long filenames with hover to show full name
+### Recommended Stack
 
-**Anti-Features (avoid):**
-- Auto-load on page refresh (loses unsaved work)
-- Confirmation dialog for every selection (only when dirty)
-- Alphabetical-only sort (hide recent files)
+Use Python 3.12 with Pydantic v2 for strict, inspectable event models and pytest for regression testing. Add pytest-regressions for stable JSON/YAML snapshots and pytest-mock for subprocess isolation. Avoid heavy parser generators; stick to regex normalization plus schema validation so log changes are easy to adapt. See `.planning/research/STACK.md` for details.
 
-## Architecture Approach
+**Core technologies:**
+- Python 3.12.x: runtime for parsing and tests — matches project baseline and Opentrons tooling.
+- Pydantic 2.12.5: typed event models — strict validation and explicit parse errors.
+- pytest 8.4.2: test runner — already in use and supports regression fixtures.
 
-**Data Flow:** Single source of truth pattern. `activeName` state controls everything; `editorContent` derives from react-query based on `activeName`. The existing `CsvEditor` component gains a `FileSelector` sub-component above the filename input. Backend requires no changes - all endpoints exist (`GET /csvs`, `GET /csvs/{name}`, `POST /csvs`).
+### Expected Features
 
-**Build Order:**
-1. **Phase 1 - Core Selection:** Add Select dropdown, wire to existing hooks, update local + WizardContext state
-2. **Phase 2 - Data Safety:** Add dirty detection via content comparison, create UnsavedChangesModal
-3. **Phase 3 - Polish:** Empty state UI, loading skeleton, auto-select first file (with flag to prevent re-trigger)
+The MVP focuses on capturing simulation output, parsing core actions, and validating CSV-to-transfer mapping. Differentiators add richer diagnostics and mode-aware assertions once the core pipeline is stable. See `.planning/research/FEATURES.md` for details.
 
-**Key Components:**
-- `FileSelector` - Select dropdown with react-query integration
-- `UnsavedChangesModal` - Mantine Modal with Discard/Cancel buttons
-- Enhanced `CsvEditor` - Orchestrates dirty state and file switching
+**Must have (table stakes):**
+- Capture `opentrons_simulate` stdout/stderr in tests — foundational log input.
+- Parse run log into structured events — enables semantic assertions.
+- Validate transfer mapping vs CSV — core correctness check.
+- Detect simulation errors/warnings — fail tests on invalid configurations.
+- Version-tolerant parsing — protects against log phrasing drift.
 
-## Critical Pitfalls
+**Should have (competitive):**
+- Mode-aware assertions — prevents false positives in multi-channel runs.
+- Semantic diff reporting — faster diagnosis than raw logs.
+- Tip reuse/mix/air gap checks — validate liquid handling policies.
 
-1. **Race condition on rapid file switching** - Use react-query `queryKey` changes (not manual `useEffect` fetch) to auto-cancel stale requests. The existing `useCsvContentQuery` pattern is correct.
+**Defer (v2+):**
+- Log format adapters by API level — only if simulator output drifts frequently.
+- Coverage metrics dashboards — valuable later, not required for correctness.
 
-2. **Stale closure in dirty detection** - Use `useRef` to track current dirty state, not captured closure value. Update ref on every render, read in handlers.
+### Architecture Approach
 
-3. **Delete-while-viewing ghost state** - Clear `activeName` and `editorContent` in delete mutation's `onSuccess` BEFORE cache invalidation. Otherwise editor shows deleted file's content.
+Centralize parsing and mapping in the core layer, with shared usage across CLI, MCP tools, and GUI workflows. The recommended structure adds a `simulation_log` parser module and a `transfer_mapping` layer before validation, following a parse-then-map pipeline. See `.planning/research/ARCHITECTURE.md` for details.
 
-4. **Mantine Select value/data mismatch** - Validate that `activeName` exists in file list after data loads. Use `null` (not `undefined`) for no selection. Add `useEffect` guard to clear orphaned selections.
+**Major components:**
+1. `core/simulation.py` — run `opentrons_simulate` and capture stdout/stderr.
+2. `core/simulation_log.py` — parse stdout into normalized events.
+3. `core/transfer_mapping.py` / `core/validation.py` — map events to expected CSV transfers and assert outcomes.
+4. `tools/simulation_tools.py` + `resources/log_resources.py` — expose parsed summaries to MCP/GUI.
 
-5. **Confirmation dialog fatigue** - Compare normalized content (`trim()`) against server content, not "any edit happened" flag. Only show dialog when truly dirty.
+### Critical Pitfalls
 
-## Implementation Confidence
+1. **Brittle parsing of human-readable logs** — build version-tolerant event models and fixtures tagged with simulator version.
+2. **Assuming one CSV row equals one log line** — implement mode-aware expectations for single/multi/multi_X1.
+3. **Mixing parsing with validation logic** — keep parser pure and validate in a separate mapping layer.
+4. **Relying on unstable ordering** — assert only required ordering (aspirate before dispense) and compare sets otherwise.
+5. **Fixture drift from real configs** — regenerate fixtures from current configs with metadata (settings + simulator version).
 
-| Area | Level | Rationale |
-|------|-------|-----------|
-| Stack | HIGH | No new deps, existing pattern in CsvManager.tsx |
-| Features | HIGH | Well-documented UX patterns, W3C/NN/g sources |
-| Architecture | HIGH | Direct codebase analysis, no backend changes |
-| Pitfalls | HIGH | Verified patterns, react-query docs, existing code |
+## Implications for Roadmap
 
-**Overall: HIGH** - This is a well-scoped frontend enhancement using established patterns already present in the codebase. All building blocks exist.
+Based on research, suggested phase structure:
 
-## Gaps to Address
+### Phase 1: Log Capture + Fixtures
+**Rationale:** All downstream parsing depends on stable, reproducible log inputs.
+**Delivers:** Captured stdout/stderr fixtures, simulator version metadata, normalization of paths/line endings.
+**Addresses:** Log capture in tests, error/warning detection.
+**Avoids:** Fixture drift, cross-platform path failures.
 
-- **Auto-select behavior decision:** Research supports either first-file auto-select OR placeholder. Recommend persisting last selection in localStorage for best UX. Decision needed during requirements.
-- **React 19 batching edge cases:** Theoretical concern based on React 19 changes. Monitor during implementation but low risk with single-state-update pattern.
+### Phase 2: Parser + Event Model
+**Rationale:** Structured events are the foundation for meaningful assertions.
+**Delivers:** `simulation_log` parser, Pydantic event schemas, normalized action events.
+**Uses:** Python 3.12, Pydantic 2.12.5, pytest-regressions fixtures.
+**Implements:** Parse-then-map pipeline in core layer.
 
-## Ready for Requirements
+### Phase 3: Transfer Mapping + Validation Integration
+**Rationale:** Map CSV intent to parsed events before refactoring tests.
+**Delivers:** CSV-to-event expectation builder, mode-aware mapping, test harness updates with clear failure summaries.
+**Addresses:** Transfer mapping assertions, mode-aware checks, semantic failure reporting.
+**Avoids:** CSV/log mismapping, ordering assumptions, parsing/validation entanglement.
 
-**Yes.** No blockers identified. All research converges on clear implementation path using existing infrastructure.
+### Phase 4: Advanced Diagnostics + Policy Checks
+**Rationale:** Differentiators depend on stable core parsing and mapping.
+**Delivers:** Tip/mix/air-gap policy validation, coverage metrics, optional API-level log adapters.
+**Addresses:** Differentiators and v2+ items.
+
+### Phase Ordering Rationale
+
+- Capture and normalize logs first to prevent brittle, irreproducible tests.
+- Parsing and mapping must precede validation and test refactors to keep logic centralized.
+- Differentiators only add value after core mapping is reliable and mode-aware.
+
+### Research Flags
+
+Phases likely needing deeper research during planning:
+- **Phase 2:** Log format is undocumented; need empirical verification across simulator versions.
+- **Phase 3:** Mode semantics (single/multi/multi_X1) require careful mapping validation.
+- **Phase 4:** API-level adapters depend on how often simulator output drifts.
+
+Phases with standard patterns (skip research-phase):
+- **Phase 1:** Log capture + fixture normalization follows standard testing patterns.
+
+## Confidence Assessment
+
+| Area | Confidence | Notes |
+|------|------------|-------|
+| Stack | HIGH | Versions validated via PyPI sources; aligns with current project runtime. |
+| Features | MEDIUM | Simulator log format is undocumented; expectations inferred from testing norms. |
+| Architecture | MEDIUM | Based on current codebase structure and typical parsing pipelines. |
+| Pitfalls | MEDIUM | Derived from domain experience; limited external validation. |
+
+**Overall confidence:** MEDIUM
+
+### Gaps to Address
+
+- Simulator log format stability: validate against actual `opentrons_simulate` outputs and capture version metadata.
+- Mode-specific mapping: confirm multi/multi_X1 log patterns and transfer grouping behavior.
+- GUI vs repo-root logs: ensure fixtures cover both execution paths and normalize any differences.
+- Volume rounding/units: document normalization rules for small-volume transfers.
+
+## Sources
+
+### Primary (HIGH confidence)
+- https://pypi.org/project/pydantic/ — current Pydantic version and compatibility.
+- https://pypi.org/project/pytest-regressions/ — regression testing tooling.
+- https://pypi.org/project/pytest-mock/ — subprocess and file IO mocking support.
+
+### Secondary (MEDIUM confidence)
+- https://docs.opentrons.com/v2/new_protocol_api.html — run log notes and API behavior.
+- Codebase review: `src/ot2_cherrypick_mcp/core/simulation.py` and `src/ot2_cherrypick_mcp/tools/simulation_tools.py`.
+- Existing test suite: `tests/test_simulation_tools.py`.
+
+### Tertiary (LOW confidence)
+- Project domain knowledge — pitfalls and testing patterns inferred from local workflows.
 
 ---
-*Research completed: 2026-01-20*
+*Research completed: 2026-01-24*
 *Ready for roadmap: yes*

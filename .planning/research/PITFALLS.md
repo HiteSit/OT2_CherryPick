@@ -1,625 +1,248 @@
-# Pitfalls Research: File Selector
+# Pitfalls Research
 
-**Feature:** CSV File Selector with Async Loading
-**Tech Stack:** React 19, Mantine 8.3+, TanStack Query (react-query), FastAPI
-**Researched:** 2026-01-20
-**Confidence:** HIGH (based on existing codebase analysis + verified patterns)
-
----
+**Domain:** OT-2 protocol simulation log parsing and test refactor
+**Researched:** 2026-01-24
+**Confidence:** MEDIUM
 
 ## Critical Pitfalls
 
-### 1. Race Condition: Out-of-Order File Loads
+### Pitfall 1: Parsing brittle, human-readable log text
 
-**What goes wrong:** User selects File A, then quickly switches to File B. If File A's response arrives after File B's response, the editor displays File A's content while the dropdown shows File B selected.
+**What goes wrong:**
+Tests fail whenever opentrons_simulate output changes wording, spacing, or ordering; CI becomes noisy and unreliable.
 
-**Why it happens:** Async requests complete in unpredictable order. Without cancellation, the slower request's callback overwrites the faster one's state.
+**Why it happens:**
+Developers parse raw stdout with regexes instead of extracting structured events or using stable markers.
 
-**Warning signs:**
-- Content flickers between files after rapid selection changes
-- Editor content doesn't match selected dropdown value
-- User reports "wrong file loaded"
-
-**Prevention strategy:**
-```typescript
-// TanStack Query handles this automatically when queryKey changes
-// The key insight: useCsvContentQuery(activeName) with enabled: Boolean(activeName)
-// creates a new query per filename, and TanStack Query cancels stale fetches
-
-// DO NOT do this (manual useEffect pattern):
-useEffect(() => {
-  fetchFile(activeName).then(setContent) // RACE CONDITION!
-}, [activeName])
-
-// DO this (already in codebase - hooks.ts):
-export const useCsvContentQuery = (name?: string) =>
-  useQuery({
-    queryKey: ['csvs', name],  // Key changes = new query
-    queryFn: () => fetchCsvContent(name!),
-    enabled: Boolean(name),
-  })
-```
-
-**Implementation step:** File selection handler - verify `activeName` state update triggers query key change, not manual fetch.
-
-**Sources:**
-- [Fixing Race Conditions in React with useEffect](https://maxrozen.com/race-conditions-fetching-data-react-with-useeffect)
-- [Race Conditions in useEffect - Modern Patterns 2025](https://medium.com/@sureshdotariya/race-conditions-in-useeffect-with-async-modern-patterns-for-reactjs-2025-9efe12d727b0)
-
----
-
-### 2. Stale Closure in Unsaved Changes Detection
-
-**What goes wrong:** The "unsaved changes" check always returns `false` (or always `true`) because the isDirty flag was captured at render time, not at check time.
-
-**Why it happens:** Event handlers and callbacks capture variables from their closure scope. If `isDirty` is captured when `false`, it stays `false` even after user edits.
+**How to avoid:**
+Define a minimal, version-tolerant event model (e.g., aspirate/dispense with labware+well+volume), build a parser around stable tokens, and keep a golden set of log fixtures pinned to known opentrons_simulate versions.
 
 **Warning signs:**
-- No warning appears when switching files with unsaved edits
-- Warning appears even for unmodified files
-- `console.log(isDirty)` in handler shows stale value
+Small updates to simulation tooling cause widespread test failures; parsing logic is full of fragile regexes tied to exact phrasing.
 
-**Prevention strategy:**
-```typescript
-// BAD: Stale closure captures initial isDirty value
-const handleFileSwitch = () => {
-  if (isDirty) {  // This isDirty is from when handleFileSwitch was created
-    showWarning()
-  }
-}
-
-// GOOD: Use ref to always get current value
-const isDirtyRef = useRef(isDirty)
-isDirtyRef.current = isDirty  // Update on every render
-
-const handleFileSwitch = useCallback(() => {
-  if (isDirtyRef.current) {  // Always reads current value
-    showWarning()
-  }
-}, [])  // Empty deps - function identity stable
-
-// ALSO GOOD: Use functional state check
-const handleFileSwitch = useCallback((newFile: string) => {
-  // Check state at call time, not definition time
-  setActiveName(prev => {
-    if (hasUnsavedChanges(editorContent, serverContent)) {
-      openConfirmModal(newFile)
-      return prev  // Don't switch yet
-    }
-    return newFile
-  })
-}, [editorContent, serverContent])
-```
-
-**Implementation step:** Unsaved changes detection hook - use refs for current dirty state.
-
-**Sources:**
-- [Be Aware of Stale Closures when Using React Hooks](https://dmitripavlutin.com/react-hooks-stale-closures/)
-- [React useEffectEvent: Goodbye to stale closure headaches](https://blog.logrocket.com/react-useeffectevent/)
+**Phase to address:**
+Phase 1 (Log inventory + fixture capture) and Phase 2 (Parser design).
 
 ---
 
-### 3. Delete-While-Viewing: Stale File Reference
+### Pitfall 2: Assuming one-to-one mapping between CSV rows and log lines
 
-**What goes wrong:** User deletes the currently-selected file. The dropdown updates (file removed from list), but the editor still shows the deleted file's content. Saving then recreates the deleted file.
+**What goes wrong:**
+Tests incorrectly fail for multi-channel or grouped operations because a single CSV row can produce multiple actions or consolidated log lines.
 
-**Why it happens:** Delete mutation invalidates the file list query, but nothing resets the `activeName` state or clears the editor content when the active file is the one deleted.
+**Why it happens:**
+Test design assumes each CSV row equals a single aspirate/dispense pair, ignoring mode-specific semantics.
+
+**How to avoid:**
+Define mode-aware expectations (single_X1, multi_X1, multi) and validate semantic outcomes (target wells and volumes) rather than exact line counts.
 
 **Warning signs:**
-- Editor still shows content after deletion confirmation
-- Save button is enabled for a "ghost" file
-- react-admin issue #5541: "getOne called on deleted object"
+Tests pass in single mode but fail in multi mode; mismatches cluster around column transfers.
 
-**Prevention strategy:**
-```typescript
-const deleteMutation = useDeleteCsv()
-
-const handleDelete = () => {
-  if (!activeName) return
-
-  const fileToDelete = activeName
-
-  deleteMutation.mutate(fileToDelete, {
-    onSuccess: () => {
-      // CRITICAL: Clear state BEFORE cache invalidation triggers re-render
-      setActiveName('')
-      setEditorContent('')
-      setSheetData(ensureHeaderRow([]))
-      setGridDirty(false)
-
-      notifications.show({
-        color: 'teal',
-        title: 'Deleted',
-        message: `${fileToDelete} removed.`
-      })
-    },
-    onError: (error) => {
-      // File may have been deleted by another user/process
-      if (isNotFoundError(error)) {
-        setActiveName('')
-        setEditorContent('')
-      }
-      notifications.show({
-        color: 'red',
-        title: 'Delete failed',
-        message: error.message
-      })
-    },
-  })
-}
-```
-
-**Implementation step:** Delete handler - reset all editor state in onSuccess callback, before or during cache invalidation.
-
-**Sources:**
-- [React-Admin Delete Redirect Race Condition](https://github.com/marmelab/react-admin/issues/5541)
+**Phase to address:**
+Phase 2 (Expectation model) and Phase 3 (Integration with mode logic).
 
 ---
 
-## State Synchronization Pitfalls
+### Pitfall 3: Mixing log parsing with business logic validation
 
-### 4. Dual-Source-of-Truth Between Dropdown and Editor
+**What goes wrong:**
+Tests become a tangled mix of parsing rules and protocol rules, making failures hard to diagnose and refactor.
 
-**What goes wrong:** Dropdown selection state (`activeName`) and editor content state (`editorContent`) drift apart. User thinks they're editing File A but changes are saved to File B.
+**Why it happens:**
+Parser outputs are not normalized; tests operate on raw tokens instead of a clean semantic model.
 
-**Why it happens:** Selection change triggers async content load. If editor content is set independently of selection (e.g., via direct text input before load completes), states become misaligned.
+**How to avoid:**
+Separate parsing into a pure module that emits normalized events, then validate events against CSV intent in a separate layer.
 
 **Warning signs:**
-- File saved to wrong filename
-- Filename input shows different value than dropdown
-- "Save" button saves to unexpected file
+Test failures require stepping through regexes; refactoring protocol behavior breaks parsing in unrelated tests.
 
-**Prevention strategy:**
-```typescript
-// SINGLE source of truth: activeName controls everything
-// Derived state: editorContent comes from query based on activeName
-
-// Current codebase pattern (CsvManager.tsx) is CORRECT:
-const [activeName, setActiveName] = useState('')
-const csvContentQuery = useCsvContentQuery(activeName)  // Derived from activeName
-
-useEffect(() => {
-  if (csvContentQuery.data !== undefined) {
-    setEditorContent(csvContentQuery.data)  // Sync derived state
-    setGridDirty(false)
-  } else if (!activeName) {
-    setEditorContent('')
-    setGridDirty(false)
-  }
-}, [csvContentQuery.data, activeName])
-
-// DANGER ZONE: The TextInput for "Active filename" allows direct editing
-// This creates second source of truth - user can type "newfile.csv" while
-// dropdown shows "existing.csv"
-
-// MITIGATION: Use dropdown as authoritative, TextInput as display-only
-// OR: Add validation that newName !== existing list names before save
-```
-
-**Implementation step:** Evaluate whether filename input should be editable independently or only via dropdown selection.
+**Phase to address:**
+Phase 2 (Parser abstraction) and Phase 3 (Test refactor).
 
 ---
 
-### 5. React 19 Automatic Batching Surprises
+### Pitfall 4: Relying on unstable ordering in simulation output
 
-**What goes wrong:** Multiple state updates that should be atomic are batched differently in React 19, causing intermediate renders with inconsistent state.
+**What goes wrong:**
+Tests that assert strict ordering fail when the simulator reorders operations (e.g., batching or optimization changes).
 
-**Why it happens:** React 19 batches all state updates (even in async callbacks), but the timing of when batched renders complete can surprise developers expecting immediate updates.
+**Why it happens:**
+Tests check sequences instead of sets or grouped operations where ordering is not meaningful.
+
+**How to avoid:**
+Use ordering only where it is required by domain logic (e.g., aspirate before dispense). Otherwise, compare unordered sets or grouped sequences by transfer id.
 
 **Warning signs:**
-- Dropdown shows correct selection, but content load fires for previous selection
-- State updates seem "delayed" by one interaction
-- `console.log` in render shows unexpected intermediate states
+Intermittent ordering diffs across platforms or opentrons_simulate versions.
 
-**Prevention strategy:**
-```typescript
-// Group related state updates to ensure atomicity
-const handleFileSelect = useCallback((newFile: string | null) => {
-  if (!newFile) {
-    // Clear all related state together
-    setActiveName('')
-    setEditorContent('')
-    setGridDirty(false)
-    return
-  }
-
-  // Only set activeName - content will sync via useEffect
-  setActiveName(newFile)
-  // DO NOT set editorContent here - let the query handle it
-}, [])
-```
-
-**Implementation step:** File selection handler - set only `activeName`, let query sync trigger content update.
+**Phase to address:**
+Phase 2 (Expectation model) and Phase 3 (Test harness).
 
 ---
 
-### 6. Mantine Select Controlled Component Value/Data Mismatch
+### Pitfall 5: Test fixtures drift from real protocol generation
 
-**What goes wrong:** Selected value shows as blank or shows raw value instead of label, even though selection worked.
+**What goes wrong:**
+Fixtures no longer reflect current settings.toml, labware definitions, or CSV schemas, so tests pass but do not represent real behavior.
 
-**Why it happens:** Mantine Select requires the `value` prop to match an item in the `data` array. If data loads async and value is set before data contains that item, display breaks.
+**Why it happens:**
+Fixtures are copied once and never regenerated; no linkage to the current helper or MCP workflows.
+
+**How to avoid:**
+Add fixture generation scripts (or snapshots) tied to current config, and pin fixture metadata (simulator version, settings snapshot).
 
 **Warning signs:**
-- Dropdown shows blank after selection
-- Selected item shows value instead of label
-- "nothingFoundMessage" displays when there should be options
+Fixture data is not reproducible from current configs; tests do not fail when protocol logic changes.
 
-**Prevention strategy:**
-```typescript
-// Ensure value exists in data before setting
-const csvOptions = useMemo(
-  () => (csvListQuery.data?.files ?? []).map((name) => ({
-    value: name,
-    label: name
-  })),
-  [csvListQuery.data],
-)
-
-// Guard against orphaned selection
-useEffect(() => {
-  if (activeName && csvListQuery.data?.files &&
-      !csvListQuery.data.files.includes(activeName)) {
-    // Selected file no longer exists - clear selection
-    setActiveName('')
-  }
-}, [activeName, csvListQuery.data?.files])
-
-// Mantine-specific: data must include all values
-<Select
-  data={csvOptions}
-  value={activeName || null}  // null, not undefined, for "no selection"
-  onChange={(value) => value && setActiveName(value)}
-/>
-```
-
-**Implementation step:** Selection change handler + useEffect guard - validate activeName exists in file list.
-
-**Sources:**
-- [Mantine Select Controlled Component Issues](https://github.com/orgs/mantinedev/discussions/345)
+**Phase to address:**
+Phase 1 (Fixture capture) and Phase 4 (CI reproducibility).
 
 ---
 
-## Edge Cases
+### Pitfall 6: Overfitting to simulator output instead of intent
 
-### 7. Empty Directory State Without Guidance
+**What goes wrong:**
+Tests encode simulator quirks instead of verifying CSV intent; refactoring or upgrading sim breaks tests without functional regression.
 
-**What goes wrong:** User sees blank dropdown with no indication of what to do. They don't realize they need to upload a file first.
+**Why it happens:**
+Test assertions are based on specific log lines or simulator-specific phrases instead of domain-level intent.
 
-**Why it happens:** No files exist in CSVs/ directory, dropdown shows empty list without actionable guidance.
+**How to avoid:**
+Anchor validations to protocol intent (source/dest wells, volumes, tip actions) and treat simulator output as an intermediate signal.
 
 **Warning signs:**
-- Users ask "how do I create a file?"
-- High bounce rate on file selector screen
-- Support tickets about "nothing appears"
+Tests fail when only tooling changes; changes to comments or log formatting cause failures.
 
-**Prevention strategy:**
-```tsx
-// Provide clear empty state with action
-{csvListQuery.isLoading ? (
-  <Group gap="xs">
-    <Loader size="sm" />
-    <Text c="dimmed">Loading CSV files...</Text>
-  </Group>
-) : csvOptions.length === 0 ? (
-  <Paper withBorder p="md" bg="gray.0">
-    <Stack align="center" gap="sm">
-      <IconFileOff size={32} color="gray" />
-      <Text ta="center" c="dimmed">
-        No CSV files in workspace yet.
-      </Text>
-      <Text ta="center" size="sm" c="dimmed">
-        Upload a CSV file below or drag and drop to get started.
-      </Text>
-    </Stack>
-  </Paper>
-) : (
-  <Select
-    label="Select a CSV file"
-    data={csvOptions}
-    value={activeName}
-    onChange={(value) => value && setActiveName(value)}
-  />
-)}
-```
-
-**Implementation step:** Render logic - add empty state component between loading and populated states.
-
-**Sources:**
-- [Empty State UX - The Most Overlooked Aspect](https://www.toptal.com/designers/ux/empty-state-ux-design)
-- [Dropbox Empty Folder Redesign Example](https://www.eleken.co/blog-posts/empty-state-ux)
+**Phase to address:**
+Phase 2 (Intent model) and Phase 3 (Test refactor).
 
 ---
 
-### 8. Auto-Select First File: Double-Trigger and Loading Flicker
+### Pitfall 7: Ignoring OS/path differences in simulation logs
 
-**What goes wrong:** On mount, component auto-selects first file. This triggers a content load, but the initial render already showed loading state. User sees: loading -> empty -> loading -> content (flicker).
+**What goes wrong:**
+Tests fail across Windows/WSL/Linux due to path formats or line endings that the parser assumes.
 
-**Why it happens:** Auto-selection happens in useEffect after initial render. Each state change triggers re-render.
+**Why it happens:**
+Parser assumes a single path convention or uses raw substrings without normalization.
+
+**How to avoid:**
+Normalize paths and line endings in parser input; treat file path lines as metadata rather than core events.
 
 **Warning signs:**
-- Brief flash of "no file selected" on app load
-- Content loading indicator appears twice
-- First file sometimes doesn't auto-load
+Tests only pass on one developer machine; CI failures cite mismatched paths.
 
-**Prevention strategy:**
-```typescript
-// Auto-select ONLY on initial load, with proper timing
-const [hasAutoSelected, setHasAutoSelected] = useState(false)
-
-useEffect(() => {
-  // Only auto-select once, only when we have data
-  if (!hasAutoSelected &&
-      csvListQuery.isSuccess &&
-      csvListQuery.data.files.length > 0 &&
-      !activeName) {
-    setActiveName(csvListQuery.data.files[0])
-    setHasAutoSelected(true)
-  }
-}, [csvListQuery.isSuccess, csvListQuery.data?.files, activeName, hasAutoSelected])
-
-// Alternative: Initialize with first file at query level
-const csvListQuery = useCsvListQuery()
-const initialFile = csvListQuery.data?.files?.[0] ?? null
-
-// Delay rendering selector until we know if there are files
-if (csvListQuery.isLoading) {
-  return <Skeleton height={36} />
-}
-```
-
-**Implementation step:** Initial load logic - use flag to prevent repeated auto-selection, consider SSR-style initial state.
+**Phase to address:**
+Phase 1 (Fixture normalization) and Phase 3 (Cross-platform validation).
 
 ---
 
-### 9. File Renamed/Moved Externally
+### Pitfall 8: Conflating parsing failures with protocol failures
 
-**What goes wrong:** User renames CSV file in file explorer. The app still references old filename. Content query fails, but activeName persists.
+**What goes wrong:**
+Failing parse is reported as a protocol regression, causing wasted debugging time.
 
-**Why it happens:** File selector assumes files are only modified through the app. External changes aren't detected.
+**Why it happens:**
+Parsing exceptions are not differentiated from validation assertions in test output.
+
+**How to avoid:**
+Use separate error classes and test stages (parse -> normalize -> validate) with explicit failure messages.
 
 **Warning signs:**
-- "File not found" errors for seemingly-selected file
-- Save creates new file instead of updating
-- File list shows outdated names until manual refresh
+Test output does not indicate whether parsing or logic failed; failures are hard to triage.
 
-**Prevention strategy:**
-```typescript
-// Handle 404 gracefully in content query
-const csvContentQuery = useQuery({
-  queryKey: ['csvs', activeName],
-  queryFn: async () => {
-    const response = await fetchCsvContent(activeName!)
-    return response
-  },
-  enabled: Boolean(activeName),
-  retry: (failureCount, error) => {
-    // Don't retry 404s - file is gone
-    if (error instanceof Response && error.status === 404) return false
-    return failureCount < 2
-  },
-})
+**Phase to address:**
+Phase 2 (Parser/test harness design).
 
-// React to query errors
-useEffect(() => {
-  if (csvContentQuery.error) {
-    const is404 = csvContentQuery.error?.message?.includes('not found')
-    if (is404) {
-      notifications.show({
-        color: 'orange',
-        title: 'File not found',
-        message: `${activeName} may have been moved or deleted.`,
-      })
-      setActiveName('')
-      // Refresh file list
-      queryClient.invalidateQueries({ queryKey: ['csvs'] })
-    }
-  }
-}, [csvContentQuery.error, activeName])
-```
+## Technical Debt Patterns
 
-**Implementation step:** Content query error handling - detect 404, clear selection, refresh list.
+Shortcuts that seem reasonable but create long-term problems.
 
----
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Hardcode regexes for exact log lines | Fast initial tests | Fragile with simulator updates | Only for one-off debug scripts |
+| Store fixtures without simulator version metadata | Quick setup | Hard to reproduce or update | Never |
+| Assert exact line counts for transfers | Simple assertions | Breaks on batching/multi-channel | Only in single_X1 tests |
+| Skip normalization of units/volumes | Less code | Hidden mismatches when rounding occurs | Only for exploratory prototyping |
 
-## UX Antipatterns
+## Integration Gotchas
 
-### 10. Confirmation Dialog Fatigue
+Common mistakes when connecting to external services.
 
-**What goes wrong:** User gets "Unsaved changes - discard?" dialog every time they switch files, even for trivial edits. They start clicking "Discard" reflexively and lose important work.
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| opentrons_simulate | Assume output format is stable across versions | Capture simulator version and update fixtures when version changes |
+| MCP workflow | Parse logs from different config roots (repo vs gui_state) without noting source | Include config root in fixture metadata and normalize inputs |
+| Windows/WSL paths | Treat path lines as parseable actions | Strip or normalize path lines before event parsing |
+| Labware resolution | Assume custom labware paths are always present in logs | Validate labware path presence separately from action parsing |
 
-**Why it happens:** Dirty detection is too sensitive (any keystroke = dirty) or dialog appears too eagerly.
+## Performance Traps
 
-**Warning signs:**
-- Users complain about "too many popups"
-- Users lose work despite dialogs (reflexive dismissal)
-- Dirty flag true even when content matches server
+Patterns that work at small scale but fail as usage grows.
 
-**Prevention strategy:**
-```typescript
-// Compare actual content, not just "any edit happened"
-const isDirty = useMemo(() => {
-  if (!serverContent) return false  // New file, not dirty
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Parsing entire log in memory for every test | Slow tests, high RAM | Stream parse or pre-parse to cached events | Dozens of large fixtures |
+| Re-running simulator in unit tests | Slow CI and flaky tests | Use captured fixtures for unit tests, simulator only in integration tests | When CI runs multiple suites |
+| Excessive deep comparisons of full event lists | Long diffs and slow asserts | Compare hashed summaries or key fields | Large multi-plate runs |
 
-  // Normalize whitespace for comparison
-  const normalizedEditor = editorContent.trim()
-  const normalizedServer = serverContent.trim()
+## Security Mistakes
 
-  return normalizedEditor !== normalizedServer
-}, [editorContent, serverContent])
+Domain-specific security issues beyond general web security.
 
-// Only show dialog if truly dirty
-const handleFileSwitch = (newFile: string) => {
-  if (isDirty) {
-    openConfirmModal({
-      title: 'Unsaved changes',
-      children: (
-        <Text>
-          You have unsaved changes to <strong>{activeName}</strong>.
-          <br />
-          Save before switching?
-        </Text>
-      ),
-      labels: { confirm: 'Save & Switch', cancel: 'Discard' },
-      onConfirm: () => {
-        handleSave()
-        setActiveName(newFile)
-      },
-      onCancel: () => setActiveName(newFile),
-    })
-  } else {
-    setActiveName(newFile)
-  }
-}
-```
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Parsing untrusted log input without limits | DoS via huge log files in CI | Enforce size limits and timeouts when parsing |
+| Writing logs to shared temp paths | Leakage of internal paths and experiment names | Store fixtures in repo and avoid temp path leaks |
+| Shelling out with unvalidated CSV paths in tests | Command injection in CI | Sanitize or use safe subprocess APIs |
 
-**Implementation step:** Dirty detection - compare normalized content, not change events.
+## UX Pitfalls
 
-**Sources:**
-- [Form Data Loss Prevention in React](https://angular-evan.medium.com/form-data-loss-prevention-in-react-f7c3bbbe45e1)
-- [Cloudscape Unsaved Changes Pattern](https://cloudscape.design/patterns/general/unsaved-changes/)
+Common user experience mistakes in this domain.
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Test failures not mapping back to CSV rows | Hard to debug regressions | Include CSV row id or source/dest in assertion messages |
+| Overly verbose parse errors | Noise hides the real failure | Provide concise failure summaries with optional verbose mode |
+| Expectation diffs too granular | Long diffs, low signal | Summarize by transfer group or action count |
+
+## "Looks Done But Isn't" Checklist
+
+Things that appear complete but are missing critical pieces.
+
+- [ ] **Parser:** Missing versioning metadata for fixtures -- verify simulator version recorded
+- [ ] **Tests:** Only single_X1 mode covered -- verify multi and multi_X1 modes
+- [ ] **Normalization:** Volumes not rounded consistently -- verify rounding strategy documented
+- [ ] **Integration:** Parser only handles repo-root logs -- verify gui_state workflow
+
+## Recovery Strategies
+
+When pitfalls occur despite prevention, how to recover.
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Brittle parsing breaks after simulator update | MEDIUM | Regenerate fixtures, update parser tokens, add version gate |
+| Fixture drift | MEDIUM | Recreate fixtures from current configs and backfill metadata |
+| Cross-platform failures | LOW | Normalize paths/line endings, rerun tests on target OS |
+
+## Pitfall-to-Phase Mapping
+
+How roadmap phases should address these pitfalls.
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Brittle parsing | Phase 2 | Tests pass across simulator minor versions |
+| CSV-to-log mismapping | Phase 2 | Mode-aware expectation tests for each mode |
+| Fixture drift | Phase 1 | Fixture regeneration script + metadata |
+| Ordering assumptions | Phase 2 | Assertions tolerate non-essential ordering |
+| Cross-platform parsing | Phase 3 | CI run in at least two OS environments |
+
+## Sources
+
+- Project context and existing OT-2 workflow knowledge (no external sources consulted)
 
 ---
-
-### 11. No Loading State During File Switch
-
-**What goes wrong:** User clicks different file in dropdown. Nothing visibly changes for 500ms while content loads. User clicks again, thinking first click didn't register.
-
-**Why it happens:** Loading state isn't shown during the brief window between selection change and content arrival.
-
-**Warning signs:**
-- Double-clicks cause race conditions (Pitfall #1)
-- Users report "laggy" file switching
-- Dropdown doesn't feel responsive
-
-**Prevention strategy:**
-```typescript
-// Show loading state in editor during content fetch
-const isLoadingContent = csvContentQuery.isFetching && Boolean(activeName)
-
-return (
-  <Stack>
-    <Select
-      disabled={isLoadingContent}  // Prevent rapid switching
-      {...otherProps}
-    />
-
-    {isLoadingContent ? (
-      <Paper withBorder p="xl" ta="center">
-        <Loader size="sm" />
-        <Text c="dimmed" mt="sm">Loading {activeName}...</Text>
-      </Paper>
-    ) : (
-      <Textarea value={editorContent} {...editorProps} />
-    )}
-  </Stack>
-)
-```
-
-**Implementation step:** Editor panel - show skeleton/loader when `csvContentQuery.isFetching`.
-
----
-
-### 12. Optimistic Updates Without Rollback
-
-**What goes wrong:** User saves file, UI shows "saved!" but API call fails silently. User navigates away, losing their work.
-
-**Why it happens:** Optimistic update assumed success, but no rollback mechanism restored original state on error.
-
-**Warning signs:**
-- "Save" appears successful but data reverts on refresh
-- No error notification despite failed API call
-- Users report "changes didn't stick"
-
-**Prevention strategy:**
-```typescript
-const uploadMutation = useMutation({
-  mutationFn: (payload: CsvUploadPayload) => uploadCsv(payload),
-
-  onMutate: async ({ name, content }) => {
-    // Cancel in-flight queries
-    await queryClient.cancelQueries({ queryKey: ['csvs', name] })
-
-    // Snapshot previous value
-    const previousContent = queryClient.getQueryData(['csvs', name])
-
-    // Optimistically update
-    queryClient.setQueryData(['csvs', name], content)
-
-    return { previousContent, name }
-  },
-
-  onError: (error, variables, context) => {
-    // Rollback on failure
-    if (context?.previousContent !== undefined) {
-      queryClient.setQueryData(
-        ['csvs', context.name],
-        context.previousContent
-      )
-    }
-
-    notifications.show({
-      color: 'red',
-      title: 'Save failed',
-      message: error.message || 'Could not save file. Please try again.',
-    })
-  },
-
-  onSuccess: () => {
-    notifications.show({
-      color: 'teal',
-      title: 'Saved',
-      message: 'File saved successfully.',
-    })
-  },
-
-  onSettled: (_, __, variables) => {
-    // Always refetch to ensure consistency
-    queryClient.invalidateQueries({ queryKey: ['csvs'] })
-    queryClient.invalidateQueries({ queryKey: ['csvs', variables.name] })
-  },
-})
-```
-
-**Implementation step:** Upload mutation - add `onMutate` snapshot and `onError` rollback.
-
-**Sources:**
-- [TanStack Query Optimistic Updates](https://tanstack.com/query/v4/docs/framework/react/guides/optimistic-updates)
-- [Concurrent Optimistic Updates Race Conditions](https://tkdodo.eu/blog/concurrent-optimistic-updates-in-react-query)
-
----
-
-## Summary: Implementation Checklist
-
-| Phase | Pitfall to Watch | Prevention |
-|-------|------------------|------------|
-| File Selection Handler | #1 Race Conditions | Use TanStack Query queryKey, not manual fetch |
-| | #5 React 19 Batching | Set only activeName, let query sync content |
-| | #6 Value/Data Mismatch | Validate value exists in data array |
-| Unsaved Changes Hook | #2 Stale Closures | Use refs for current dirty state |
-| | #10 Confirmation Fatigue | Compare normalized content, not change flags |
-| Delete Handler | #3 Delete-While-Viewing | Clear all state in onSuccess, before invalidation |
-| Empty State UI | #7 No Guidance | Show actionable empty state with upload CTA |
-| Auto-Select Logic | #8 Double-Trigger | Use flag to prevent repeated auto-selection |
-| Content Query | #9 External Changes | Handle 404, clear selection, refresh list |
-| Loading States | #11 No Feedback | Disable dropdown during fetch, show skeleton |
-| Save Mutation | #12 Silent Failures | Snapshot + rollback in mutation callbacks |
-| Editor State | #4 Dual Source of Truth | Single activeName drives all derived state |
-
----
-
-## Confidence Assessment
-
-| Pitfall | Confidence | Basis |
-|---------|------------|-------|
-| Race Conditions | HIGH | Verified with TanStack Query docs + existing codebase pattern |
-| Stale Closures | HIGH | Well-documented React antipattern with clear solutions |
-| Delete-While-Viewing | HIGH | Identified in react-admin issue, clear reproduction |
-| Dual Source of Truth | HIGH | Observed in existing CsvManager.tsx code |
-| React 19 Batching | MEDIUM | Theoretical based on React 19 changes, not directly verified |
-| Mantine Value/Data | HIGH | Documented in Mantine GitHub discussions |
-| Empty State UX | HIGH | Standard UX pattern with many examples |
-| Auto-Select Flicker | MEDIUM | Common pattern issue, timing-dependent |
-| External Changes | MEDIUM | Edge case, depends on usage pattern |
-| Confirmation Fatigue | HIGH | Well-documented UX antipattern |
-| Loading Feedback | HIGH | Standard UX requirement |
-| Optimistic Rollback | HIGH | TanStack Query documented pattern |
+*Pitfalls research for: OT-2 simulation log parsing and tests*
+*Researched: 2026-01-24*
