@@ -8,6 +8,16 @@ Web GUI enhancement for the OT-2 CherryPick protocol generator. Provides a dropd
 
 Users can select CSV files from a dropdown and immediately see the content loaded in the editor views — no manual path typing, no guessing filenames, with protection against accidental data loss.
 
+## Current Milestone: v2.0 Simulation Log Validation
+
+**Goal:** Refactor tests to validate CSV-driven transfers by parsing simulation output and asserting correct pipetting behavior.
+
+**Target features:**
+- Test suite refactor: restructure directories/fixtures to support log validation
+- Structured parsing of simulation output for test assertions
+- Verification of transfer mapping, labware configuration, and tip actions against CSV inputs
+- Coverage of liquid handling parameters (heights, flow rates, air gaps) based on settings/CSV
+
 ## Requirements
 
 ### Validated
@@ -30,7 +40,10 @@ Users can select CSV files from a dropdown and immediately see the content loade
 
 ### Active
 
-(None — next milestone will define fresh requirements)
+- [ ] Refactor test suite structure (directories, fixtures, harness) for simulation log validation
+- [ ] Parse simulation output into structured data for tests
+- [ ] Test transfer mapping, labware setup, and tip actions against CSV inputs
+- [ ] Validate liquid handling parameters (heights, flow rates, air gaps) from settings/CSV
 
 ### Out of Scope
 
@@ -77,4 +90,4 @@ Users can select CSV files from a dropdown and immediately see the content loade
 | Disabled dropdown when isEmpty or isLoading | Prevent interaction with empty or loading state | ✓ Good — clear feedback, no confusion |
 
 ---
-*Last updated: 2026-01-21 after v1.0 milestone*
+*Last updated: 2026-01-24 after v2.0 milestone start*

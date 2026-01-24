@@ -2,73 +2,58 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-21)
+See: .planning/PROJECT.md (updated 2026-01-24)
 
-**Core value:** Users can select CSV files from a dropdown and immediately see content loaded with protection against data loss
-**Current focus:** v1.0 milestone complete — ready to plan next milestone
+**Core value:** Users can select CSV files from a dropdown and immediately see the content loaded in the editor views with protection against accidental data loss.
+**Current focus:** Phase 4 - Log Capture Baseline (v2.0 Simulation Log Validation)
 
 ## Current Position
 
-Phase: N/A
-Plan: N/A
-Status: Milestone v1.0 complete
-Last activity: 2026-01-23 — Completed quick task 002: Add labware_dict.toml GUI editor
+Phase: 4 of 8 (Log Capture Baseline)
+Plan: 1 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-01-24 — v2.0 roadmap reordered (refactor at end)
 
-Progress: v1.0 complete (3 phases, 3 plans, 7 tasks)
+Progress: [█████░░░░░] 38%
 
 ## Performance Metrics
 
-**v1.0 Milestone:**
+**Velocity:**
 - Total plans completed: 3
-- Total tasks: 7
-- Average duration: 4 min per plan
-- Total execution time: 13 minutes
-- Timeline: 1 day (2026-01-20 → 2026-01-21)
+- Average duration: 4 min
+- Total execution time: 0.22 hours
 
 **By Phase:**
 
-| Phase | Plans | Tasks | Duration | Completed |
-|-------|-------|-------|----------|-----------|
-| 1. Core Selection | 1/1 | 3 | 1 min | 2026-01-20 |
-| 2. Data Safety | 1/1 | 2 | 7 min | 2026-01-20 |
-| 3. Polish | 1/1 | 2 | 5 min | 2026-01-21 |
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| 1. Core Selection | 1 | 1 | 1 min |
+| 2. Data Safety | 1 | 1 | 7 min |
+| 3. Polish | 1 | 1 | 5 min |
 
-**Velocity Trend:**
-- Consistent delivery across all phases
-- No blockers encountered
-- All phase goals verified
+**Recent Trend:**
+- Last 5 plans: 1 min, 7 min, 5 min
+- Trend: Stable
 
 ## Accumulated Context
 
 ### Decisions
 
-All decisions from v1.0 milestone are now in PROJECT.md Key Decisions table with outcomes marked ✓ Good.
+Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
 
-Recent implementation patterns established:
-- Custom Mantine rightSection pattern for multiple action buttons
-- Confirmation modal pattern with pending state for user decisions
-- isEmpty derivation pattern for conditional rendering
-- Dirty state tracking with originalContent baseline comparison
+- Phase 4: Use captured simulation fixtures as the baseline for repeatable validation
 
 ### Pending Todos
 
-None.
+None yet.
 
 ### Blockers/Concerns
 
-None.
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 001 | Move Upload CSV next to dropdown for cleaner layout | 2026-01-21 | 57b478d | [001-move-upload-csv-next-to-dropdown](./quick/001-move-upload-csv-next-to-dropdown/) |
-| 002 | Add labware_dict.toml GUI editor in Deck Setup | 2026-01-23 | 6da9487 | [002-labware-dict-gui-editor](./quick/002-labware-dict-gui-editor/) |
+None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-21
-Stopped at: v1.0 milestone complete and archived
-Resume file: .planning/MILESTONES.md (see v1.0 entry for full details)
-
-**Next steps:** Run `/gsd:new-milestone` to start planning next milestone (questioning → research → requirements → roadmap)
+Last session: 2026-01-24 00:00
+Stopped at: Roadmap and state initialized for v2.0 planning
+Resume file: None
