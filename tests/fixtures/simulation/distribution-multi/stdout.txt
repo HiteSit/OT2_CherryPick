@@ -1,0 +1,74 @@
+=== Using local configuration ===
+=== Step 1: Updating protocol with helper ===
+=== Cherry-Pick Protocol Helper ===
+Converting TOML + CSV → JSON configuration...
+Reading configuration files...
+  - Labware TOML: labware_dict.toml
+  - Settings TOML: settings.toml
+  - CSV file: /mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick/CSVs/example_distribution.csv
+✓ Successfully read all configuration files
+Generated JSON config (2961 characters)
+Reading CherryPick_OT2.py...
+Writing updated CherryPick_OT2.py...
+✓ Successfully updated protocol file
+
+✅ Successfully converted to JSON-based configuration!
+The protocol no longer requires the 'toml' package.
+Updated file: CherryPick_OT2.py
+
+=== Step 2: Running protocol simulation ===
+Starting Cherry-Pick Protocol
+Dual-pipette mode: DISABLED (legacy single-pipette)
+Using legacy mode: multi
+Distribution: A1 → 4 wells, pattern: equal
+Picking up tip from A1 of Opentrons OT-2 96 Tip Rack 300 µL on slot 1
+Distributing from A1 at bottom+2.0mm
+Distributing [50.0, 50.0, 50.0, 50.0] from A1 of tube_rack_96_1500ul on slot 4 to A1 of 384_ppv_55ul on slot 2
+	Transferring [50.0, 50.0, 50.0, 50.0] from A1 of tube_rack_96_1500ul on slot 4 to A1 of 384_ppv_55ul on slot 2
+		Aspirating 200.0 uL from A1 of tube_rack_96_1500ul on slot 4 at 94.0 uL/sec
+		Dispensing 50.0 uL into A1 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 50.0 uL into A2 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 50.0 uL into A3 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 50.0 uL into A4 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Blowing out at A1 of tube_rack_96_1500ul on slot 4
+Dropping tip into Trash Bin on slot 12
+Distribution: A2 → 4 wells, pattern: geometric:0.5
+Picking up tip from A2 of Opentrons OT-2 96 Tip Rack 300 µL on slot 1
+Distributing from A2 at bottom+2.0mm
+Distributing [100.0, 50.0, 25.0, 12.5] from A2 of tube_rack_96_1500ul on slot 4 to A5 of 384_ppv_55ul on slot 2
+	Transferring [100.0, 50.0, 25.0, 12.5] from A2 of tube_rack_96_1500ul on slot 4 to A5 of 384_ppv_55ul on slot 2
+		Aspirating 187.5 uL from A2 of tube_rack_96_1500ul on slot 4 at 94.0 uL/sec
+		Dispensing 100.0 uL into A5 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 50.0 uL into A6 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 25.0 uL into A7 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 12.5 uL into A8 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Blowing out at A2 of tube_rack_96_1500ul on slot 4
+Distribution: A3 → 5 wells, pattern: equal
+Distributing from A3 at bottom+2.0mm
+Distributing [60.0, 60.0, 60.0, 60.0, 60.0] from A3 of tube_rack_96_1500ul on slot 4 to B1 of 384_ppv_55ul on slot 2
+	Transferring [60.0, 60.0, 60.0, 60.0, 60.0] from A3 of tube_rack_96_1500ul on slot 4 to B1 of 384_ppv_55ul on slot 2
+		Aspirating 300.0 uL from A3 of tube_rack_96_1500ul on slot 4 at 94.0 uL/sec
+		Dispensing 60.0 uL into B1 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 60.0 uL into B2 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 60.0 uL into B3 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 60.0 uL into B4 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 60.0 uL into B5 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Blowing out at A3 of tube_rack_96_1500ul on slot 4
+Dropping tip into Trash Bin on slot 12
+Distribution: A4 → 4 wells, pattern: geometric:2
+Picking up tip from A3 of Opentrons OT-2 96 Tip Rack 300 µL on slot 1
+Distributing from A4 at bottom+2.0mm
+Distributing [20.0, 40.0, 80.0, 160.0] from A4 of tube_rack_96_1500ul on slot 4 to B6 of 384_ppv_55ul on slot 2
+	Transferring [20.0, 40.0, 80.0, 160.0] from A4 of tube_rack_96_1500ul on slot 4 to B6 of 384_ppv_55ul on slot 2
+		Aspirating 300.0 uL from A4 of tube_rack_96_1500ul on slot 4 at 94.0 uL/sec
+		Dispensing 20.0 uL into B6 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 40.0 uL into B7 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 80.0 uL into B8 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Dispensing 160.0 uL into B9 of 384_ppv_55ul on slot 2 at 94.0 uL/sec
+		Blowing out at A4 of tube_rack_96_1500ul on slot 4
+Returning tip
+	Dropping tip into A3 of Opentrons OT-2 96 Tip Rack 300 µL on slot 1
+Protocol complete: 4 transfers
+
+=== Simulation successful! Copying CherryPick_OT2.py to clipboard ===
+Protocol copied to clipboard ✓

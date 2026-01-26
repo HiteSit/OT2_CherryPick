@@ -68,11 +68,11 @@ while [[ $# -gt 0 ]]; do
             SEND_TO_OPENTRONS=true
             shift
             ;;
-        -*)
+        -* )
             echo "Unknown option $1"
             exit 1
             ;;
-        *)
+        * )
             CSV_FILE="$1"
             shift
             ;;

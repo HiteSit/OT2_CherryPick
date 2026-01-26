@@ -1,0 +1,3 @@
+/home/hitesit/.opentrons/robot_settings.json not found. Loading defaults
+Deck calibration not found.
+/home/hitesit/.opentrons/deck_calibration.json not found. Loading defaults
