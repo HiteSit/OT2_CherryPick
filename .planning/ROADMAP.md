@@ -16,7 +16,7 @@ The project now focuses on validating OT-2 simulation behavior by turning simula
 
 ### Phase 1: Core Selection
 **Goal**: Users can select CSV files from a searchable dropdown and see content immediately loaded
-**Plans**: 1 plan
+**Plans**: 3 plans
 
 Plans:
 - [x] 01-01-PLAN.md — File selector with search, clear, refresh, and immediate content loading
@@ -62,10 +62,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Test suite can load a simulation log and expose structured events for labware load, pick up tip, aspirate, dispense, and drop tip actions
   2. Parser selects the correct log adapter based on simulator/API version so tests parse multiple versions consistently
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: TBD
+- [ ] 05-01-PLAN.md — Define raw event models and v8.7.0 log adapter
+- [ ] 05-02-PLAN.md — Normalize events and add versioned parsing entrypoint
 
 #### Phase 6: Transfer Mapping Validation
 **Goal**: Expected CSV transfers are validated against parsed events with mode-aware expectations
