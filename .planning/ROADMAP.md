@@ -48,10 +48,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Test runner captures `opentrons_simulate` stdout/stderr into fixtures that are reused for repeatable validation runs
   2. Simulation warnings or errors fail tests with clear context pointing to the offending log output
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md — Capture simulation logs as reusable fixtures
 
 #### Phase 5: Structured Event Parsing
 **Goal**: Simulation logs are parsed into normalized, version-aware event models for downstream assertions
