@@ -51,7 +51,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 04-01-PLAN.md — Capture simulation logs as reusable fixtures
+- [x] 04-01-PLAN.md — Capture simulation logs as reusable fixtures
 
 #### Phase 5: Structured Event Parsing
 **Goal**: Simulation logs are parsed into normalized, version-aware event models for downstream assertions
@@ -109,7 +109,7 @@ Plans:
 | 1. Core Selection | v1.0 | 1/1 | Complete | 2026-01-20 |
 | 2. Data Safety | v1.0 | 1/1 | Complete | 2026-01-20 |
 | 3. Polish | v1.0 | 1/1 | Complete | 2026-01-21 |
-| 4. Log Capture Baseline | v2.0 | 0/TBD | Not started | - |
+| 4. Log Capture Baseline | v2.0 | 1/1 | Complete | 2026-01-26 |
 | 5. Structured Event Parsing | v2.0 | 0/TBD | Not started | - |
 | 6. Transfer Mapping Validation | v2.0 | 0/TBD | Not started | - |
 | 7. Diagnostics + Policy Checks | v2.0 | 0/TBD | Not started | - |
