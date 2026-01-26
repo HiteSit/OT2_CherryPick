@@ -1,0 +1,21 @@
+=== Using local configuration ===
+=== Step 1: Updating protocol with helper ===
+=== Cherry-Pick Protocol Helper ===
+Converting TOML + CSV → JSON configuration...
+Reading configuration files...
+  - Labware TOML: labware_dict.toml
+  - Settings TOML: settings.toml
+  - CSV file: /mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick/tests/fixtures/csvs/invalid_labware.csv
+✓ Successfully read all configuration files
+Generated JSON config (2635 characters)
+Reading CherryPick_OT2.py...
+Writing updated CherryPick_OT2.py...
+✓ Successfully updated protocol file
+
+✅ Successfully converted to JSON-based configuration!
+The protocol no longer requires the 'toml' package.
+Updated file: CherryPick_OT2.py
+
+=== Step 2: Running protocol simulation ===
+
+=== Simulation failed - protocol NOT copied to clipboard ===

@@ -1,0 +1,23 @@
+/home/hitesit/.opentrons/robot_settings.json not found. Loading defaults
+Deck calibration not found.
+/home/hitesit/.opentrons/deck_calibration.json not found. Loading defaults
+ValueError [line 931]: Labware validation failed: ❌ STRICT LABWARE VALIDATION FAILED
+
+CSV labware references MUST exactly match settings.toml definitions.
+Labware naming convention: {labware_id}_{position_rack}
+
+❌ CSV references NOT FOUND in settings.toml:
+   - missing_labware_1_1
+   - missing_labware_2_2
+
+✓ Available labware from settings.toml:
+   - 384_ppv_55ul_2
+   - tip_rack_geb_1000ul_5
+   - tube_rack_96_1500ul_4
+
+FIX: Either:
+1. Update CSV to reference exact labware names from settings.toml, OR
+2. Add missing labware definitions to settings.toml [[settings.working_plate]] sections
+
+NOTE: Hardware modules (type='module') are background-only and cannot be referenced in CSV.
+

@@ -1,0 +1,49 @@
+=== Using local configuration ===
+=== Step 1: Updating protocol with helper ===
+=== Cherry-Pick Protocol Helper ===
+Converting TOML + CSV → JSON configuration...
+Reading configuration files...
+  - Labware TOML: labware_dict.toml
+  - Settings TOML: settings.toml
+  - CSV file: /mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick/CSVs/example_home_control.csv
+✓ Successfully read all configuration files
+Generated JSON config (2977 characters)
+Reading CherryPick_OT2.py...
+Writing updated CherryPick_OT2.py...
+✓ Successfully updated protocol file
+
+✅ Successfully converted to JSON-based configuration!
+The protocol no longer requires the 'toml' package.
+Updated file: CherryPick_OT2.py
+
+=== Step 2: Running protocol simulation ===
+Starting Cherry-Pick Protocol
+Dual-pipette mode: DISABLED (legacy single-pipette)
+Using legacy mode: single_X1
+Picking up tip from A1 of GEB 1000uL on slot 5
+Aspirating 50.0 uL from A1 of tube_rack_96_1500ul on slot 4 at 274.7 uL/sec
+Dispensing 50.0 uL into A1 of 384_ppv_55ul on slot 2 at 274.7 uL/sec
+Blowing out at A1 of 384_ppv_55ul on slot 2
+Aspirating 50.0 uL from A2 of tube_rack_96_1500ul on slot 4 at 274.7 uL/sec
+Dispensing 50.0 uL into A2 of 384_ppv_55ul on slot 2 at 274.7 uL/sec
+Blowing out at A2 of 384_ppv_55ul on slot 2
+Aspirating 50.0 uL from A3 of tube_rack_96_1500ul on slot 4 at 274.7 uL/sec
+Dispensing 50.0 uL into A3 of 384_ppv_55ul on slot 2 at 274.7 uL/sec
+Blowing out at A3 of 384_ppv_55ul on slot 2
+Row 4: HOME control - Re-homing robot to correct any precision drift
+Dropping tip into Trash Bin on slot 12
+Picking up tip from B1 of GEB 1000uL on slot 5
+Aspirating 50.0 uL from A4 of tube_rack_96_1500ul on slot 4 at 274.7 uL/sec
+Dispensing 50.0 uL into A4 of 384_ppv_55ul on slot 2 at 274.7 uL/sec
+Blowing out at A4 of 384_ppv_55ul on slot 2
+Aspirating 50.0 uL from A5 of tube_rack_96_1500ul on slot 4 at 274.7 uL/sec
+Dispensing 50.0 uL into A5 of 384_ppv_55ul on slot 2 at 274.7 uL/sec
+Blowing out at A5 of 384_ppv_55ul on slot 2
+Aspirating 50.0 uL from A6 of tube_rack_96_1500ul on slot 4 at 274.7 uL/sec
+Dispensing 50.0 uL into A6 of 384_ppv_55ul on slot 2 at 274.7 uL/sec
+Blowing out at A6 of 384_ppv_55ul on slot 2
+Dropping tip into Trash Bin on slot 12
+Protocol complete: 7 transfers
+
+=== Simulation successful! Copying CherryPick_OT2.py to clipboard ===
+Protocol copied to clipboard ✓
