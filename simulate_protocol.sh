@@ -139,9 +139,10 @@ uv run python helper_cherry_pick.py -l labware_dict.toml -s settings.toml -c "$C
 echo ""
 echo "=== Step 2: Running protocol simulation ==="
 opentrons_simulate --custom-labware $LABWARE_PATH CherryPick_OT2.py
+SIM_EXIT_CODE=$?
 
 # Check if simulation succeeded and copy to clipboard if it did
-if [ $? -eq 0 ]; then
+if [ $SIM_EXIT_CODE -eq 0 ]; then
     echo ""
     echo "=== Simulation successful! Copying CherryPick_OT2.py to clipboard ==="
     if cat CherryPick_OT2.py | /mnt/c/Windows/System32/clip.exe 2>/dev/null; then
@@ -173,4 +174,5 @@ if [ $? -eq 0 ]; then
 else
     echo ""
     echo "=== Simulation failed - protocol NOT copied to clipboard ==="
+    exit $SIM_EXIT_CODE
 fi
