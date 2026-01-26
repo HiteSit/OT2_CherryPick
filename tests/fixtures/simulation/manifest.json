@@ -1,0 +1,52 @@
+{
+  "fixtures": [
+    {
+      "fixture_id": "basic-single_x1",
+      "csv_path": "CSVs/example_basic.csv",
+      "settings_profile": "single_X1",
+      "expect_failure": false
+    },
+    {
+      "fixture_id": "basic-multi_x1",
+      "csv_path": "CSVs/example_basic.csv",
+      "settings_profile": "multi_X1",
+      "expect_failure": false
+    },
+    {
+      "fixture_id": "multi-multi",
+      "csv_path": "CSVs/example_multi_mode.csv",
+      "settings_profile": "multi",
+      "expect_failure": false
+    },
+    {
+      "fixture_id": "distribution-multi",
+      "csv_path": "CSVs/example_distribution.csv",
+      "settings_profile": "multi",
+      "expect_failure": false
+    },
+    {
+      "fixture_id": "home-control-single_x1",
+      "csv_path": "CSVs/example_home_control.csv",
+      "settings_profile": "single_X1",
+      "expect_failure": false
+    },
+    {
+      "fixture_id": "fill-analytics",
+      "csv_path": "CSVs/fill_analytics_plate.csv",
+      "settings_profile": "fill_analytics",
+      "expect_failure": false
+    },
+    {
+      "fixture_id": "extreme-single_x1",
+      "csv_path": "CSVs/example_basic.csv",
+      "settings_profile": "liquid_extreme",
+      "expect_failure": false
+    },
+    {
+      "fixture_id": "invalid-labware",
+      "csv_path": "tests/fixtures/csvs/invalid_labware.csv",
+      "settings_profile": "single_X1",
+      "expect_failure": true
+    }
+  ]
+}
