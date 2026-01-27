@@ -8,6 +8,8 @@ from tests.simulation_logs.models import (
     TipDropEvent,
     TipPickupEvent,
 )
+from tests.simulation_logs.expectations import ExpectedTransfer, build_expected_transfers
+from tests.simulation_logs.matching import MatchResult, match_transfers
 from tests.simulation_logs.normalize import (
     NormalizedAspirateEvent,
     NormalizedDispenseEvent,
@@ -27,11 +29,15 @@ __all__ = [
     "ParseWarning",
     "TipDropEvent",
     "TipPickupEvent",
+    "ExpectedTransfer",
     "NormalizedAspirateEvent",
     "NormalizedDispenseEvent",
     "NormalizedLabwareLoadEvent",
     "NormalizedMixEvent",
     "NormalizedTipDropEvent",
     "NormalizedTipPickupEvent",
+    "MatchResult",
+    "build_expected_transfers",
+    "match_transfers",
     "parse_fixture",
 ]
