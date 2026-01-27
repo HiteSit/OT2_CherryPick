@@ -65,8 +65,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Define raw event models and v8.7.0 log adapter
-- [ ] 05-02-PLAN.md — Normalize events and add versioned parsing entrypoint
+- [x] 05-01-PLAN.md — Define raw event models and v8.7.0 log adapter
+- [x] 05-02-PLAN.md — Normalize events and add versioned parsing entrypoint
 
 #### Phase 6: Transfer Mapping Validation
 **Goal**: Expected CSV transfers are validated against parsed events with mode-aware expectations
@@ -75,10 +75,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Tests compare expected CSV transfers to parsed events and pass only when the simulator executed matching transfers
   2. Expectations adjust correctly for single, multi, and multi_X1 runs so multi-channel transfers validate by column behavior
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: TBD
+- [x] 06-01-PLAN.md — Build CSV expectations (mode + distribution aware)
+- [ ] 06-02-PLAN.md — Match expectations to simulator events with diagnostics
 
 #### Phase 7: Diagnostics + Policy Checks
 **Goal**: Validation failures provide semantic diagnostics and cover liquid handling policy rules
@@ -113,11 +114,11 @@ Plans:
 | 2. Data Safety | v1.0 | 1/1 | Complete | 2026-01-20 |
 | 3. Polish | v1.0 | 1/1 | Complete | 2026-01-21 |
 | 4. Log Capture Baseline | v2.0 | 3/3 | Complete | 2026-01-26 |
-| 5. Structured Event Parsing | v2.0 | 0/TBD | Not started | - |
-| 6. Transfer Mapping Validation | v2.0 | 0/TBD | Not started | - |
+| 5. Structured Event Parsing | v2.0 | 2/2 | Complete | 2026-01-27 |
+| 6. Transfer Mapping Validation | v2.0 | 1/2 | In progress | - |
 | 7. Diagnostics + Policy Checks | v2.0 | 0/TBD | Not started | - |
 | 8. Test Suite Refactor | v2.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-26 - Phase 4 fixtures completed*
+*Last updated: 2026-01-27 - Phase 6 expectations plan 1 completed*
