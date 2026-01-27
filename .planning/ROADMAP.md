@@ -89,10 +89,11 @@ Plans:
   1. Failed tests summarize expected vs observed transfers in a semantic failure report
   2. Test output reports coverage metrics for which CSV actions were validated
   3. Tests confirm tip reuse, mix, and air gap behaviors match settings/CSV intent
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 07-01: TBD
+- [x] 07-01-PLAN.md — Add semantic transfer diagnostics + CSV row coverage metrics
+- [x] 07-02-PLAN.md — Add tip reuse, mix, and air gap policy checks with evidence gating
 
 #### Phase 8: Test Suite Refactor
 **Goal**: Test suite structure is reorganized and hardened after core validation work
@@ -101,10 +102,16 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Test directories and fixtures are reorganized so simulation log fixtures and parsers live in clear, reusable locations
   2. Test harness exposes shared utilities for log capture, parser setup, and fixture normalization
-**Plans**: TBD
+**Plans**: 7 plans
 
 Plans:
-- [ ] 08-01: TBD
+- [ ] 08-01-PLAN.md — Add shared support utilities for fixture paths and capture
+- [ ] 08-02-PLAN.md — Move simulation fixtures and capture tests into integration suite
+- [ ] 08-03-PLAN.md — Add shared parser setup and fixture normalization helpers
+- [ ] 08-04-PLAN.md — Move core parsing modules and adapters into unit package
+- [ ] 08-05-PLAN.md — Move matching/diagnostics/expectations/policies into unit package
+- [ ] 08-06-PLAN.md — Move simulation log tests into unit/simulation_logs
+- [ ] 08-07-PLAN.md — Move transfer mapping tests into unit/transfer_mapping
 
 ## Progress
 
@@ -116,9 +123,9 @@ Plans:
 | 4. Log Capture Baseline | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 5. Structured Event Parsing | v2.0 | 2/2 | Complete | 2026-01-27 |
 | 6. Transfer Mapping Validation | v2.0 | 2/2 | Complete | 2026-01-27 |
-| 7. Diagnostics + Policy Checks | v2.0 | 0/TBD | Not started | - |
-| 8. Test Suite Refactor | v2.0 | 0/TBD | Not started | - |
+| 7. Diagnostics + Policy Checks | v2.0 | 2/2 | Complete | 2026-01-27 |
+| 8. Test Suite Refactor | v2.0 | 0/7 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-27 - Phase 6 expectations plan 1 completed*
+*Last updated: 2026-01-27 - Phase 7 diagnostics + policy checks completed*

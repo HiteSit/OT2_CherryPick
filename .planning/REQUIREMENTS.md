@@ -13,23 +13,23 @@ Requirements for the Simulation Log Validation milestone. Each maps to roadmap p
 
 ### Log Capture
 
-- [ ] **LOG-01**: Test suite captures `opentrons_simulate` stdout/stderr as fixtures for repeatable validation runs
+- [x] **LOG-01**: Test suite captures `opentrons_simulate` stdout/stderr as fixtures for repeatable validation runs
 
 ### Parsing
 
-- [ ] **PARSE-01**: Test suite parses simulation logs into structured events (labware load, pick up tip, aspirate, dispense, drop tip)
+- [x] **PARSE-01**: Test suite parses simulation logs into structured events (labware load, pick up tip, aspirate, dispense, drop tip)
 
 ### Transfer Validation
 
-- [ ] **MAP-01**: Test suite compares expected transfers from CSV against parsed simulation events
+- [x] **MAP-01**: Test suite compares expected transfers from CSV against parsed simulation events
 
 ### Mode Handling
 
-- [ ] **MODE-01**: Test suite applies mode-aware expectations for single, multi, and multi_X1 runs
+- [x] **MODE-01**: Test suite applies mode-aware expectations for single, multi, and multi_X1 runs
 
 ### Diagnostics & Reporting
 
-- [ ] **DIAG-01**: Simulation errors or warnings cause tests to fail with actionable context
+- [x] **DIAG-01**: Simulation errors or warnings cause tests to fail with actionable context
 - [ ] **DIAG-02**: Failures summarize expected vs observed transfers (semantic failure report)
 - [ ] **DIAG-03**: Test suite reports coverage metrics for validated CSV actions
 
@@ -39,7 +39,7 @@ Requirements for the Simulation Log Validation milestone. Each maps to roadmap p
 
 ### Compatibility
 
-- [ ] **COMP-01**: Test suite supports log adapters keyed by API level or simulator version
+- [x] **COMP-01**: Test suite supports log adapters keyed by API level or simulator version
 
 ## Future Requirements
 
@@ -65,12 +65,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LOG-01 | Phase 4 | Pending |
-| DIAG-01 | Phase 4 | Pending |
-| PARSE-01 | Phase 5 | Pending |
-| COMP-01 | Phase 5 | Pending |
-| MAP-01 | Phase 6 | Pending |
-| MODE-01 | Phase 6 | Pending |
+| LOG-01 | Phase 4 | Complete |
+| DIAG-01 | Phase 4 | Complete |
+| PARSE-01 | Phase 5 | Complete |
+| COMP-01 | Phase 5 | Complete |
+| MAP-01 | Phase 6 | Complete |
+| MODE-01 | Phase 6 | Complete |
 | DIAG-02 | Phase 7 | Pending |
 | DIAG-03 | Phase 7 | Pending |
 | POL-01 | Phase 7 | Pending |
@@ -83,4 +83,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-24*
-*Last updated: 2026-01-24 after roadmap creation*
+*Last updated: 2026-01-27 after Phase 5 verification*
