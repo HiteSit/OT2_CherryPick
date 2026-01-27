@@ -6,6 +6,11 @@ from pathlib import Path
 import pytest
 
 from tests.fixtures.simulation import load_manifest
+from tests.simulation_logs.diagnostics import (
+    compute_row_coverage,
+    format_row_coverage,
+    format_transfer_report,
+)
 from tests.simulation_logs.expectations import build_expected_transfers
 from tests.simulation_logs.matching import match_transfers
 from tests.simulation_logs.normalize import load_settings
@@ -51,8 +56,10 @@ def test_expected_transfers_match_fixture(
     result = parse_fixture(fixture_id)
 
     match = match_transfers(expectations, result.events)
+    coverage = compute_row_coverage(expectations, match)
 
-    assert match.success, match.report()
+    assert match.success, format_transfer_report(match, expectations)
+    assert coverage.covered_rows == coverage.total_rows, format_row_coverage(coverage)
 
 
 def test_transfer_matching_reports_volume_mismatch(
@@ -69,7 +76,9 @@ def test_transfer_matching_reports_volume_mismatch(
         *expectations[1:],
     ]
     match = match_transfers(mutated, result.events)
+    coverage = compute_row_coverage(mutated, match)
 
     assert not match.success
     assert match.mismatched or match.missing
     assert "dispense" in " ".join(match.mismatched + match.missing).lower()
+    assert "coverage" in format_row_coverage(coverage).lower()

@@ -17,6 +17,8 @@ class MatchResult:
     missing: list[str]
     extra: list[str]
     mismatched: list[str]
+    missing_expected: list[ExpectedTransfer]
+    mismatched_expected: list[ExpectedTransfer]
     matched_count: int
 
     def summary(self) -> str:
@@ -54,6 +56,8 @@ def match_transfers(
     missing: list[str] = []
     extra: list[str] = []
     mismatched: list[str] = []
+    missing_expected: list[ExpectedTransfer] = []
+    mismatched_expected: list[ExpectedTransfer] = []
     matched_count = 0
     event_index = 0
     expected_index = 0
@@ -81,8 +85,10 @@ def match_transfers(
                 filtered_events,
                 event_index,
                 missing=missing,
+                missing_expected=missing_expected,
                 extra=extra,
                 mismatched=mismatched,
+                mismatched_expected=mismatched_expected,
             )
             matched_count += group_matched
             continue
@@ -92,8 +98,10 @@ def match_transfers(
             filtered_events,
             event_index,
             missing=missing,
+            missing_expected=missing_expected,
             extra=extra,
             mismatched=mismatched,
+            mismatched_expected=mismatched_expected,
         )
         if matched:
             matched_count += 1
@@ -108,6 +116,8 @@ def match_transfers(
         missing=missing,
         extra=extra,
         mismatched=mismatched,
+        missing_expected=missing_expected,
+        mismatched_expected=mismatched_expected,
         matched_count=matched_count,
     )
 
@@ -129,8 +139,10 @@ def _match_distribution_group(
     event_index: int,
     *,
     missing: list[str],
+    missing_expected: list[ExpectedTransfer],
     extra: list[str],
     mismatched: list[str],
+    mismatched_expected: list[ExpectedTransfer],
 ) -> tuple[int, int]:
     if not group_entries:
         return event_index, 0
@@ -138,6 +150,7 @@ def _match_distribution_group(
     group_total = leader.group_total_volume_ul
     if group_total is None:
         mismatched.append(f"Missing group_total_volume_ul for {leader.group_id}")
+        mismatched_expected.append(leader)
         return event_index, 0
 
     aspirate, event_index = _advance_to_match_aspirate(
@@ -149,6 +162,7 @@ def _match_distribution_group(
     if aspirate is None:
         for entry in group_entries:
             missing.append(_describe_missing(entry))
+            missing_expected.append(entry)
         return event_index, 0
 
     if aspirate.volume_ul != group_total:
@@ -160,6 +174,7 @@ def _match_distribution_group(
                 expected=leader,
             )
         )
+        mismatched_expected.append(leader)
 
     group_matched = 0
     for entry in group_entries:
@@ -171,6 +186,7 @@ def _match_distribution_group(
         )
         if dispense is None:
             missing.append(_describe_missing(entry))
+            missing_expected.append(entry)
             continue
         if dispense.volume_ul != entry.dispense_volume_ul:
             mismatched.append(
@@ -181,6 +197,7 @@ def _match_distribution_group(
                     expected=entry,
                 )
             )
+            mismatched_expected.append(entry)
             continue
         group_matched += 1
 
@@ -193,8 +210,10 @@ def _match_single_transfer(
     event_index: int,
     *,
     missing: list[str],
+    missing_expected: list[ExpectedTransfer],
     extra: list[str],
     mismatched: list[str],
+    mismatched_expected: list[ExpectedTransfer],
 ) -> tuple[int, bool]:
     aspirate, event_index = _advance_to_match_aspirate(
         events,
@@ -204,6 +223,7 @@ def _match_single_transfer(
     )
     if aspirate is None:
         missing.append(_describe_missing(expected))
+        missing_expected.append(expected)
         return event_index, False
 
     if aspirate.volume_ul < expected.aspirate_volume_ul:
@@ -213,8 +233,10 @@ def _match_single_transfer(
             events,
             event_index,
             missing=missing,
+            missing_expected=missing_expected,
             extra=extra,
             mismatched=mismatched,
+            mismatched_expected=mismatched_expected,
         )
 
     if aspirate.volume_ul != expected.aspirate_volume_ul:
@@ -226,6 +248,7 @@ def _match_single_transfer(
                 expected=expected,
             )
         )
+        mismatched_expected.append(expected)
 
     dispense, event_index = _advance_to_match_dispense(
         events,
@@ -235,6 +258,7 @@ def _match_single_transfer(
     )
     if dispense is None:
         missing.append(_describe_missing(expected))
+        missing_expected.append(expected)
         return event_index, False
 
     if dispense.volume_ul != expected.dispense_volume_ul:
@@ -246,6 +270,7 @@ def _match_single_transfer(
                 expected=expected,
             )
         )
+        mismatched_expected.append(expected)
         return event_index, False
 
     return event_index, aspirate.volume_ul == expected.aspirate_volume_ul
@@ -258,8 +283,10 @@ def _match_split_transfer(
     event_index: int,
     *,
     missing: list[str],
+    missing_expected: list[ExpectedTransfer],
     extra: list[str],
     mismatched: list[str],
+    mismatched_expected: list[ExpectedTransfer],
 ) -> tuple[int, bool]:
     remaining_aspirate = expected.aspirate_volume_ul
     remaining_dispense = expected.dispense_volume_ul
@@ -278,6 +305,7 @@ def _match_split_transfer(
             )
             if current_aspirate is None:
                 missing.append(_describe_missing(expected))
+                missing_expected.append(expected)
                 return event_index, False
 
         if current_aspirate.volume_ul > remaining_aspirate:
@@ -289,6 +317,7 @@ def _match_split_transfer(
                     remaining_volume=remaining_aspirate,
                 )
             )
+            mismatched_expected.append(expected)
             return event_index, False
 
         running_aspirate += current_aspirate.volume_ul
@@ -302,6 +331,7 @@ def _match_split_transfer(
         )
         if dispense is None:
             missing.append(_describe_missing(expected))
+            missing_expected.append(expected)
             return event_index, False
 
         if dispense.volume_ul > remaining_dispense:
@@ -313,6 +343,7 @@ def _match_split_transfer(
                     remaining_volume=remaining_dispense,
                 )
             )
+            mismatched_expected.append(expected)
             return event_index, False
 
         running_dispense += dispense.volume_ul
@@ -329,6 +360,7 @@ def _match_split_transfer(
     mismatched.append(
         _describe_split_totals(expected, running_aspirate, running_dispense)
     )
+    mismatched_expected.append(expected)
     return event_index, False
 
 
@@ -425,12 +457,17 @@ def _describe_split_totals(
 
 
 def _format_expected(expected: ExpectedTransfer) -> str:
+    row_label = None
+    if expected.row_index is not None:
+        row_label = f"row {expected.row_index}"
     label = (
         f"{expected.source_labware_id}/{expected.source_slot}/{expected.source_well} "
         f"-> {expected.dest_labware_id}/{expected.dest_slot}/{expected.dest_well}"
     )
     if expected.group_id:
         label = f"[{expected.group_id}] {label}"
+    if row_label:
+        label = f"{row_label} {label}"
     return (
         f"{label} (aspirate {expected.aspirate_volume_ul} uL, "
         f"dispense {expected.dispense_volume_ul} uL)"

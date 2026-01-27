@@ -13,6 +13,7 @@ _LABWARE_SLOT_PATTERN = re.compile(r"^(?P<labware_id>.+)_(?P<slot>\d+)$")
 @dataclass(frozen=True)
 class ExpectedTransfer:
     sequence_index: int
+    row_index: int | None
     source_labware_id: str
     source_slot: str
     source_well: str
@@ -118,11 +119,13 @@ def build_expected_transfers(csv_path: Path, settings: dict) -> list[ExpectedTra
 
     expectations: list[ExpectedTransfer] = []
     sequence_index = 1
+    csv_row_index = 0
     rows = parse_csv_rows(csv_path)
 
     for row_index, row in enumerate(rows, start=1):
         if detect_home_row(row):
             continue
+        csv_row_index += 1
 
         dest_well_raw = (row.get("Dest Well") or "").strip()
         has_pipe = "|" in dest_well_raw
@@ -148,12 +151,13 @@ def build_expected_transfers(csv_path: Path, settings: dict) -> list[ExpectedTra
                 air_gap_ul=air_gap_ul,
             )
             group_total = sum(volume - air_gap_ul for _, volume in per_dest)
-            group_id = f"distribution-{row_index}"
+            group_id = f"distribution-{csv_row_index}"
 
             for dest_well, dispense_volume in per_dest:
                 expectations.append(
                     ExpectedTransfer(
                         sequence_index=sequence_index,
+                        row_index=csv_row_index,
                         source_labware_id=source_labware,
                         source_slot=source_slot,
                         source_well=source_well,
@@ -177,6 +181,7 @@ def build_expected_transfers(csv_path: Path, settings: dict) -> list[ExpectedTra
         expectations.append(
             ExpectedTransfer(
                 sequence_index=sequence_index,
+                row_index=csv_row_index,
                 source_labware_id=source_labware,
                 source_slot=source_slot,
                 source_well=source_well,
