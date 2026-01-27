@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-24)
 ## Current Position
 
 Phase: 6 of 8 (Transfer Mapping Validation)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-01-27 - Completed 06-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-01-27 - Completed 06-02-PLAN.md
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -44,6 +44,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 - Phase 4: Use captured simulation fixtures as the baseline for repeatable validation
+- Phase 6: Fail transfer matching on extra aspirate/dispense events by default, with allow_extra_events to override
 
 ### Pending Todos
 
@@ -55,6 +56,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-27 11:45
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-01-27 11:59
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None

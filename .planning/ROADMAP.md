@@ -79,7 +79,7 @@ Plans:
 
 Plans:
 - [x] 06-01-PLAN.md — Build CSV expectations (mode + distribution aware)
-- [ ] 06-02-PLAN.md — Match expectations to simulator events with diagnostics
+- [x] 06-02-PLAN.md — Match expectations to simulator events with diagnostics
 
 #### Phase 7: Diagnostics + Policy Checks
 **Goal**: Validation failures provide semantic diagnostics and cover liquid handling policy rules
@@ -115,7 +115,7 @@ Plans:
 | 3. Polish | v1.0 | 1/1 | Complete | 2026-01-21 |
 | 4. Log Capture Baseline | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 5. Structured Event Parsing | v2.0 | 2/2 | Complete | 2026-01-27 |
-| 6. Transfer Mapping Validation | v2.0 | 1/2 | In progress | - |
+| 6. Transfer Mapping Validation | v2.0 | 2/2 | Complete | 2026-01-27 |
 | 7. Diagnostics + Policy Checks | v2.0 | 0/TBD | Not started | - |
 | 8. Test Suite Refactor | v2.0 | 0/TBD | Not started | - |
 
