@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Iterable, List
 
-from tests.simulation_logs.models import (
+from tests.unit.simulation_logs.models import (
     AspirateEvent,
     DispenseEvent,
     MixEvent,

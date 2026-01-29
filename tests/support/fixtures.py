@@ -18,6 +18,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
+from tests.support import paths as support_paths
+
 
 @dataclass(frozen=True)
 class FixtureEntry:
@@ -27,20 +29,13 @@ class FixtureEntry:
     expect_failure: bool
 
 
-FIXTURES_DIR = Path(__file__).resolve().parent
-MANIFEST_PATH = FIXTURES_DIR / "manifest.json"
+FIXTURES_DIR = support_paths.simulation_fixtures_root()
+MANIFEST_PATH = support_paths.simulation_manifest_path()
 
 
-def _find_repo_root() -> Path:
-    current = Path(__file__).resolve()
-    for parent in current.parents:
-        if (parent / "pyproject.toml").exists():
-            return parent
-    raise FileNotFoundError("Unable to locate repo root (pyproject.toml not found)")
-
-
-def load_manifest(path: Path = MANIFEST_PATH) -> list[FixtureEntry]:
-    data = json.loads(path.read_text(encoding="utf-8"))
+def load_manifest(path: Path | None = None) -> list[FixtureEntry]:
+    manifest_path = path or MANIFEST_PATH
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
     fixtures = data.get("fixtures", [])
     if not isinstance(fixtures, list):
         raise ValueError("Manifest must contain a list under 'fixtures'")
@@ -55,6 +50,31 @@ def load_manifest(path: Path = MANIFEST_PATH) -> list[FixtureEntry]:
             )
         )
     return entries
+
+
+def load_fixture_metadata(fixture_id: str) -> dict[str, object]:
+    metadata_path = FIXTURES_DIR / fixture_id / "metadata.json"
+    if not metadata_path.exists():
+        raise FileNotFoundError(f"Fixture metadata not found for '{fixture_id}'")
+    return json.loads(metadata_path.read_text(encoding="utf-8"))
+
+
+def assert_settings_profile_parity(
+    entry: FixtureEntry,
+    metadata: dict[str, object] | None = None,
+) -> None:
+    metadata_payload = metadata or load_fixture_metadata(entry.fixture_id)
+    metadata_profile = metadata_payload.get("settings_profile")
+    if not metadata_profile:
+        raise AssertionError(
+            f"{entry.fixture_id} metadata missing settings_profile (manifest={entry.settings_profile})"
+        )
+    if entry.settings_profile != metadata_profile:
+        raise AssertionError(
+            "Settings profile mismatch for fixture "
+            f"{entry.fixture_id}: manifest={entry.settings_profile} "
+            f"metadata={metadata_profile}"
+        )
 
 
 def _parse_machine_config(script_text: str) -> str:
@@ -136,7 +156,7 @@ def _get_simulator_version() -> str:
 @contextmanager
 def swap_settings_profile(repo_root: Path, profile: str) -> Iterable[None]:
     settings_path = repo_root / "settings.toml"
-    profile_path = repo_root / "tests" / "e2e" / "configs" / profile / "settings.toml"
+    profile_path = support_paths.settings_profiles_root() / profile / "settings.toml"
     if not profile_path.exists():
         raise FileNotFoundError(f"Settings profile not found: {profile_path}")
     if not settings_path.exists():
@@ -153,7 +173,7 @@ def swap_settings_profile(repo_root: Path, profile: str) -> Iterable[None]:
 
 
 def capture_fixture(entry: FixtureEntry) -> Path:
-    repo_root = _find_repo_root()
+    repo_root = support_paths.repo_root()
     simulate_script = repo_root / "simulate_protocol.sh"
     csv_path = repo_root / entry.csv_path
     if not csv_path.exists():

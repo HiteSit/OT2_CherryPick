@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from pathlib import Path
+from tests.unit.simulation_logs import AspirateEvent, DispenseEvent, TipDropEvent, TipPickupEvent
+from tests.unit.simulation_logs.adapters import v8_7_0
+from tests.support import paths as support_paths
 
-from tests.simulation_logs import AspirateEvent, DispenseEvent, TipDropEvent, TipPickupEvent
-from tests.simulation_logs.adapters import v8_7_0
-
-FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "simulation"
+FIXTURE_ROOT = support_paths.simulation_fixtures_root()
 
 
 def load_stdout(fixture_name: str) -> str:

@@ -5,16 +5,20 @@ from __future__ import annotations
 import json
 import os
 import re
-from pathlib import Path
-
 import pytest
 
-from tests.fixtures.simulation import FixtureEntry, capture_fixture, load_manifest
+from tests.support.fixtures import (
+    FixtureEntry,
+    assert_settings_profile_parity,
+    capture_fixture,
+    load_manifest,
+)
+from tests.support import paths
 
 
 pytestmark = [pytest.mark.requires_simulation, pytest.mark.pipeline_test]
 
-FIXTURES_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "simulation"
+FIXTURES_ROOT = paths.simulation_fixtures_root()
 
 
 def _load_fixture_outputs(entry: FixtureEntry) -> tuple[str, str, dict[str, object]]:
@@ -53,6 +57,12 @@ def _assert_no_markers(entry: FixtureEntry, label: str, output: str) -> None:
             f"{entry.fixture_id} {label} contains warning/error output:\n"
             f"{_excerpt(output)}"
         )
+
+
+@pytest.mark.parametrize("entry", load_manifest(), ids=lambda entry: entry.fixture_id)
+def test_fixture_settings_profile_parity(entry: FixtureEntry) -> None:
+    _, _, metadata = _load_fixture_outputs(entry)
+    assert_settings_profile_parity(entry, metadata)
 
 
 @pytest.mark.parametrize("entry", load_manifest(), ids=lambda entry: entry.fixture_id)

@@ -6,7 +6,7 @@ from typing import Optional, Sequence, Union
 
 import tomllib
 
-from tests.simulation_logs.models import (
+from tests.unit.simulation_logs.models import (
     AspirateEvent,
     DispenseEvent,
     LabwareLoadEvent,

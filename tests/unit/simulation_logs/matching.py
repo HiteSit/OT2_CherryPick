@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Sequence, cast
 
-from tests.simulation_logs.expectations import ExpectedTransfer
-from tests.simulation_logs.normalize import (
+from tests.unit.simulation_logs.expectations import ExpectedTransfer
+from tests.unit.simulation_logs.normalize import (
     NormalizedAspirateEvent,
     NormalizedDispenseEvent,
     NormalizedEvent,
@@ -64,10 +64,9 @@ def match_transfers(
 
     while expected_index < len(ordered_expected):
         if event_index >= len(filtered_events):
-            missing.extend(
-                _describe_missing(expected)
-                for expected in ordered_expected[expected_index:]
-            )
+            remaining = ordered_expected[expected_index:]
+            missing.extend(_describe_missing(expected) for expected in remaining)
+            missing_expected.extend(remaining)
             break
 
         expected = ordered_expected[expected_index]

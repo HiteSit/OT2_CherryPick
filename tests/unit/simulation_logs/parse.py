@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Callable, List
 
-from tests.simulation_logs.adapters import v8_7_0
-from tests.simulation_logs.models import ParseResult, ParseWarning, RawEvent
-from tests.simulation_logs.normalize import load_settings, normalize_events
+from tests.support import paths
+from tests.unit.simulation_logs.adapters import v8_7_0
+from tests.unit.simulation_logs.models import ParseResult, ParseWarning, RawEvent
+from tests.unit.simulation_logs.normalize import load_settings, normalize_events
 
 DEFAULT_SIMULATOR_VERSION = "opentrons_simulate 8.7.0"
 ADAPTERS: dict[str, Callable[[str, str], ParseResult]] = {
     "opentrons_simulate 8.7.0": v8_7_0.parse_text,
 }
 
-FIXTURE_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "simulation"
-SETTINGS_ROOT = Path(__file__).resolve().parents[1] / "e2e" / "configs"
+FIXTURE_ROOT = paths.simulation_fixtures_root()
+SETTINGS_ROOT = paths.settings_profiles_root()
 
 
 def select_adapter(metadata: dict[str, object]) -> Callable[[str, str], ParseResult]:

@@ -3,19 +3,19 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from tests.simulation_logs.normalize import (
+from tests.unit.simulation_logs.normalize import (
     NormalizedAspirateEvent,
     NormalizedDispenseEvent,
     NormalizedLabwareLoadEvent,
     NormalizedTipDropEvent,
     NormalizedTipPickupEvent,
-    load_settings,
 )
-from tests.simulation_logs.parse import parse_fixture, select_adapter
-from tests.simulation_logs.adapters import v8_7_0
+from tests.unit.simulation_logs.parse import parse_fixture, select_adapter
+from tests.unit.simulation_logs.adapters import v8_7_0
+from tests.support import paths as support_paths
+from tests.support.simulation import load_settings_profile
 
-FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "simulation"
-SETTINGS_ROOT = Path(__file__).parent / "e2e" / "configs"
+FIXTURE_ROOT = support_paths.simulation_fixtures_root()
 
 
 def events_of_type(events, event_type):
@@ -33,7 +33,7 @@ def assert_fixture_has_normalized_events(fixture_id: str) -> None:
     result = parse_fixture(fixture_id)
     metadata = json.loads((FIXTURE_ROOT / fixture_id / "metadata.json").read_text("utf-8"))
     settings_profile = metadata["settings_profile"]
-    settings = load_settings(SETTINGS_ROOT / settings_profile / "settings.toml")
+    settings = load_settings_profile(settings_profile)
     expected_loads = len(settings["settings"]["working_plate"])
 
     loads = events_of_type(result.events, NormalizedLabwareLoadEvent)
@@ -84,7 +84,7 @@ def test_unknown_simulator_version_returns_warning(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    from tests.simulation_logs import parse as parse_module
+    from tests.unit.simulation_logs import parse as parse_module
 
     parse_module.FIXTURE_ROOT = tmp_path
     result = parse_module.parse_fixture("unknown-version")

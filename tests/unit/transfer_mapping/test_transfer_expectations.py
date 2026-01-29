@@ -1,34 +1,20 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
-from tests.fixtures.simulation import load_manifest
-from tests.simulation_logs.expectations import build_expected_transfers
-from tests.simulation_logs.normalize import load_settings
+from tests.support.fixtures import FixtureEntry, load_manifest
+from tests.support.simulation import build_expected_transfers_for_entry
 
 
 @pytest.fixture(scope="module")
-def manifest_entries() -> dict[str, object]:
+def manifest_entries() -> dict[str, FixtureEntry]:
     entries = load_manifest()
     return {entry.fixture_id: entry for entry in entries}
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
-
-
-def _load_settings_profile(profile: str) -> dict:
-    settings_path = _repo_root() / "tests" / "e2e" / "configs" / profile / "settings.toml"
-    return load_settings(settings_path)
-
-
-def _build_for_fixture(fixture_id: str, manifest_entries: dict[str, object]):
+def _build_for_fixture(fixture_id: str, manifest_entries: dict[str, FixtureEntry]):
     entry = manifest_entries[fixture_id]
-    csv_path = _repo_root() / entry.csv_path
-    settings = _load_settings_profile(entry.settings_profile)
-    return build_expected_transfers(csv_path, settings)
+    return build_expected_transfers_for_entry(entry)
 
 
 @pytest.mark.parametrize(
@@ -41,7 +27,7 @@ def _build_for_fixture(fixture_id: str, manifest_entries: dict[str, object]):
 def test_basic_modes_expected_volumes(
     fixture_id: str,
     expected_volumes: list[float],
-    manifest_entries: dict[str, object],
+    manifest_entries: dict[str, FixtureEntry],
 ) -> None:
     expectations = _build_for_fixture(fixture_id, manifest_entries)
 
@@ -50,7 +36,7 @@ def test_basic_modes_expected_volumes(
     assert [exp.dispense_volume_ul for exp in expectations] == expected_volumes
 
 
-def test_multi_mode_air_gap(manifest_entries: dict[str, object]) -> None:
+def test_multi_mode_air_gap(manifest_entries: dict[str, FixtureEntry]) -> None:
     expectations = _build_for_fixture("multi-multi", manifest_entries)
 
     assert len(expectations) == 2
@@ -59,7 +45,7 @@ def test_multi_mode_air_gap(manifest_entries: dict[str, object]) -> None:
     assert all(exp.dispense_volume_ul == 60.0 for exp in expectations)
 
 
-def test_distribution_multi_expansion(manifest_entries: dict[str, object]) -> None:
+def test_distribution_multi_expansion(manifest_entries: dict[str, FixtureEntry]) -> None:
     expectations = _build_for_fixture("distribution-multi", manifest_entries)
 
     assert len(expectations) == 17
@@ -79,7 +65,7 @@ def test_distribution_multi_expansion(manifest_entries: dict[str, object]) -> No
     assert all(len(totals) == 1 for totals in grouped_totals.values())
 
 
-def test_home_control_rows_skipped(manifest_entries: dict[str, object]) -> None:
+def test_home_control_rows_skipped(manifest_entries: dict[str, FixtureEntry]) -> None:
     expectations = _build_for_fixture("home-control-single_x1", manifest_entries)
 
     assert len(expectations) == 6

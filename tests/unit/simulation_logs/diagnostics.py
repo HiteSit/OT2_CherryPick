@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Sequence
 
-from tests.simulation_logs.expectations import ExpectedTransfer
-from tests.simulation_logs.matching import MatchResult
+from tests.unit.simulation_logs.expectations import ExpectedTransfer
+from tests.unit.simulation_logs.matching import MatchResult
 
 
 @dataclass(frozen=True)

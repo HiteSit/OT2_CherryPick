@@ -4,14 +4,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional, Sequence
 
-from tests.simulation_logs.expectations import (
+from tests.unit.simulation_logs.expectations import (
     ExpectedTransfer,
     detect_home_row,
     parse_csv_rows,
     parse_labware_field,
 )
-from tests.simulation_logs.matching import MatchResult
-from tests.simulation_logs.normalize import (
+from tests.unit.simulation_logs.matching import MatchResult
+from tests.unit.simulation_logs.normalize import (
     NormalizedEvent,
     NormalizedMixEvent,
     NormalizedTipDropEvent,
