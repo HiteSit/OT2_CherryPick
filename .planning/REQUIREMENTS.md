@@ -9,7 +9,7 @@ Requirements for the Simulation Log Validation milestone. Each maps to roadmap p
 
 ### Test Suite Refactor
 
-- [ ] **REF-01**: Test suite reorganizes directories, fixtures, and harnesses to support simulation log validation
+- [x] **REF-01**: Test suite reorganizes directories, fixtures, and harnesses to support simulation log validation
 
 ### Log Capture
 
@@ -30,12 +30,12 @@ Requirements for the Simulation Log Validation milestone. Each maps to roadmap p
 ### Diagnostics & Reporting
 
 - [x] **DIAG-01**: Simulation errors or warnings cause tests to fail with actionable context
-- [ ] **DIAG-02**: Failures summarize expected vs observed transfers (semantic failure report)
-- [ ] **DIAG-03**: Test suite reports coverage metrics for validated CSV actions
+- [x] **DIAG-02**: Failures summarize expected vs observed transfers (semantic failure report)
+- [x] **DIAG-03**: Test suite reports coverage metrics for validated CSV actions
 
 ### Liquid Handling Policies
 
-- [ ] **POL-01**: Test suite validates tip reuse, mix, and air gap behavior against settings/CSV intent
+- [x] **POL-01**: Test suite validates tip reuse, mix, and air gap behavior against settings/CSV intent
 
 ### Compatibility
 
@@ -71,10 +71,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMP-01 | Phase 5 | Complete |
 | MAP-01 | Phase 6 | Complete |
 | MODE-01 | Phase 6 | Complete |
-| DIAG-02 | Phase 7 | Pending |
-| DIAG-03 | Phase 7 | Pending |
-| POL-01 | Phase 7 | Pending |
-| REF-01 | Phase 8 | Pending |
+| DIAG-02 | Phase 7 | Complete |
+| DIAG-03 | Phase 7 | Complete |
+| POL-01 | Phase 7 | Complete |
+| REF-01 | Phase 8 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 10 total
@@ -83,4 +83,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-24*
-*Last updated: 2026-01-27 after Phase 5 verification*
+*Last updated: 2026-01-28 after Phase 9 verification*

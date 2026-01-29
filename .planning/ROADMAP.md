@@ -7,7 +7,7 @@ The project now focuses on validating OT-2 simulation behavior by turning simula
 ## Milestones
 
 - ✅ **v1.0 CSV File Selector** - Phases 1-3 (shipped 2026-01-21)
-- 📋 **v2.0 Simulation Log Validation** - Phases 4-8 (planned)
+- 📋 **v2.0 Simulation Log Validation** - Gap closure pending
 
 ## Phases
 
@@ -37,7 +37,7 @@ Plans:
 
 </details>
 
-### 📋 v2.0 Simulation Log Validation (Planned)
+### 📋 v2.0 Simulation Log Validation (Gap Closure)
 
 **Milestone Goal:** Tests can prove CSV-driven OT-2 transfers match simulator behavior, with structured logs, mode-aware expectations, and actionable diagnostics.
 
@@ -105,13 +105,53 @@ Plans:
 **Plans**: 7 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Add shared support utilities for fixture paths and capture
-- [ ] 08-02-PLAN.md — Move simulation fixtures and capture tests into integration suite
-- [ ] 08-03-PLAN.md — Add shared parser setup and fixture normalization helpers
-- [ ] 08-04-PLAN.md — Move core parsing modules and adapters into unit package
-- [ ] 08-05-PLAN.md — Move matching/diagnostics/expectations/policies into unit package
-- [ ] 08-06-PLAN.md — Move simulation log tests into unit/simulation_logs
-- [ ] 08-07-PLAN.md — Move transfer mapping tests into unit/transfer_mapping
+- [x] 08-01-PLAN.md — Add shared support utilities for fixture paths and capture
+- [x] 08-02-PLAN.md — Move simulation fixtures and capture tests into integration suite
+- [x] 08-03-PLAN.md — Add shared parser setup and fixture normalization helpers
+- [x] 08-04-PLAN.md — Move core parsing modules and adapters into unit package
+- [x] 08-05-PLAN.md — Move matching/diagnostics/expectations/policies into unit package
+- [x] 08-06-PLAN.md — Move simulation log tests into unit/simulation_logs
+- [x] 08-07-PLAN.md — Move transfer mapping tests into unit/transfer_mapping
+
+#### Phase 9: Diagnostics + Policy Verification
+**Goal**: Verify diagnostics and policy coverage meets milestone requirements; close any remaining gaps
+**Depends on**: Phase 8
+**Requirements**: DIAG-02, DIAG-03, POL-01
+**Gap Closure:** Closes gaps from milestone audit
+**Plans**: 1 plan
+
+Plans:
+- [x] 09-01-PLAN.md — Verify diagnostics + policy requirements and close gaps
+
+#### Phase 10: Fixture Downstream Coverage
+**Goal**: Ensure all captured fixtures are consumed by downstream parse/match/policy tests
+**Depends on**: Phase 9
+**Requirements**: (tech debt)
+**Gap Closure:** Closes integration coverage gaps from milestone audit
+**Plans**: 1 plan
+
+Plans:
+- [x] 10-01-PLAN.md — Add downstream coverage for extreme-single_x1 and invalid-labware fixtures
+
+#### Phase 11: Backfill Phase 7 Verification
+**Goal**: Produce a formal verification report for Phase 7 diagnostics and policy checks
+**Depends on**: Phase 7
+**Requirements**: DIAG-02, DIAG-03, POL-01
+**Gap Closure:** Closes audit gaps for missing Phase 7 verification
+**Plans**: 1 plan
+
+Plans:
+- [ ] 11-01-PLAN.md — Verify Phase 7 diagnostics and policy checks
+
+#### Phase 12: Fixture Settings Profile Parity Check
+**Goal**: Ensure manifest settings_profile matches fixture metadata across parsing and expectations
+**Depends on**: Phase 10
+**Requirements**: (tech debt)
+**Gap Closure:** Closes audit gap for fixture settings_profile parity
+**Plans**: 1 plan
+
+Plans:
+- [x] 12-01-PLAN.md — Add settings_profile parity assertion for fixtures
 
 ## Progress
 
@@ -124,8 +164,12 @@ Plans:
 | 5. Structured Event Parsing | v2.0 | 2/2 | Complete | 2026-01-27 |
 | 6. Transfer Mapping Validation | v2.0 | 2/2 | Complete | 2026-01-27 |
 | 7. Diagnostics + Policy Checks | v2.0 | 2/2 | Complete | 2026-01-27 |
-| 8. Test Suite Refactor | v2.0 | 0/7 | Not started | - |
+| 8. Test Suite Refactor | v2.0 | 7/7 | Complete | 2026-01-28 |
+| 9. Diagnostics + Policy Verification | v2.0 | 1/1 | Complete | 2026-01-28 |
+| 10. Fixture Downstream Coverage | v2.0 | 1/1 | Complete | 2026-01-28 |
+| 11. Backfill Phase 7 Verification | v2.0 | 1/1 | Complete | 2026-01-29 |
+| 12. Fixture Settings Profile Parity Check | v2.0 | 1/1 | Complete | 2026-01-29 |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-27 - Phase 7 diagnostics + policy checks completed*
+*Last updated: 2026-01-29 - Completed 12-01 fixture settings profile parity check*
