@@ -4,7 +4,8 @@
 from tests.support.paths import (
     repo_root,
     tests_root,
-    simulation_fixtures_root,
+    simulation_fixtures_root,  # Legacy alias, use simulation_baselines_root
+    simulation_baselines_root,
     simulation_manifest_path,
     settings_profiles_root,
     settings_profile_path,
@@ -31,11 +32,30 @@ from tests.support.config_map import (
     get_csvs_by_category,
 )
 
+from tests.support.fixtures import (
+    FixtureEntry,
+    load_manifest,
+    load_fixtures_with_baselines,
+    load_fixture_metadata,
+    assert_settings_profile_parity,
+    capture_fixture,
+    swap_settings_profile,
+)
+
+from tests.support.simulation import (
+    build_expected_transfers_for_entry,
+    build_fixture_context,
+    load_settings_profile,
+    parse_fixture_entry,
+    resolve_fixture_csv,
+)
+
 __all__ = [
     # paths
     "repo_root",
     "tests_root",
-    "simulation_fixtures_root",
+    "simulation_fixtures_root",  # Legacy alias
+    "simulation_baselines_root",
     "simulation_manifest_path",
     "settings_profiles_root",
     "settings_profile_path",
@@ -56,4 +76,18 @@ __all__ = [
     "get_compatible_profiles",
     "csv_config_combinations",
     "get_csvs_by_category",
+    # fixtures
+    "FixtureEntry",
+    "load_manifest",
+    "load_fixtures_with_baselines",
+    "load_fixture_metadata",
+    "assert_settings_profile_parity",
+    "capture_fixture",
+    "swap_settings_profile",
+    # simulation
+    "build_expected_transfers_for_entry",
+    "build_fixture_context",
+    "load_settings_profile",
+    "parse_fixture_entry",
+    "resolve_fixture_csv",
 ]

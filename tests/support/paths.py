@@ -24,7 +24,22 @@ def simulation_fixtures_root() -> Path:
 
 
 def simulation_manifest_path() -> Path:
-    return simulation_fixtures_root() / "manifest.json"
+    """Return path to unified manifest.json in tests/support/.
+
+    This is the single source of truth for all test scenario definitions.
+    The legacy manifest at integration/simulation_logs/fixtures/manifest.json
+    is no longer used.
+    """
+    return tests_root() / "support" / "manifest.json"
+
+
+def simulation_baselines_root() -> Path:
+    """Return path to captured simulation baseline fixtures.
+
+    Baselines (stdout.txt, stderr.txt, metadata.json) are stored here.
+    Only fixtures with has_baseline=true in manifest.json have baselines.
+    """
+    return tests_root() / "integration" / "simulation_logs" / "fixtures"
 
 
 def settings_profiles_root() -> Path:

@@ -1,0 +1,158 @@
+{
+  "version": "2.0",
+  "description": "Unified test scenario definitions for E2E and integration tests",
+  "fixtures": [
+    {
+      "fixture_id": "basic-single_x1",
+      "csv_path": "CSVs/example_basic.csv",
+      "settings_profile": "single_X1",
+      "expect_failure": false,
+      "has_baseline": true,
+      "description": "Basic cherry-pick with single-channel pipette"
+    },
+    {
+      "fixture_id": "basic-multi_x1",
+      "csv_path": "CSVs/example_basic.csv",
+      "settings_profile": "multi_X1",
+      "expect_failure": false,
+      "has_baseline": true,
+      "description": "Basic cherry-pick with 8-channel single-tip mode"
+    },
+    {
+      "fixture_id": "basic_volumes-single_x1",
+      "csv_path": "CSVs/example_basic_volumes.csv",
+      "settings_profile": "single_X1",
+      "expect_failure": false,
+      "has_baseline": false,
+      "description": "Basic cherry-pick with large volumes (400uL) requiring P1000"
+    },
+    {
+      "fixture_id": "advanced-single_x1",
+      "csv_path": "CSVs/example_advanced.csv",
+      "settings_profile": "single_X1",
+      "expect_failure": false,
+      "has_baseline": false,
+      "description": "Advanced cherry-pick with Tip Action=keep (conflicts with multi_X1)"
+    },
+    {
+      "fixture_id": "multi-multi",
+      "csv_path": "CSVs/example_multi_mode.csv",
+      "settings_profile": "multi",
+      "expect_failure": false,
+      "has_baseline": true,
+      "description": "Full 8-channel multi mode transfers"
+    },
+    {
+      "fixture_id": "distribution-multi",
+      "csv_path": "CSVs/example_distribution.csv",
+      "settings_profile": "multi",
+      "expect_failure": false,
+      "has_baseline": true,
+      "description": "Distribution transfers with multi mode"
+    },
+    {
+      "fixture_id": "distribution-single_x1",
+      "csv_path": "CSVs/example_distribution.csv",
+      "settings_profile": "single_X1",
+      "expect_failure": false,
+      "has_baseline": false,
+      "description": "Distribution transfers with single-channel pipette"
+    },
+    {
+      "fixture_id": "distribution-multi_x1",
+      "csv_path": "CSVs/example_distribution.csv",
+      "settings_profile": "multi_X1",
+      "expect_failure": false,
+      "has_baseline": false,
+      "description": "Distribution transfers with 8-channel single-tip mode"
+    },
+    {
+      "fixture_id": "mixed_modes-multi",
+      "csv_path": "CSVs/example_mixed_modes.csv",
+      "settings_profile": "multi",
+      "expect_failure": false,
+      "has_baseline": false,
+      "description": "Mixed mode transfers with full 8-channel"
+    },
+    {
+      "fixture_id": "mixed_modes-single_x1",
+      "csv_path": "CSVs/example_mixed_modes.csv",
+      "settings_profile": "single_X1",
+      "expect_failure": false,
+      "has_baseline": false,
+      "description": "Mixed mode transfers with single-channel pipette"
+    },
+    {
+      "fixture_id": "mixed_modes-multi_x1",
+      "csv_path": "CSVs/example_mixed_modes.csv",
+      "settings_profile": "multi_X1",
+      "expect_failure": false,
+      "has_baseline": false,
+      "description": "Mixed mode transfers with 8-channel single-tip mode"
+    },
+    {
+      "fixture_id": "dual_all_three_modes-dual",
+      "csv_path": "CSVs/test_dual_all_three_modes.csv",
+      "settings_profile": "dual",
+      "expect_failure": false,
+      "has_baseline": false,
+      "description": "Dual-pipette mode with all three channel configurations"
+    },
+    {
+      "fixture_id": "dual_single_multi-dual",
+      "csv_path": "CSVs/test_dual_single_multi.csv",
+      "settings_profile": "dual",
+      "expect_failure": false,
+      "has_baseline": false,
+      "description": "Dual-pipette mode with single and multi channel"
+    },
+    {
+      "fixture_id": "dual_single_multi_x1-dual",
+      "csv_path": "CSVs/test_dual_single_multi_X1.csv",
+      "settings_profile": "dual",
+      "expect_failure": false,
+      "has_baseline": false,
+      "description": "Dual-pipette mode with single and multi_X1 channel"
+    },
+    {
+      "fixture_id": "fill-analytics",
+      "csv_path": "CSVs/fill_analytics_plate.csv",
+      "settings_profile": "fill_analytics",
+      "expect_failure": false,
+      "has_baseline": true,
+      "description": "Custom deck layout for analytics plate filling"
+    },
+    {
+      "fixture_id": "home-control-single_x1",
+      "csv_path": "CSVs/example_home_control.csv",
+      "settings_profile": "single_X1",
+      "expect_failure": false,
+      "has_baseline": true,
+      "description": "HOME control row feature with single-channel"
+    },
+    {
+      "fixture_id": "home-control-multi_x1",
+      "csv_path": "CSVs/example_home_control.csv",
+      "settings_profile": "multi_X1",
+      "expect_failure": false,
+      "has_baseline": false,
+      "description": "HOME control row feature with 8-channel single-tip mode"
+    },
+    {
+      "fixture_id": "extreme-single_x1",
+      "csv_path": "CSVs/example_basic.csv",
+      "settings_profile": "liquid_extreme",
+      "expect_failure": false,
+      "has_baseline": true,
+      "description": "Extreme liquid handling settings for stress testing"
+    },
+    {
+      "fixture_id": "invalid-labware",
+      "csv_path": "tests/fixtures/csvs/invalid_labware.csv",
+      "settings_profile": "single_X1",
+      "expect_failure": true,
+      "has_baseline": true,
+      "description": "Expected failure case: CSV references non-existent labware"
+    }
+  ]
+}

@@ -86,8 +86,13 @@ def test_unknown_simulator_version_returns_warning(tmp_path: Path) -> None:
 
     from tests.unit.simulation_logs import parse as parse_module
 
-    parse_module.FIXTURE_ROOT = tmp_path
-    result = parse_module.parse_fixture("unknown-version")
+    # Save original value and restore after test
+    original_fixture_root = parse_module.FIXTURE_ROOT
+    try:
+        parse_module.FIXTURE_ROOT = tmp_path
+        result = parse_module.parse_fixture("unknown-version")
 
-    assert result.warnings
-    assert not result.events
+        assert result.warnings
+        assert not result.events
+    finally:
+        parse_module.FIXTURE_ROOT = original_fixture_root

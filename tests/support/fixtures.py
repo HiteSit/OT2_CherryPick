@@ -23,33 +23,90 @@ from tests.support import paths as support_paths
 
 @dataclass(frozen=True)
 class FixtureEntry:
+    """Represents a test fixture from the unified manifest.
+
+    Attributes:
+        fixture_id: Unique identifier for this fixture (e.g., "basic-single_x1")
+        csv_path: Path to CSV file relative to repo root (e.g., "CSVs/example_basic.csv")
+        settings_profile: Name of settings profile to use (e.g., "single_X1")
+        expect_failure: Whether this fixture is expected to fail simulation
+        has_baseline: Whether captured baseline files exist for this fixture
+        description: Human-readable description of the fixture
+    """
     fixture_id: str
     csv_path: str
     settings_profile: str
     expect_failure: bool
+    has_baseline: bool = False
+    description: str = ""
 
 
-FIXTURES_DIR = support_paths.simulation_fixtures_root()
+# Path to captured baseline fixtures (stdout.txt, stderr.txt, metadata.json)
+BASELINES_DIR = support_paths.simulation_baselines_root()
+# Path to unified manifest.json (single source of truth)
 MANIFEST_PATH = support_paths.simulation_manifest_path()
 
+# Legacy alias for backward compatibility
+FIXTURES_DIR = BASELINES_DIR
 
-def load_manifest(path: Path | None = None) -> list[FixtureEntry]:
+
+def load_manifest(
+    path: Path | None = None,
+    *,
+    with_baseline_only: bool = False,
+) -> list[FixtureEntry]:
+    """Load fixture entries from the unified manifest.
+
+    Args:
+        path: Optional path to manifest file. Defaults to tests/support/manifest.json.
+        with_baseline_only: If True, only return entries with has_baseline=true.
+            Useful for integration tests that require captured baselines.
+
+    Returns:
+        List of FixtureEntry objects from the manifest.
+
+    Raises:
+        ValueError: If manifest format is invalid.
+    """
     manifest_path = path or MANIFEST_PATH
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
     fixtures = data.get("fixtures", [])
     if not isinstance(fixtures, list):
         raise ValueError("Manifest must contain a list under 'fixtures'")
+
     entries: list[FixtureEntry] = []
     for item in fixtures:
+        has_baseline = bool(item.get("has_baseline", False))
+
+        # Skip entries without baselines if filter is enabled
+        if with_baseline_only and not has_baseline:
+            continue
+
         entries.append(
             FixtureEntry(
                 fixture_id=item["fixture_id"],
                 csv_path=item["csv_path"],
                 settings_profile=item["settings_profile"],
-                expect_failure=bool(item["expect_failure"]),
+                expect_failure=bool(item.get("expect_failure", False)),
+                has_baseline=has_baseline,
+                description=item.get("description", ""),
             )
         )
     return entries
+
+
+def load_fixtures_with_baselines(path: Path | None = None) -> list[FixtureEntry]:
+    """Load only fixture entries that have captured baselines.
+
+    Convenience function for integration tests that need baseline files.
+
+    Args:
+        path: Optional path to manifest file.
+
+    Returns:
+        List of FixtureEntry objects with has_baseline=true.
+    """
+    return load_manifest(path, with_baseline_only=True)
 
 
 def load_fixture_metadata(fixture_id: str) -> dict[str, object]:

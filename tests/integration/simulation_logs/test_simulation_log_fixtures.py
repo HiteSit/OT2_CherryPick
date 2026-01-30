@@ -11,6 +11,7 @@ from tests.support.fixtures import (
     FixtureEntry,
     assert_settings_profile_parity,
     capture_fixture,
+    load_fixtures_with_baselines,
     load_manifest,
 )
 from tests.support import paths
@@ -18,11 +19,15 @@ from tests.support import paths
 
 pytestmark = [pytest.mark.requires_simulation, pytest.mark.pipeline_test]
 
-FIXTURES_ROOT = paths.simulation_fixtures_root()
+# Directory containing captured baseline files (stdout.txt, stderr.txt, metadata.json)
+BASELINES_ROOT = paths.simulation_baselines_root()
+
+# Legacy alias for backward compatibility
+FIXTURES_ROOT = BASELINES_ROOT
 
 
 def _load_fixture_outputs(entry: FixtureEntry) -> tuple[str, str, dict[str, object]]:
-    fixture_dir = FIXTURES_ROOT / entry.fixture_id
+    fixture_dir = BASELINES_ROOT / entry.fixture_id
     stdout_path = fixture_dir / "stdout.txt"
     stderr_path = fixture_dir / "stderr.txt"
     metadata_path = fixture_dir / "metadata.json"
@@ -59,13 +64,22 @@ def _assert_no_markers(entry: FixtureEntry, label: str, output: str) -> None:
         )
 
 
-@pytest.mark.parametrize("entry", load_manifest(), ids=lambda entry: entry.fixture_id)
+@pytest.mark.parametrize(
+    "entry",
+    load_fixtures_with_baselines(),
+    ids=lambda entry: entry.fixture_id,
+)
 def test_fixture_settings_profile_parity(entry: FixtureEntry) -> None:
+    """Verify settings_profile in manifest matches metadata.json for each baseline."""
     _, _, metadata = _load_fixture_outputs(entry)
     assert_settings_profile_parity(entry, metadata)
 
 
-@pytest.mark.parametrize("entry", load_manifest(), ids=lambda entry: entry.fixture_id)
+@pytest.mark.parametrize(
+    "entry",
+    load_fixtures_with_baselines(),
+    ids=lambda entry: entry.fixture_id,
+)
 def test_simulation_log_fixtures(entry: FixtureEntry) -> None:
     stdout, stderr, metadata = _load_fixture_outputs(entry)
     returncode = metadata.get("returncode")

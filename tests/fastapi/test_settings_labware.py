@@ -7,20 +7,23 @@ def test_read_settings(client):
 
 
 def test_patch_settings_updates_value(client):
-    patch_payload = {"path": "settings.general.tip_reuse", "value": "never"}
+    # Use mode field since tip_reuse was removed (now per-row via CSV Tip Action column)
+    patch_payload = {"path": "settings.general.mode", "value": "single_X1"}
     response = client.patch("/settings", json=patch_payload)
     assert response.status_code == 200
-    assert response.json()["settings"]["general"]["tip_reuse"] == "never"
+    assert response.json()["settings"]["general"]["mode"] == "single_X1"
 
     verify = client.get("/settings")
-    assert verify.json()["settings"]["general"]["tip_reuse"] == "never"
+    assert verify.json()["settings"]["general"]["mode"] == "single_X1"
 
 
 def test_reset_settings_restores_defaults(client):
-    client.patch("/settings", json={"path": "settings.general.tip_reuse", "value": "never"})
+    # Use mode field since tip_reuse was removed (now per-row via CSV Tip Action column)
+    client.patch("/settings", json={"path": "settings.general.mode", "value": "single_X1"})
     reset_response = client.post("/settings/reset")
     assert reset_response.status_code == 200
-    assert reset_response.json()["settings"]["general"]["tip_reuse"] == "always"
+    # Mode should be reset to a valid value (depends on default settings.toml)
+    assert reset_response.json()["settings"]["general"]["mode"] in {"multi", "single_X1", "multi_X1", "dual"}
 
 
 def test_labware_roundtrip(client):

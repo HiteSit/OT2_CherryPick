@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.support.fixtures import FixtureEntry, load_manifest
+from tests.support.fixtures import FixtureEntry, load_fixtures_with_baselines, load_manifest
 from tests.support.simulation import (
     build_fixture_context,
     load_settings_profile,
@@ -25,11 +25,16 @@ from tests.unit.simulation_logs.normalize import (
 
 @pytest.fixture(scope="module")
 def manifest_entries() -> dict[str, FixtureEntry]:
-    entries = load_manifest()
+    """Load all fixtures with baselines for tests that need parsed fixture data."""
+    entries = load_fixtures_with_baselines()
     return {entry.fixture_id: entry for entry in entries}
 
 
-@pytest.mark.parametrize("entry", load_manifest(), ids=lambda entry: entry.fixture_id)
+@pytest.mark.parametrize(
+    "entry",
+    load_fixtures_with_baselines(),
+    ids=lambda entry: entry.fixture_id,
+)
 def test_manifest_fixtures_policy_evaluation(entry: FixtureEntry) -> None:
     expected, parsed, csv_path, settings = build_fixture_context(entry)
     match = match_transfers(expected, parsed.events)

@@ -39,9 +39,13 @@ def test_generate_protocol_after_settings_patch(client):
     assert response.json()["logs"]
 
 
-def test_send_to_opentrons_requires_target_path(client):
+def test_send_to_opentrons_without_target_path_uses_shell_settings(client):
+    # target_path is now optional - falls back to shell_settings.target_protocol_src_win
+    # The request should succeed (validation no longer requires target_path)
     response = client.post("/workflow/generate", json={"csv": "example_basic.csv", "send_to_opentrons": True})
-    assert response.status_code == 422
+    # Request is accepted (200), but deployment may fail if shell_settings path is invalid
+    # The key point is that we no longer get a 422 validation error
+    assert response.status_code == 200
 
 
 def test_generate_and_deploy_protocol(client, tmp_path):

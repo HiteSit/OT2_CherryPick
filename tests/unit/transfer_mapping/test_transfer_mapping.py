@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 import pytest
 
-from tests.support.fixtures import FixtureEntry, load_manifest
+from tests.support.fixtures import FixtureEntry, load_fixtures_with_baselines, load_manifest
 from tests.support.simulation import (
     build_expected_transfers_for_entry,
     parse_fixture_entry,
@@ -20,7 +20,8 @@ from tests.unit.simulation_logs.normalize import NormalizedDispenseEvent
 
 @pytest.fixture(scope="module")
 def manifest_entries() -> dict[str, FixtureEntry]:
-    entries = load_manifest()
+    """Load all fixtures with baselines for tests that need parsed fixture data."""
+    entries = load_fixtures_with_baselines()
     return {entry.fixture_id: entry for entry in entries}
 
 
@@ -53,7 +54,11 @@ def test_expected_transfers_match_fixture(
     assert coverage.covered_rows == coverage.total_rows, format_row_coverage(coverage)
 
 
-@pytest.mark.parametrize("entry", load_manifest(), ids=lambda entry: entry.fixture_id)
+@pytest.mark.parametrize(
+    "entry",
+    load_fixtures_with_baselines(),
+    ids=lambda entry: entry.fixture_id,
+)
 def test_manifest_fixture_match_and_coverage(entry: FixtureEntry) -> None:
     expectations = build_expected_transfers_for_entry(entry)
     result = parse_fixture_entry(entry)
