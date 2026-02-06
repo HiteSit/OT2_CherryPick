@@ -39,5 +39,43 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = [ "src/ot2_cherrypick_mcp" ]
 
+[tool.pytest.ini_options]
+# Pytest configuration for OT2_CherryPick test suite
+
+# Test discovery patterns
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Test paths
+testpaths = [
+    "tests/workflow",
+    "tests/e2e",
+    "tests/fastapi",
+    "tests/unit",
+    "tests/integration",
+    "tests",
+]
+
+# Markers for organizing tests
+markers = [
+    "requires_simulation: Tests that require opentrons_simulate and labware definitions",
+    "pipeline_test: Tests suitable for CI/CD pipeline execution",
+    "slow: Tests that take significant time to execute",
+    "baseline_test: Tests that validate captured baseline fixtures",
+    "e2e: End-to-end integration tests",
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "fastapi: FastAPI backend tests",
+    "workflow: Unified workflow tests (Phase 3)",
+]
+
+# Output options
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+
 [tool.uv]
 managed = true
