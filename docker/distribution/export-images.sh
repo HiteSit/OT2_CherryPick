@@ -4,12 +4,9 @@ set -e
 # ============================================================================
 # OT-2 CherryPick Docker Image Export Script
 # ============================================================================
-# Purpose: Export existing Docker images and package for offline distribution
+# Purpose: Build Docker images from source and package for offline distribution
 # Usage: ./export-images.sh [version]
 # Example: ./export-images.sh 1.0.0
-#
-# Prerequisites: Run 'docker compose up -d' in the docker/ directory first
-#                to build and verify the images work correctly.
 # ============================================================================
 
 # Configuration
@@ -60,25 +57,19 @@ check_docker() {
     log_success "Docker is installed and running"
 }
 
-# Check that required images exist
-check_images_exist() {
-    log_info "Checking for existing Docker images..."
+# Build fresh images from source (--no-cache ensures latest code is included)
+build_images() {
+    log_info "Building Docker images from source (--no-cache)..."
+    log_info "This ensures the exported images always match the current source code."
 
-    if ! docker image inspect ot2cherrypick/backend:latest &> /dev/null; then
-        log_error "Image 'ot2cherrypick/backend:latest' not found."
-        log_error "Please build the images first by running:"
-        log_error "  cd ${DOCKER_DIR} && docker compose up -d"
+    cd "${DOCKER_DIR}"
+    if ! docker compose build --no-cache; then
+        log_error "Docker image build failed. Fix build errors before exporting."
         exit 1
     fi
+    cd "${SCRIPT_DIR}"
 
-    if ! docker image inspect ot2cherrypick/frontend:latest &> /dev/null; then
-        log_error "Image 'ot2cherrypick/frontend:latest' not found."
-        log_error "Please build the images first by running:"
-        log_error "  cd ${DOCKER_DIR} && docker compose up -d"
-        exit 1
-    fi
-
-    log_success "Both images found and ready to export"
+    log_success "Both images built successfully from current source"
 }
 
 # Clean up previous builds
@@ -397,12 +388,19 @@ fi
 echo "Docker is installed and running"
 echo ""
 
-# Stop any running containers first
+# Stop any running containers and remove old volumes
+# Volume removal is REQUIRED: the backend bootstraps template files
+# (CherryPick_OT2.py, settings.toml, labware_dict.toml) from the image
+# into the gui_state volume only if they don't already exist.
+# Without removing the volume, stale templates from a previous version persist.
 if docker compose ps -q 2>/dev/null | grep -q .; then
-    echo "Stopping existing containers..."
-    docker compose down
-    echo ""
+    echo "Stopping existing containers and removing old volumes..."
+    docker compose down -v
+else
+    echo "Removing old volumes (if any)..."
+    docker compose down -v 2>/dev/null || true
 fi
+echo ""
 
 # Remove old images to ensure fresh install
 echo "Removing old images (if any)..."
@@ -472,9 +470,10 @@ if errorlevel 1 (
 echo Docker is installed and running
 echo.
 
-REM Stop any running containers first
-echo Stopping existing containers (if any)...
-docker compose down >nul 2>&1
+REM Stop containers and remove old volumes to ensure fresh template bootstrap
+REM Without this, stale CherryPick_OT2.py/settings.toml persist from previous version
+echo Stopping existing containers and removing old volumes...
+docker compose down -v >nul 2>&1
 echo.
 
 REM Remove old images to ensure fresh install
@@ -595,8 +594,8 @@ main() {
     echo ""
 
     check_docker
-    check_images_exist
     cleanup_previous
+    build_images
     export_images
     create_package_structure
     create_readme
