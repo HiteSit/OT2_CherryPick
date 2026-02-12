@@ -1,0 +1,53 @@
+# Single-channel mode with custom protocol name
+# Tests that protocol_name is embedded in metadata and JSON
+
+[settings.general]
+protocol_name = "My Custom Protocol"
+mode = "single_X1"
+starting_tip_well = "H1"
+
+[settings.general.head_speed]
+speed = 400
+
+[settings.liquid_handling]
+
+[settings.liquid_handling.pre_aspirate_contact]
+enabled = false
+position_offset_percent = 20
+aspirate_volume = 0
+
+[settings.liquid_handling.post_aspirate_wick]
+enabled = false
+radius = 1
+v_offset_mm = -1.5
+speed = 20
+
+[settings.liquid_handling.delays]
+post_aspirate = 0
+
+[settings.liquid_handling.push_out]
+enabled = true
+volume_ul = 5
+
+[settings.liquid_handling.mixing]
+enabled = false
+location = "destination"
+repetitions = 3
+source_remixing = "once"
+
+# Deck layout: tube rack source, 384 destination, tip rack for Pipette_1
+[[settings.working_plate]]
+type = "reservoir"
+labware_id = "384_ppv_55ul"
+position_rack = "2"
+
+[[settings.working_plate]]
+type = "reservoir"
+labware_id = "tube_rack_96_1500ul"
+position_rack = "4"
+
+[[settings.working_plate]]
+type = "tip"
+labware_id = "tip_rack_geb_1000ul"
+connection = "Pipette_1"
+position_rack = "5"
