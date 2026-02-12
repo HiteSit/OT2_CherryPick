@@ -24,6 +24,8 @@ speed = 400                     # Pipette movement speed (mm/min)
 # - High precision: contact + tip wick only
 
 [settings.liquid_handling]
+active_preset = ""                  # Preset name to activate (e.g. "standard", "viscous")
+                                    # Empty string = use individual settings below as-is
 
 # Pre-Aspirate Liquid Contact
 # Combines touch_liquid and pre_wet functionality from original protocols
@@ -90,62 +92,27 @@ source_remixing = "once"        # Options: "once", "always" (only applies when l
 # =============================================================================
 # PRESET CONFIGURATIONS
 # =============================================================================
-# Common combinations for different liquid handling scenarios.
-# Copy these values to the main sections above to apply presets.
+# Named presets that override individual liquid-handling settings above.
+# When active_preset is set, the preset's values take precedence.
+# When active_preset is empty (""), individual settings above are used as-is.
 
-# Standard Aqueous Solutions (like original cherry_pick_protocol.py)
-# Light liquid contact for positioning confidence + tip wick
+# Standard Liquids (aqueous, low viscosity)
+# Contact + wick for clean tip withdrawal, no delays, no push-out
 [settings.liquid_handling.presets.standard]
 pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_volume = 0 }
-post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
-delays = { post_aspirate = 0 }
-push_out = { enabled = false }
-mixing = { enabled = true, location = "destination", repetitions = 3, source_remixing = "once" }
+post_aspirate_wick   = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
+delays               = { post_aspirate = 0 }
+push_out             = { enabled = false }
+mixing               = { enabled = true, location = "destination", repetitions = 3, source_remixing = "once" }
 
-# Viscous Liquids (like original cherry_pick_protocol_DMSO.py)
+# Viscous Liquids (e.g. DMSO — mirrors cherry_pick_protocol_DMSO.py)
 # Contact + delays for settling + push-out for complete ejection
 [settings.liquid_handling.presets.viscous]
 pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_volume = 0 }
-post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
-delays = { post_aspirate = 2.0 }
-push_out = { enabled = true, volume_ul = 5 }
-mixing = { enabled = true, location = "destination", repetitions = 5, source_remixing = "once" }
-
-# Hydrophobic/Slippery Liquids (like original cherrypick_slipery.py)
-# Pre-wet tip conditioning + standard handling
-[settings.liquid_handling.presets.slippery]
-pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_volume = 5 }
-post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
-delays = { post_aspirate = 0 }
-push_out = { enabled = false }
-mixing = { enabled = true, location = "destination", repetitions = 3, source_remixing = "once" }
-
-# High Precision Mode
-# Minimal interventions, maximum precision
-[settings.liquid_handling.presets.minimal]
-pre_aspirate_contact = { enabled = false }
-post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
-delays = { post_aspirate = 0 }
-push_out = { enabled = false }
-mixing = { enabled = true, location = "destination", repetitions = 3, source_remixing = "once" }
-
-# Aggressive Handling
-# All features enabled for challenging liquids
-[settings.liquid_handling.presets.aggressive]
-pre_aspirate_contact = { enabled = true, position_offset_percent = 30, aspirate_volume = 10 }
-post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 15 }
-delays = { post_aspirate = 3.0 }
-push_out = { enabled = true, volume_ul = 5 }
-mixing = { enabled = true, location = "destination", repetitions = 7, source_remixing = "once" }
-
-# Cell Resuspension / Bead Mixing
-# Mix source wells before sampling to ensure homogeneous suspensions
-[settings.liquid_handling.presets.cell_resuspension]
-pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_volume = 0 }
-post_aspirate_wick = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
-delays = { post_aspirate = 0 }
-push_out = { enabled = false }
-mixing = { enabled = true, location = "source", repetitions = 5, source_remixing = "once" }  # Mix at source before aspirating
+post_aspirate_wick   = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
+delays               = { post_aspirate = 2.0 }
+push_out             = { enabled = true, volume_ul = 5 }
+mixing               = { enabled = true, location = "destination", repetitions = 5, source_remixing = "once" }
 
 # =============================================================================
 # DECK LAYOUT CONFIGURATION

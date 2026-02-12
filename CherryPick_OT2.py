@@ -932,6 +932,20 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # Extract liquid handling configuration (with defaults)
     liquid_handling = settings['settings'].get('liquid_handling', {})
+
+    # --- Preset resolution ---
+    active_preset = liquid_handling.get('active_preset', '')
+    if active_preset:
+        presets = liquid_handling.get('presets', {})
+        if active_preset not in presets:
+            raise ValueError(f"Unknown liquid handling preset: '{active_preset}'. Available: {list(presets.keys())}")
+        preset_values = presets[active_preset]
+        protocol.comment(f"Applying liquid handling preset: {active_preset}")
+        # Override individual settings with preset values
+        for key in ('pre_aspirate_contact', 'post_aspirate_wick', 'delays', 'push_out', 'mixing'):
+            if key in preset_values:
+                liquid_handling[key] = preset_values[key]
+
     liquid_contact_config = liquid_handling.get('pre_aspirate_contact', {'enabled': True, 'position_offset_percent': 20, 'aspirate_volume': 0})
     wick_config = liquid_handling.get('post_aspirate_wick', {'enabled': True, 'radius': 0.8, 'v_offset_mm': -1.5, 'speed': 20})
     delay_config = liquid_handling.get('delays', {'post_aspirate': 0})

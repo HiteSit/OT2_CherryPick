@@ -156,13 +156,17 @@ def apply_liquid_preset(
 
     change_results = handler.set_values(updates)
 
+    # Also set the active_preset key so the protocol runtime applies this preset
+    old_active, new_active = handler.set_value("settings.liquid_handling.active_preset", preset_name)
+
     return {
         "settings_file": str(handler.path),
         "preset": preset_name,
+        "active_preset": preset_name,
         "changes": [
             {"path": path, "old_value": old, "new_value": new}
             for path, old, new in change_results
-        ],
+        ] + [{"path": "settings.liquid_handling.active_preset", "old_value": old_active, "new_value": new_active}],
         "backup_file": str(handler.path.with_suffix(handler.path.suffix + ".backup")),
     }
 
