@@ -15,6 +15,13 @@ export function ConfigSummary() {
       <Grid>
         <Grid.Col span={6}>
           <Stack gap="xs">
+            {general?.protocol_name && (
+              <div>
+                <Text size="sm" fw={500}>Protocol Name:</Text>
+                <Text size="sm">{general.protocol_name}</Text>
+              </div>
+            )}
+
             <div>
               <Text size="sm" fw={500}>Pipette Mode:</Text>
               <Badge color="blue" size="lg">

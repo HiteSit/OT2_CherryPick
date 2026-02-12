@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Stack, Alert, Text, Select, Group, Tooltip, ActionIcon, Paper, Title, TextInput } from '@mantine/core'
 import { IconAlertCircle, IconHelp } from '@tabler/icons-react'
 import { DeckGrid } from '../deck/DeckGrid'
@@ -11,6 +12,12 @@ export function DeckSetupStep() {
   const { state } = useWizard()
   const { data: settings } = useSettingsQuery()
   const patchMutation = usePatchSetting()
+
+  const [localProtocolName, setLocalProtocolName] = useState('')
+
+  useEffect(() => {
+    setLocalProtocolName(settings?.settings?.general?.protocol_name || '')
+  }, [settings?.settings?.general?.protocol_name])
 
   const hasSource = state.deckLayout.some(l => l.type === 'source')
   const hasDestination = state.deckLayout.some(l => l.type === 'destination')
@@ -71,6 +78,53 @@ export function DeckSetupStep() {
 
   return (
     <Stack gap="lg">
+      <Paper p="md" withBorder>
+        <Stack gap="sm">
+          <Title order={5}>Protocol Name</Title>
+          <TextInput
+            label={
+              <Group gap={4}>
+                Custom name for this protocol
+                <Tooltip label={HELP_TEXT.protocolName} maw={400} multiline>
+                  <ActionIcon size="xs" variant="subtle" color="gray">
+                    <IconHelp size={14} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
+            }
+            description="Displayed on the OT-2 touchscreen during execution"
+            placeholder="Unified Cherry-Pick & Distribution Protocol"
+            value={localProtocolName}
+            onChange={(e) => setLocalProtocolName(e.currentTarget.value)}
+            onBlur={() => {
+              const currentValue = settings?.settings?.general?.protocol_name || ''
+              if (localProtocolName !== currentValue) {
+                patchMutation.mutate(
+                  { path: 'settings.general.protocol_name', value: localProtocolName },
+                  {
+                    onSuccess: () => {
+                      notifications.show({
+                        color: 'teal',
+                        message: 'Protocol name updated',
+                        position: 'top-right',
+                      })
+                    },
+                    onError: (error) => {
+                      notifications.show({
+                        color: 'red',
+                        title: 'Failed to update protocol name',
+                        message: error instanceof Error ? error.message : 'Unknown error',
+                        position: 'top-right',
+                      })
+                    },
+                  }
+                )
+              }
+            }}
+          />
+        </Stack>
+      </Paper>
+
       <Paper p="md" withBorder>
         <Stack gap="sm">
           <Title order={5}>Pipette Mode</Title>

@@ -4,6 +4,8 @@
  */
 
 export const HELP_TEXT = {
+  protocolName: "Custom name displayed on the OT-2 touchscreen during protocol execution. If left empty, the default protocol name from the script is used.",
+
   mode: {
     single_X1: "Single-channel pipette - one transfer at a time. Maximum flexibility for cherry-picking.",
     multi_X1: "8-channel pipette in single-tip mode. Cherry-picking with multi-channel hardware. Uses only one tip (configured by starting_tip_well).",

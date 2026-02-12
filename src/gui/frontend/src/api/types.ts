@@ -1,4 +1,5 @@
 export interface GeneralSettings {
+  protocol_name?: string
   mode: 'multi' | 'multi_X1' | 'single_X1' | 'dual'
   starting_tip_well: string
   head_speed: {
