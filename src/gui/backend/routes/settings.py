@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import PlainTextResponse
 
 from ..dependencies import get_state_store
-from ..schemas import DocumentPayload, PatchPayload, WorkingPlateEntryPayload, WorkingPlateMovePayload
+from ..schemas import DocumentPayload, PatchPayload, PresetSavePayload, WorkingPlateEntryPayload, WorkingPlateMovePayload
 from ..state import FileStateStore
 
 router = APIRouter(prefix="/settings", tags=["settings"])
@@ -80,3 +80,56 @@ def move_working_plate_entry(
     """Reorder working plate entries."""
 
     return store.move_working_plate_entry(index, payload.target_index)
+
+
+@router.post("/presets/{name}")
+def save_preset(
+    payload: PresetSavePayload,
+    name: str = Path(..., min_length=1),
+    store: FileStateStore = Depends(get_state_store),
+) -> dict[str, object]:
+    """Save a custom liquid-handling preset."""
+
+    if name != payload.name:
+        raise HTTPException(status_code=400, detail="Preset name in path and body must match.")
+
+    import tomlkit
+
+    doc = store._read_doc(store.settings_path)
+    lh = doc["settings"]["liquid_handling"]
+
+    if "presets" not in lh:
+        lh["presets"] = tomlkit.table()
+
+    # Convert the preset dict into a proper TOML table with inline sub-tables
+    preset_table = tomlkit.table()
+    for key, val in payload.preset.items():
+        if isinstance(val, dict):
+            inline = tomlkit.inline_table()
+            inline.update(val)
+            preset_table[key] = inline
+        else:
+            preset_table[key] = val
+
+    lh["presets"][name] = preset_table
+    store._write_doc(store.settings_path, doc)
+    return store._doc_to_plain(doc)
+
+
+@router.delete("/presets/{name}")
+def delete_preset(
+    name: str = Path(..., min_length=1),
+    store: FileStateStore = Depends(get_state_store),
+) -> dict[str, object]:
+    """Delete a custom liquid-handling preset."""
+
+    doc = store._read_doc(store.settings_path)
+    lh = doc["settings"]["liquid_handling"]
+    presets = lh.get("presets")
+
+    if not presets or name not in presets:
+        raise HTTPException(status_code=404, detail=f"Preset '{name}' not found.")
+
+    del presets[name]
+    store._write_doc(store.settings_path, doc)
+    return store._doc_to_plain(doc)

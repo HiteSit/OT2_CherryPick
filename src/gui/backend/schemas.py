@@ -104,6 +104,21 @@ class CSVListResponse(BaseModel):
     files: List[str]
 
 
+class PresetSavePayload(BaseModel):
+    """Payload for saving a custom liquid-handling preset."""
+
+    name: str = Field(..., min_length=1, max_length=64, description="Preset name (alphanumeric + underscore)")
+    preset: Dict[str, Any] = Field(..., description="Full preset object with LH sub-keys")
+
+    @field_validator("name")
+    @classmethod
+    def validate_preset_name(cls, value: str) -> str:  # noqa: D417
+        import re
+        if not re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", value):
+            raise ValueError("Preset name must start with a letter and contain only alphanumeric characters or underscores")
+        return value
+
+
 class ShellSettings(BaseModel):
     target_protocol_src_win: Optional[str] = Field(
         None,
@@ -135,6 +150,7 @@ __all__ = [
     "CSVUploadPayload",
     "DocumentPayload",
     "PatchPayload",
+    "PresetSavePayload",
     "WorkingPlateEntryPayload",
     "WorkingPlateMovePayload",
     "ProtocolGenerationRequest",
