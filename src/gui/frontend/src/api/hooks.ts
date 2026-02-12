@@ -8,6 +8,7 @@ import {
   deleteCsv,
   deleteLabwareEntry,
   deletePipetteEntry,
+  deletePreset,
   deleteWorkingPlateEntry,
   fetchCsvContent,
   fetchCsvList,
@@ -19,6 +20,7 @@ import {
   patchSetting,
   replaceSettings,
   runWorkflow,
+  savePreset,
   updateLabwareEntry,
   updatePipetteEntry,
   updateShellSettings,
@@ -27,6 +29,7 @@ import {
 import type {
   CsvUploadPayload,
   LabwareEntry,
+  LiquidHandlingPreset,
   PipetteEntry,
   ShellSettingsBrowseRequest,
   ShellSettingsUpdate,
@@ -169,6 +172,28 @@ export const useDeleteCsv = () => {
     onSuccess: (_, name) => {
       queryClient.invalidateQueries({ queryKey: ['csvs'] })
       queryClient.removeQueries({ queryKey: ['csvs', name] })
+    },
+  })
+}
+
+export const useSavePreset = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ name, preset }: { name: string; preset: LiquidHandlingPreset }) => savePreset(name, preset),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings'] })
+      queryClient.invalidateQueries({ queryKey: ['settings', 'raw'] })
+    },
+  })
+}
+
+export const useDeletePreset = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) => deletePreset(name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings'] })
+      queryClient.invalidateQueries({ queryKey: ['settings', 'raw'] })
     },
   })
 }

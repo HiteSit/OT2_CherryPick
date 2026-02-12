@@ -1,20 +1,24 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Accordion,
   ActionIcon,
+  Badge,
   Button,
   Grid,
+  Group,
   Loader,
+  Modal,
   NumberInput,
   Select,
   Stack,
   Switch,
   Text,
+  TextInput,
   Textarea,
   Tooltip,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { IconRefresh } from '@tabler/icons-react'
+import { IconDeviceFloppy, IconRefresh } from '@tabler/icons-react'
 import * as TOML from '@ltd/j-toml'
 import {
   useAddWorkingPlateEntry,
@@ -24,9 +28,10 @@ import {
   usePatchSetting,
   useRawSettingsQuery,
   useReplaceSettings,
+  useSavePreset,
   useSettingsQuery,
 } from '../api/hooks'
-import type { LabwareEntry } from '../api/types'
+import type { LabwareEntry, LiquidHandlingPreset } from '../api/types'
 import { SectionCard } from './SectionCard'
 import { WorkingPlateTable } from './WorkingPlateTable'
 
@@ -62,7 +67,10 @@ export function SettingsEditor() {
   const addWorkingPlateMutation = useAddWorkingPlateEntry()
   const deleteWorkingPlateMutation = useDeleteWorkingPlateEntry()
   const moveWorkingPlateMutation = useMoveWorkingPlateEntry()
+  const savePresetMutation = useSavePreset()
   const [rawContent, setRawContent] = useState('')
+  const [savePresetOpen, setSavePresetOpen] = useState(false)
+  const [presetName, setPresetName] = useState('')
 
   useEffect(() => {
     if (rawQuery.data) {
@@ -72,15 +80,49 @@ export function SettingsEditor() {
 
   const workingPlate = useMemo(() => data?.settings.working_plate ?? [], [data])
 
-  const handlePatch = (path: string, value: unknown) => {
-    patchMutation.mutate(
-      { path, value },
-      {
-        onSuccess: () => notifications.show({ color: 'teal', title: 'Updated', message: `${path} saved.` }),
-        onError: (error) => notifications.show({ color: 'red', title: 'Error', message: String(error) }),
-      },
-    )
-  }
+  const lh = data?.settings.liquid_handling
+  const activePreset = lh?.active_preset || ''
+
+  const handlePatch = useCallback(
+    (path: string, value: unknown) => {
+      // When user manually changes a liquid handling field while a preset is active,
+      // auto-clear the active_preset to switch to "Custom"
+      const isLhField =
+        path.startsWith('settings.liquid_handling.') &&
+        !path.startsWith('settings.liquid_handling.active_preset') &&
+        !path.startsWith('settings.liquid_handling.presets')
+
+      if (isLhField && activePreset) {
+        // First clear the active preset, then apply the field change
+        patchMutation.mutate(
+          { path: 'settings.liquid_handling.active_preset', value: '' },
+          {
+            onSuccess: () => {
+              patchMutation.mutate(
+                { path, value },
+                {
+                  onSuccess: () =>
+                    notifications.show({ color: 'teal', title: 'Updated', message: `${path} saved. Preset cleared.` }),
+                  onError: (error) => notifications.show({ color: 'red', title: 'Error', message: String(error) }),
+                },
+              )
+            },
+            onError: (error) => notifications.show({ color: 'red', title: 'Error', message: String(error) }),
+          },
+        )
+        return
+      }
+
+      patchMutation.mutate(
+        { path, value },
+        {
+          onSuccess: () => notifications.show({ color: 'teal', title: 'Updated', message: `${path} saved.` }),
+          onError: (error) => notifications.show({ color: 'red', title: 'Error', message: String(error) }),
+        },
+      )
+    },
+    [patchMutation, activePreset],
+  )
 
   const handleWorkingPlateUpdate = (
     index: number,
@@ -142,6 +184,104 @@ export function SettingsEditor() {
     )
   }
 
+  const handlePresetSelect = (presetKey: string | null) => {
+    if (!lh || !presetKey) return
+
+    if (presetKey === '__custom__') {
+      handlePatch('settings.liquid_handling.active_preset', '')
+      return
+    }
+
+    const preset = lh.presets?.[presetKey]
+    if (!preset) return
+
+    // Set the active preset name, then apply each preset field to the individual controls
+    patchMutation.mutate(
+      { path: 'settings.liquid_handling.active_preset', value: presetKey },
+      {
+        onSuccess: () => {
+          // Apply each preset sub-section to the corresponding individual settings
+          const patches: Array<{ path: string; value: unknown }> = []
+          if (preset.pre_aspirate_contact) {
+            for (const [k, v] of Object.entries(preset.pre_aspirate_contact)) {
+              patches.push({ path: `settings.liquid_handling.pre_aspirate_contact.${k}`, value: v })
+            }
+          }
+          if (preset.post_aspirate_wick) {
+            for (const [k, v] of Object.entries(preset.post_aspirate_wick)) {
+              patches.push({ path: `settings.liquid_handling.post_aspirate_wick.${k}`, value: v })
+            }
+          }
+          if (preset.delays) {
+            for (const [k, v] of Object.entries(preset.delays)) {
+              patches.push({ path: `settings.liquid_handling.delays.${k}`, value: v })
+            }
+          }
+          if (preset.push_out) {
+            for (const [k, v] of Object.entries(preset.push_out)) {
+              patches.push({ path: `settings.liquid_handling.push_out.${k}`, value: v })
+            }
+          }
+          if (preset.mixing) {
+            for (const [k, v] of Object.entries(preset.mixing)) {
+              patches.push({ path: `settings.liquid_handling.mixing.${k}`, value: v })
+            }
+          }
+
+          // Apply patches sequentially (chain them)
+          const applyNext = (idx: number) => {
+            if (idx >= patches.length) {
+              notifications.show({
+                color: 'teal',
+                title: 'Preset applied',
+                message: `"${presetKey}" preset values loaded.`,
+              })
+              return
+            }
+            patchMutation.mutate(patches[idx], {
+              onSuccess: () => applyNext(idx + 1),
+              onError: (error) =>
+                notifications.show({ color: 'red', title: 'Error applying preset', message: String(error) }),
+            })
+          }
+          applyNext(0)
+        },
+        onError: (error) => notifications.show({ color: 'red', title: 'Error', message: String(error) }),
+      },
+    )
+  }
+
+  const handleSavePreset = () => {
+    if (!lh || !presetName.trim()) return
+
+    const preset: LiquidHandlingPreset = {
+      pre_aspirate_contact: { ...lh.pre_aspirate_contact },
+      post_aspirate_wick: { ...lh.post_aspirate_wick },
+      delays: { ...lh.delays },
+      push_out: { ...lh.push_out },
+      mixing: { ...lh.mixing },
+    }
+
+    savePresetMutation.mutate(
+      { name: presetName.trim(), preset },
+      {
+        onSuccess: () => {
+          notifications.show({
+            color: 'teal',
+            title: 'Preset saved',
+            message: `"${presetName.trim()}" has been saved.`,
+          })
+          // Set the newly created preset as active
+          handlePatch('settings.liquid_handling.active_preset', presetName.trim())
+          setSavePresetOpen(false)
+          setPresetName('')
+        },
+        onError: (error) =>
+          notifications.show({ color: 'red', title: 'Error saving preset', message: String(error) }),
+      },
+    )
+  }
+
   if (isLoading || !data) {
     return (
       <Stack align="center" py="xl">
@@ -151,7 +291,20 @@ export function SettingsEditor() {
     )
   }
 
-  const { general, liquid_handling: lh } = data.settings
+  const { general } = data.settings
+
+  // Build preset selector options
+  const presetOptions = [
+    ...(lh?.presets
+      ? Object.keys(lh.presets).map((key) => ({
+          value: key,
+          label: key.charAt(0).toUpperCase() + key.slice(1),
+        }))
+      : []),
+    { value: '__custom__', label: 'Custom' },
+  ]
+
+  const selectedPreset = activePreset || '__custom__'
 
   return (
     <Stack gap="lg">
@@ -221,19 +374,64 @@ export function SettingsEditor() {
         </div>
       </SectionCard>
 
+      {/* Liquid Handling Preset Selector */}
+      <SectionCard
+        title={
+          <Group gap="sm">
+            <span>Liquid Handling Preset</span>
+            {activePreset ? (
+              <Badge variant="light" color="blue" size="sm">
+                {activePreset}
+              </Badge>
+            ) : (
+              <Badge variant="light" color="gray" size="sm">
+                Custom
+              </Badge>
+            )}
+          </Group>
+        }
+        description={
+          <Text c="dimmed" size="sm">
+            Select a preset to apply optimized liquid handling parameters, or customize individual settings below.
+          </Text>
+        }
+      >
+        <Group gap="sm" align="flex-end">
+          <Select
+            label="Active preset"
+            data={presetOptions}
+            value={selectedPreset}
+            onChange={handlePresetSelect}
+            style={{ flex: 1, maxWidth: 300 }}
+          />
+          <Tooltip label="Save current settings as a new preset">
+            <Button
+              variant="light"
+              leftSection={<IconDeviceFloppy size={16} />}
+              onClick={() => {
+                setPresetName('')
+                setSavePresetOpen(true)
+              }}
+            >
+              Save as Preset
+            </Button>
+          </Tooltip>
+        </Group>
+      </SectionCard>
+
       <SectionCard title="Pre-aspirate Contact">
         <Grid>
           <Grid.Col span={{ base: 12, md: 4 }}>
             <Switch
               label="Enabled"
-              checked={lh.pre_aspirate_contact.enabled}
+              checked={lh!.pre_aspirate_contact.enabled}
               onChange={(event) => handlePatch('settings.liquid_handling.pre_aspirate_contact.enabled', event.currentTarget.checked)}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 4 }}>
             <NumberInput
               label="Position offset (%)"
-              value={lh.pre_aspirate_contact.position_offset_percent}
+              value={lh!.pre_aspirate_contact.position_offset_percent}
               min={0}
               max={100}
               onChange={(value) =>
@@ -244,7 +442,7 @@ export function SettingsEditor() {
           <Grid.Col span={{ base: 12, md: 4 }}>
             <NumberInput
               label="Aspirate volume (µL)"
-              value={lh.pre_aspirate_contact.aspirate_volume}
+              value={lh!.pre_aspirate_contact.aspirate_volume}
               min={0}
               onChange={(value) =>
                 value !== '' && handlePatch('settings.liquid_handling.pre_aspirate_contact.aspirate_volume', value)
@@ -259,14 +457,14 @@ export function SettingsEditor() {
           <Grid.Col span={{ base: 12, md: 3 }}>
             <Switch
               label="Enabled"
-              checked={lh.post_aspirate_wick.enabled}
+              checked={lh!.post_aspirate_wick.enabled}
               onChange={(event) => handlePatch('settings.liquid_handling.post_aspirate_wick.enabled', event.currentTarget.checked)}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 3 }}>
             <NumberInput
               label="Radius"
-              value={lh.post_aspirate_wick.radius}
+              value={lh!.post_aspirate_wick.radius}
               min={0}
               step={0.1}
               onChange={(value) =>
@@ -277,7 +475,7 @@ export function SettingsEditor() {
           <Grid.Col span={{ base: 12, md: 3 }}>
             <NumberInput
               label="Vertical offset (mm)"
-              value={lh.post_aspirate_wick.v_offset_mm}
+              value={lh!.post_aspirate_wick.v_offset_mm}
               step={0.1}
               onChange={(value) =>
                 value !== '' && handlePatch('settings.liquid_handling.post_aspirate_wick.v_offset_mm', Number(value))
@@ -287,7 +485,7 @@ export function SettingsEditor() {
           <Grid.Col span={{ base: 12, md: 3 }}>
             <NumberInput
               label="Speed"
-              value={lh.post_aspirate_wick.speed}
+              value={lh!.post_aspirate_wick.speed}
               min={1}
               onChange={(value) =>
                 value !== '' && handlePatch('settings.liquid_handling.post_aspirate_wick.speed', Number(value))
@@ -302,7 +500,7 @@ export function SettingsEditor() {
           <Grid.Col span={{ base: 12, md: 6 }}>
             <NumberInput
               label="Post-aspirate delay (s)"
-              value={lh.delays.post_aspirate}
+              value={lh!.delays.post_aspirate}
               min={0}
               max={10}
               step={0.5}
@@ -314,13 +512,13 @@ export function SettingsEditor() {
           <Grid.Col span={{ base: 12, md: 6 }}>
             <Switch
               label="Push-out enabled"
-              checked={lh.push_out.enabled}
+              checked={lh!.push_out.enabled}
               onChange={(event) => handlePatch('settings.liquid_handling.push_out.enabled', event.currentTarget.checked)}
             />
             <NumberInput
               mt="sm"
               label="Push-out volume (µL)"
-              value={lh.push_out.volume_ul}
+              value={lh!.push_out.volume_ul}
               min={0}
               onChange={(value) =>
                 value !== '' && handlePatch('settings.liquid_handling.push_out.volume_ul', Number(value))
@@ -335,7 +533,7 @@ export function SettingsEditor() {
           <Grid.Col span={{ base: 12, md: 3 }}>
             <Switch
               label="Enabled"
-              checked={lh.mixing.enabled}
+              checked={lh!.mixing.enabled}
               onChange={(event) => handlePatch('settings.liquid_handling.mixing.enabled', event.currentTarget.checked)}
             />
           </Grid.Col>
@@ -343,9 +541,9 @@ export function SettingsEditor() {
             <Select
               label="Location"
               data={mixingLocationOptions}
-              value={lh.mixing.location}
+              value={lh!.mixing.location}
               onChange={(value) => value && handlePatch('settings.liquid_handling.mixing.location', value)}
-              disabled={!lh.mixing.enabled}
+              disabled={!lh!.mixing.enabled}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 3 }}>
@@ -353,20 +551,20 @@ export function SettingsEditor() {
               label="Repetitions"
               min={0}
               max={20}
-              value={lh.mixing.repetitions}
+              value={lh!.mixing.repetitions}
               onChange={(value) =>
                 value !== '' && handlePatch('settings.liquid_handling.mixing.repetitions', Number(value))
               }
-              disabled={!lh.mixing.enabled}
+              disabled={!lh!.mixing.enabled}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 3 }}>
             <Select
               label="Source remixing"
               data={sourceRemixOptions}
-              value={lh.mixing.source_remixing}
+              value={lh!.mixing.source_remixing}
               onChange={(value) => value && handlePatch('settings.liquid_handling.mixing.source_remixing', value)}
-              disabled={!lh.mixing.enabled}
+              disabled={!lh!.mixing.enabled}
             />
           </Grid.Col>
         </Grid>
@@ -406,6 +604,44 @@ export function SettingsEditor() {
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
+
+      {/* Save as Preset Modal */}
+      <Modal
+        opened={savePresetOpen}
+        onClose={() => setSavePresetOpen(false)}
+        title="Save as Preset"
+        centered
+      >
+        <Stack gap="md">
+          <Text size="sm" c="dimmed">
+            Save the current liquid handling settings as a named preset. The preset will be available for future use.
+          </Text>
+          <TextInput
+            label="Preset name"
+            placeholder="e.g. my_viscous_preset"
+            value={presetName}
+            onChange={(event) => setPresetName(event.currentTarget.value)}
+            description="Must start with a letter. Only letters, numbers, and underscores allowed."
+            error={
+              presetName && !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(presetName)
+                ? 'Invalid preset name'
+                : undefined
+            }
+          />
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setSavePresetOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSavePreset}
+              loading={savePresetMutation.isPending}
+              disabled={!presetName.trim() || !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(presetName)}
+            >
+              Save Preset
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
   )
 }

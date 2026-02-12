@@ -48,12 +48,22 @@ export interface WorkingPlateEntry {
   persist_after_protocol?: boolean
 }
 
-export interface LiquidHandlingSettings {
+export interface LiquidHandlingPreset {
   pre_aspirate_contact: PreAspirateContactSettings
   post_aspirate_wick: PostAspirateWickSettings
   delays: DelaySettings
   push_out: PushOutSettings
   mixing: MixingSettings
+}
+
+export interface LiquidHandlingSettings {
+  active_preset: string
+  pre_aspirate_contact: PreAspirateContactSettings
+  post_aspirate_wick: PostAspirateWickSettings
+  delays: DelaySettings
+  push_out: PushOutSettings
+  mixing: MixingSettings
+  presets?: Record<string, LiquidHandlingPreset>
 }
 
 export interface SettingsDocument {

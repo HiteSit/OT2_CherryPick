@@ -4,6 +4,7 @@ import type {
   CsvUploadPayload,
   LabwareDocument,
   LabwareEntry,
+  LiquidHandlingPreset,
   PipetteEntry,
   SettingsDocument,
   ShellSettings,
@@ -39,6 +40,19 @@ export const replaceSettings = async (doc: Record<string, unknown>): Promise<Set
 
 export const fetchRawSettings = async (): Promise<string> => {
   const { data } = await api.get<string>('/settings/raw', { responseType: 'text' })
+  return data
+}
+
+export const savePreset = async (name: string, preset: LiquidHandlingPreset): Promise<SettingsDocument> => {
+  const { data } = await api.post<SettingsDocument>(`/settings/presets/${encodeURIComponent(name)}`, {
+    name,
+    preset,
+  })
+  return data
+}
+
+export const deletePreset = async (name: string): Promise<SettingsDocument> => {
+  const { data } = await api.delete<SettingsDocument>(`/settings/presets/${encodeURIComponent(name)}`)
   return data
 }
 
