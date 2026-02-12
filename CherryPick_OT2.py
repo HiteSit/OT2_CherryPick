@@ -909,6 +909,7 @@ def run(protocol: protocol_api.ProtocolContext):
     protocol.comment("Starting Cherry-Pick Protocol")
 
     # Get configuration data using get_values function
+    # Note: custom protocol_name logged after config is parsed (see below)
     try:
         [labware_dict, settings, csv_data] = get_values(  # noqa: F821
             "labware_dict", "settings", "csv_data")
@@ -973,6 +974,11 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # Extract general settings
     general_settings = settings['settings']['general']
+
+    # Log custom protocol name if configured
+    protocol_name = general_settings.get('protocol_name', '')
+    if protocol_name:
+        protocol.comment(f"Protocol: {protocol_name}")
 
     # Apply optional head speed overrides from settings.general.head_speed
     head_speed_cfg = general_settings.get('head_speed') if isinstance(general_settings, dict) else None

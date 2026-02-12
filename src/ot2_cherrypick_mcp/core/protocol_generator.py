@@ -175,6 +175,18 @@ def update_protocol_file(
         else:
             raise ValueError("No replacement was made. The get_values() function pattern might not match.")
 
+    # Patch metadata protocolName if protocol_name is configured
+    try:
+        config = json.loads(json_config)
+        protocol_name = config.get('settings', {}).get('settings', {}).get('general', {}).get('protocol_name', '')
+        if protocol_name:
+            metadata_pattern = r"('protocolName'\s*:\s*')([^']*)(')";
+            new_content = re.sub(metadata_pattern, lambda m: m.group(1) + protocol_name + m.group(3), new_content)
+            if verbose:
+                print(f"✓ Updated protocol name to: {protocol_name}")
+    except (json.JSONDecodeError, AttributeError):
+        pass  # If JSON parsing fails, skip metadata patching
+
     if verbose:
         print(f"Writing updated {protocol_file}...")
 
