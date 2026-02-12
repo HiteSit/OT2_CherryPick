@@ -68,6 +68,8 @@ markers = [
     "integration: Integration tests",
     "fastapi: FastAPI backend tests",
     "workflow: Unified workflow tests (Phase 3)",
+    "error_scenario: Tests for error handling scenarios",
+    "resource_test: Tests for MCP resource endpoints",
 ]
 
 # Output options
