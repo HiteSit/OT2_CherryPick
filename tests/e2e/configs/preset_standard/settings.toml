@@ -1,0 +1,69 @@
+# Single-channel mode with standard preset active
+# Tests that preset resolution overrides individual settings at runtime
+
+[settings.general]
+mode = "single_X1"
+starting_tip_well = "H1"
+
+[settings.general.head_speed]
+speed = 400
+
+[settings.liquid_handling]
+active_preset = "standard"
+
+# Individual settings (these should be overridden by standard preset at runtime)
+[settings.liquid_handling.pre_aspirate_contact]
+enabled = false
+position_offset_percent = 20
+aspirate_volume = 0
+
+[settings.liquid_handling.post_aspirate_wick]
+enabled = false
+radius = 1
+v_offset_mm = -1.5
+speed = 20
+
+[settings.liquid_handling.delays]
+post_aspirate = 0
+
+[settings.liquid_handling.push_out]
+enabled = true
+volume_ul = 20
+
+[settings.liquid_handling.mixing]
+enabled = false
+location = "destination"
+repetitions = 3
+source_remixing = "once"
+
+# Preset definitions
+[settings.liquid_handling.presets.standard]
+pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_volume = 0 }
+post_aspirate_wick   = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
+delays               = { post_aspirate = 0 }
+push_out             = { enabled = false }
+mixing               = { enabled = true, location = "destination", repetitions = 3, source_remixing = "once" }
+
+[settings.liquid_handling.presets.viscous]
+pre_aspirate_contact = { enabled = true, position_offset_percent = 20, aspirate_volume = 0 }
+post_aspirate_wick   = { enabled = true, radius = 0.8, v_offset_mm = -1.5, speed = 20 }
+delays               = { post_aspirate = 2.0 }
+push_out             = { enabled = true, volume_ul = 5 }
+mixing               = { enabled = true, location = "destination", repetitions = 5, source_remixing = "once" }
+
+# Deck layout: tube rack source, 384 destination, tip rack for Pipette_1
+[[settings.working_plate]]
+type = "reservoir"
+labware_id = "384_ppv_55ul"
+position_rack = "2"
+
+[[settings.working_plate]]
+type = "reservoir"
+labware_id = "tube_rack_96_1500ul"
+position_rack = "4"
+
+[[settings.working_plate]]
+type = "tip"
+labware_id = "tip_rack_geb_1000ul"
+connection = "Pipette_1"
+position_rack = "5"
