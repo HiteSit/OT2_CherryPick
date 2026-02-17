@@ -109,6 +109,67 @@ def validate_configuration(
                         f"Labware '{labware_id}' referenced in settings.working_plate is not defined in labware_dict.toml"
                     )
 
+    # ── Build pipette lookup: name -> {volume_range, channels} ──
+    pipette_entries = labware_data.get("pipettes", []) if isinstance(labware_data, dict) else []
+    pipettes_by_name: Dict[str, Dict[str, object]] = {}
+    for pentry in pipette_entries:
+        if isinstance(pentry, dict) and pentry.get("name"):
+            pipettes_by_name[pentry["name"]] = pentry
+
+    # ── Build labware lookup: labware_id -> {well_count, category} ──
+    labware_by_id: Dict[str, Dict[str, object]] = {}
+    for lentry in labware_entries:
+        if isinstance(lentry, dict) and lentry.get("labware_id"):
+            labware_by_id[lentry["labware_id"]] = lentry
+
+    # ── Determine mode and active pipette(s) ──
+    mode = ""
+    if settings_data:
+        mode = (
+            settings_data.get("settings", {})  # type: ignore[union-attr]
+            .get("general", {})
+            .get("mode", "")
+        )
+
+    # Map mode -> pipette name (matches CherryPick_OT2.py logic)
+    # single_X1 -> Pipette_1, multi / multi_X1 -> Pipette_8, dual -> both
+    active_pipette_configs: List[Dict[str, object]] = []
+    if mode == "single_X1":
+        if "Pipette_1" in pipettes_by_name:
+            active_pipette_configs.append(pipettes_by_name["Pipette_1"])
+    elif mode in ("multi", "multi_X1"):
+        if "Pipette_8" in pipettes_by_name:
+            active_pipette_configs.append(pipettes_by_name["Pipette_8"])
+    elif mode == "dual":
+        # Dual mode uses both pipettes; volume checks use per-row Mode column
+        for pname in ("Pipette_1", "Pipette_8"):
+            if pname in pipettes_by_name:
+                active_pipette_configs.append(pipettes_by_name[pname])
+
+    # ── Multi-mode vs labware compatibility (deck-level check) ──
+    # Multi mode (full 8-tip) only works with 96/384-well plates and reservoirs
+    if mode == "multi" and settings_data:
+        compatible_well_counts = {1, 2, 8, 12, 96, 384}
+        working_plates = (
+            settings_data.get("settings", {})  # type: ignore[union-attr]
+            .get("working_plate", [])
+        )
+        if isinstance(working_plates, list):
+            for wp_entry in working_plates:
+                if not isinstance(wp_entry, dict):
+                    continue
+                wp_type = wp_entry.get("type", "").lower()
+                if wp_type in ("source", "dest", "reservoir"):
+                    wp_labware_id = wp_entry.get("labware_id", "").strip()
+                    if wp_labware_id and wp_labware_id in labware_by_id:
+                        well_count = labware_by_id[wp_labware_id].get("well_count")
+                        if well_count and well_count not in compatible_well_counts:
+                            errors.append(
+                                f"Multi mode requires 96/384-well plates or reservoirs "
+                                f"(1,2,8,12 wells). Labware '{wp_labware_id}' has "
+                                f"{well_count} wells"
+                            )
+
     csv_file = resolve_project_path(csv_path)
     if not csv_file.exists():
         errors.append(f"CSV transfer map not found at {csv_file}")
@@ -128,6 +189,10 @@ def validate_configuration(
         if not has_volume_column:
             errors.append(f"CSV file must have at least one volume column: {sorted(CSV_VOLUME_COLUMNS)}")
 
+        # Determine whether air-gap and per-row mode columns are present
+        has_air_gap_column = "Air Gap" in fieldnames
+        has_csv_mode_column = "Mode" in fieldnames
+
         if not missing_base and has_volume_column:
             prev_row: Dict[str, str] | None = None
             for row_number, row in enumerate(reader, start=2):
@@ -141,6 +206,9 @@ def validate_configuration(
                     has_dist_volume = bool(row.get("Distribution Volume (ul)", "").strip())
                     is_distribution = has_pipe or has_dist_volume
 
+                    # ── Parse volume for this row ──
+                    row_volume: float | None = None
+
                     # Validate appropriate volume column
                     if is_distribution:
                         # Distribution row - check Distribution Volume (ul)
@@ -149,6 +217,8 @@ def validate_configuration(
                                 volume = float(row.get("Distribution Volume (ul)") or 0)
                                 if volume <= 0:
                                     errors.append(f"Row {row_number}: distribution volume must be positive")
+                                else:
+                                    row_volume = volume
                             except ValueError:
                                 errors.append(f"Row {row_number}: distribution volume is not a number")
                         else:
@@ -165,10 +235,88 @@ def validate_configuration(
                                 volume = float(row.get("Volume (ul)") or 0)
                                 if volume <= 0:
                                     errors.append(f"Row {row_number}: volume must be positive")
+                                else:
+                                    row_volume = volume
                             except ValueError:
                                 errors.append(f"Row {row_number}: volume is not a number")
                         else:
                             errors.append(f"Row {row_number}: cherry-pick row requires 'Volume (ul)' column")
+
+                    # ── Resolve per-row pipette configs ──
+                    # In dual mode with a Mode column, pick the right pipette
+                    row_pipette_configs = active_pipette_configs
+                    if mode == "dual" and has_csv_mode_column:
+                        csv_row_mode = (row.get("Mode") or "").strip().lower()
+                        if csv_row_mode == "single_x1" and "Pipette_1" in pipettes_by_name:
+                            row_pipette_configs = [pipettes_by_name["Pipette_1"]]
+                        elif csv_row_mode in ("multi", "multi_x1") and "Pipette_8" in pipettes_by_name:
+                            row_pipette_configs = [pipettes_by_name["Pipette_8"]]
+
+                    # ── Volume vs pipette range checks ──
+                    # Skip for distribution rows: the per-well distribution volume can be
+                    # below pipette minimum because the runtime aspirates the TOTAL volume
+                    # (sum of all per-well volumes), not individual per-well amounts.
+                    if row_volume is not None and row_pipette_configs and not is_distribution:
+                        for pip_cfg in row_pipette_configs:
+                            vol_range = pip_cfg.get("volume_range")
+                            if not isinstance(vol_range, (list, tuple)) or len(vol_range) < 2:
+                                continue
+                            pip_min = float(vol_range[0])
+                            pip_max = float(vol_range[1])
+                            pip_name = pip_cfg.get("name", "unknown")
+
+                            # Volume below pipette minimum: warning because the
+                            # pipette can physically aspirate but with reduced accuracy
+                            if row_volume < pip_min:
+                                warnings.append(
+                                    f"Row {row_number}: volume {row_volume} \u00b5L is below "
+                                    f"{pip_name} rated minimum ({pip_min} \u00b5L) "
+                                    f"\u2014 accuracy may be reduced"
+                                )
+
+                            # Volume above max is handled by split_volume_into_chunks
+                            # at runtime, but warn if it will require splitting
+                            if row_volume > pip_max:
+                                warnings.append(
+                                    f"Row {row_number}: volume {row_volume} \u00b5L exceeds "
+                                    f"{pip_name} max ({pip_max} \u00b5L) \u2014 will be split "
+                                    f"into multiple transfers at runtime"
+                                )
+
+                    # ── Air Gap + Volume vs pipette capacity ──
+                    # Also skip for distribution rows (runtime handles total volume splitting)
+                    if row_volume is not None and has_air_gap_column and row_pipette_configs and not is_distribution:
+                        air_gap_str = (row.get("Air Gap") or "").strip()
+                        if air_gap_str:
+                            try:
+                                air_gap_vol = float(air_gap_str)
+                                if air_gap_vol > 0:
+                                    for pip_cfg in row_pipette_configs:
+                                        vol_range = pip_cfg.get("volume_range")
+                                        if not isinstance(vol_range, (list, tuple)) or len(vol_range) < 2:
+                                            continue
+                                        pip_min = float(vol_range[0])
+                                        pip_max = float(vol_range[1])
+                                        pip_name = pip_cfg.get("name", "unknown")
+
+                                        effective_max = pip_max - air_gap_vol
+                                        if effective_max < pip_min:
+                                            errors.append(
+                                                f"Row {row_number}: air gap ({air_gap_vol} \u00b5L) "
+                                                f"leaves insufficient capacity for {pip_name}. "
+                                                f"Effective max ({effective_max} \u00b5L) < minimum "
+                                                f"({pip_min} \u00b5L)"
+                                            )
+                                        elif row_volume > effective_max:
+                                            # Will require extra splits; warn
+                                            warnings.append(
+                                                f"Row {row_number}: volume {row_volume} \u00b5L + "
+                                                f"air gap {air_gap_vol} \u00b5L exceeds {pip_name} "
+                                                f"capacity ({pip_max} \u00b5L) \u2014 additional transfer "
+                                                f"splits will occur"
+                                            )
+                            except ValueError:
+                                pass  # Non-numeric air gap is not this check's concern
 
                     # Validate well formats
                     source_well = (row.get("Source Well") or "").strip()
@@ -187,6 +335,21 @@ def validate_configuration(
                             errors.append(
                                 f"Row {row_number}: labware '{labware_value}' (base '{base_id}') not defined in labware_dict.toml"
                             )
+
+                    # ── Multi-mode: check CSV labware compatibility per row ──
+                    if mode == "multi":
+                        compatible_well_counts_csv = {1, 2, 8, 12, 96, 384}
+                        for key in ("Source Labware", "Dest Labware"):
+                            labware_value = (row.get(key) or "").strip()
+                            base_id = _base_labware_id(labware_value)
+                            if base_id and base_id in labware_by_id:
+                                wc = labware_by_id[base_id].get("well_count")
+                                if wc and wc not in compatible_well_counts_csv:
+                                    errors.append(
+                                        f"Row {row_number}: multi mode is incompatible with "
+                                        f"labware '{labware_value}' ({wc} wells). Multi mode "
+                                        f"requires 96/384-well plates or reservoirs"
+                                    )
 
                 # HOME control row validation:
                 # If previous row was HOME, current row MUST have Tip Action: new (firmware requirement)
