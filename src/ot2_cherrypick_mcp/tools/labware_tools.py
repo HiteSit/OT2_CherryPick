@@ -61,7 +61,10 @@ def add_labware_definition(
 
     existing = handler.get_value("labware")
     if any(entry.get("labware_id") == labware_id for entry in existing):
-        raise ConfigurationError(f"Labware with id '{labware_id}' already exists")
+        raise ConfigurationError(
+            f"Labware with id '{labware_id}' already exists in {handler.path}.\n"
+            f"Use config://labware resource to see existing labware definitions."
+        )
 
     spec = LabwareSpecification(
         labware_id=labware_id,

@@ -93,14 +93,19 @@ def register_protocol_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="ot2_generate_protocol",
-        description=(
-            "Compile TOML configuration and a transfer CSV into an OT-2 protocol "
-            "file with embedded JSON.\n\n"
-            "Response Format Options:\n"
-            "- json (default): Full structured data for programmatic use\n"
-            "- markdown: Human-readable formatted summary\n"
-            "- concise: Single-line status (minimal context usage)"
-        ),
+        description="""Compile TOML configuration and a transfer CSV into a self-contained OT-2 protocol.
+
+WHEN TO USE: After configuring settings and creating/uploading a CSV.
+For the complete pipeline (validate + generate + simulate + deploy), prefer ot2_full_workflow instead.
+
+PREREQUISITES:
+- CSV file must exist (use ot2_list_csv_files to check)
+- settings.toml configured (via ot2_update_settings or ot2_apply_liquid_preset)
+- labware_dict.toml contains all referenced labware
+- Consider running ot2_validate_configuration first to catch errors early
+
+Response Format: json (default, structured), markdown (human-readable), concise (one-line).
+""",
         annotations={
             "readOnlyHint": False,
             "destructiveHint": False,

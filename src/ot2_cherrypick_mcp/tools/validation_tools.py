@@ -37,27 +37,24 @@ def register_validation_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="ot2_validate_configuration",
-        description="""Pre-flight validation before protocol generation.
+        description="""Pre-flight validation of settings, labware, and CSV before protocol generation.
 
-EXAMPLE:
-validate_configuration(csv_path="CSVs/experiment.csv")
+WHEN TO USE: Before ot2_generate_protocol to catch configuration errors early.
+NOT needed if using ot2_full_workflow (it validates automatically as step 1).
 
 CHECKS PERFORMED:
 - TOML syntax and structure (settings.toml, labware_dict.toml)
 - Labware references exist in catalog
-- Deck slot conflicts (unique position_rack values)
+- Deck slot conflicts (no duplicate position_rack values)
 - CSV column structure (required columns present)
 - Volume ranges within pipette capacity
-- Multi-channel mode compatibility (only 96/384-well plates)
-- Height specification consistency (not both Height and Top)
+- Multi-channel mode compatibility (multi mode requires 96/384-well plates)
+- Height specification consistency (cannot use both Height AND Top for same position)
 
-Response Format Options:
-- json (default): Full error/warning lists for programmatic use
-- markdown: Formatted report with status badges and bulleted lists
-- concise: Single-line pass/fail with error count
+Returns structured errors (must fix) and warnings (should review).
+Response Format: json (default), markdown (formatted report), concise (pass/fail).
 
-Returns errors (must fix) and warnings (should review).
-Run before generate_protocol() to catch issues early.
+EXAMPLE: ot2_validate_configuration(csv_path="CSVs/experiment.csv")
 """,
         annotations={
             "readOnlyHint": True,

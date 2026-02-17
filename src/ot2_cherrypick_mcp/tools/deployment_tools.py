@@ -37,24 +37,23 @@ def register_deployment_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="ot2_deploy_to_opentrons",
-        description="""Deploy protocol to target location or clipboard for Opentrons App.
+        description="""Deploy the compiled protocol to Opentrons App or clipboard.
 
-EXAMPLES:
-- Clipboard only: deploy_to_opentrons(copy_to_clipboard=True, clipboard_command="clip.exe")
-- File copy: deploy_to_opentrons(target_path="/path/to/opentrons/protocols/")
+WHEN TO USE: After successful simulation. NOT needed if using ot2_full_workflow
+with deploy=True (it deploys automatically).
+
+OPTIONS:
+- Copy to clipboard: deploy_to_opentrons(copy_to_clipboard=True)
+- Copy to file path: deploy_to_opentrons(target_path="/path/to/opentrons/protocols/src/")
 - Both: deploy_to_opentrons(target_path="...", copy_to_clipboard=True)
 
 CLIPBOARD COMMANDS by platform:
-- Windows: "clip.exe"
+- Windows/WSL: "clip.exe" (default)
 - macOS: "pbcopy"
 - Linux (X11): "xclip -selection clipboard"
 
-After deployment, protocol is ready to:
-1. Import into Opentrons App (paste from clipboard or it appears automatically)
-2. Run "Labware Position Check" for calibration
-3. Execute on OT-2 robot
-
-Returns deployment status and paths written.
+After deployment the protocol is ready to import into Opentrons App,
+run Labware Position Check for calibration, and execute on the OT-2 robot.
 """,
         annotations={
             "readOnlyHint": False,

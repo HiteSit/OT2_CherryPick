@@ -21,12 +21,188 @@ from ..utils.toml import TomlHandler
 
 DEFAULT_SETTINGS_PATH = Path("settings.toml")
 
+# ---------------------------------------------------------------------------
+# Shorthand aliases: map common short names to full dotted TOML paths.
+# Resolved silently so LLM agents don't need to know the full path.
+# ---------------------------------------------------------------------------
+PATH_ALIASES: Dict[str, str] = {
+    # General settings
+    "tip_reuse": "settings.general.tip_reuse",
+    "mode": "settings.general.mode",
+    "pipette_mode": "settings.general.mode",
+    "speed": "settings.general.head_speed.speed",
+    "head_speed": "settings.general.head_speed.speed",
+    "starting_tip": "settings.general.starting_tip_well",
+    "starting_tip_well": "settings.general.starting_tip_well",
+    "protocol_name": "settings.general.protocol_name",
+    # Liquid handling - pre-aspirate
+    "pre_aspirate": "settings.liquid_handling.pre_aspirate_contact.enabled",
+    "pre_aspirate_contact": "settings.liquid_handling.pre_aspirate_contact.enabled",
+    "pre_aspirate_volume": "settings.liquid_handling.pre_aspirate_contact.aspirate_volume",
+    "pre_wet_volume": "settings.liquid_handling.pre_aspirate_contact.aspirate_volume",
+    # Liquid handling - wicking
+    "wick": "settings.liquid_handling.post_aspirate_wick.enabled",
+    "wicking": "settings.liquid_handling.post_aspirate_wick.enabled",
+    "tip_wicking": "settings.liquid_handling.post_aspirate_wick.enabled",
+    # Liquid handling - delays
+    "post_aspirate_delay": "settings.liquid_handling.delays.post_aspirate",
+    "delay": "settings.liquid_handling.delays.post_aspirate",
+    "aspirate_delay": "settings.liquid_handling.delays.post_aspirate",
+    # Liquid handling - push-out
+    "push_out": "settings.liquid_handling.push_out.enabled",
+    "pushout": "settings.liquid_handling.push_out.enabled",
+    "push_out_volume": "settings.liquid_handling.push_out.volume_ul",
+    "pushout_volume": "settings.liquid_handling.push_out.volume_ul",
+    # Liquid handling - mixing
+    "mixing": "settings.liquid_handling.mixing.enabled",
+    "mixing_enabled": "settings.liquid_handling.mixing.enabled",
+    "mixing_location": "settings.liquid_handling.mixing.location",
+    "mixing_reps": "settings.liquid_handling.mixing.repetitions",
+    "mixing_repetitions": "settings.liquid_handling.mixing.repetitions",
+    "source_remixing": "settings.liquid_handling.mixing.source_remixing",
+    # Liquid handling - active preset
+    "active_preset": "settings.liquid_handling.active_preset",
+}
+
+# Valid values for common settings (used in error messages)
+VALID_VALUES: Dict[str, List[str]] = {
+    "settings.general.tip_reuse": ["always", "never", "per_source"],
+    "settings.general.mode": ["single_X1", "multi_X1", "multi", "dual"],
+    "settings.liquid_handling.mixing.location": ["destination", "source", "none"],
+    "settings.liquid_handling.mixing.source_remixing": ["once", "always"],
+}
+
 __all__ = [
     "register_config_tools",
     "update_settings_value",
     "apply_liquid_preset",
     "list_settings_values",
+    "PATH_ALIASES",
+    "VALID_VALUES",
 ]
+
+
+# Pre-compute the set of known full paths for auto-create eligibility
+_KNOWN_FULL_PATHS: set[str] = set(PATH_ALIASES.values())
+
+
+def _resolve_path_alias(path: str) -> str:
+    """Resolve a shorthand alias to its full dotted path, or return as-is."""
+    return PATH_ALIASES.get(path, path)
+
+
+def _is_known_path(path: str) -> bool:
+    """Return True if the path is an alias key or a known alias target."""
+    return path in PATH_ALIASES or path in _KNOWN_FULL_PATHS
+
+
+def _suggest_similar_paths(
+    failed_path: str,
+    settings_path: str | Path = DEFAULT_SETTINGS_PATH,
+) -> List[str]:
+    """Return alias names and TOML leaf paths similar to *failed_path*."""
+
+    candidates: List[str] = list(PATH_ALIASES.keys())
+
+    # Also gather actual leaf key names from the TOML
+    try:
+        result = list_settings_values(settings_path=settings_path)
+        for entry in result.get("entries", []):
+            full = entry["path"]
+            leaf = full.rsplit(".", 1)[-1] if "." in full else full
+            # strip array index notation
+            if "[" in leaf:
+                leaf = leaf.split("[")[0]
+            if leaf and leaf not in candidates:
+                candidates.append(leaf)
+    except ConfigurationError:
+        pass
+
+    # Simple prefix / substring matching
+    failed_lower = failed_path.lower()
+    # Extract the leaf segment for matching
+    failed_leaf = failed_lower.rsplit(".", 1)[-1] if "." in failed_lower else failed_lower
+
+    scored: List[tuple[int, str]] = []
+    for candidate in candidates:
+        c_lower = candidate.lower()
+        # Exact prefix match
+        if c_lower.startswith(failed_leaf[:3]) and len(failed_leaf) >= 3:
+            scored.append((2, candidate))
+        # Substring match
+        elif failed_leaf in c_lower or c_lower in failed_leaf:
+            scored.append((1, candidate))
+
+    # De-duplicate and sort by score descending
+    seen: set[str] = set()
+    suggestions: List[str] = []
+    for _score, name in sorted(scored, key=lambda t: -t[0]):
+        display = f"{name} ({PATH_ALIASES[name]})" if name in PATH_ALIASES else name
+        if display not in seen:
+            seen.add(display)
+            suggestions.append(display)
+        if len(suggestions) >= 5:
+            break
+
+    return suggestions
+
+
+def _build_settings_error(
+    original_error: str,
+    path: str,
+    settings_path: str | Path = DEFAULT_SETTINGS_PATH,
+) -> str:
+    """Build an enriched error message with suggestions for recovery."""
+
+    parts = [original_error]
+
+    # Check for valid value hints
+    resolved = _resolve_path_alias(path)
+    if resolved in VALID_VALUES:
+        parts.append(f"Valid values for '{resolved}': {', '.join(VALID_VALUES[resolved])}")
+
+    # Suggest similar paths
+    suggestions = _suggest_similar_paths(path, settings_path)
+    if suggestions:
+        parts.append("Similar settings: " + "; ".join(suggestions))
+
+    parts.append("Use ot2_list_settings() to see all valid paths and current values.")
+    return "\n".join(parts)
+
+
+def _auto_create_value(
+    handler: TomlHandler,
+    path: str,
+    parsed_value: object,
+) -> tuple[object, object]:
+    """Try to create a missing leaf key if the parent path exists.
+
+    Only used for paths that resolved from a known alias, so we know the
+    key *should* exist in the TOML structure.
+    """
+
+    tokens = handler._parse_path(path)
+    if len(tokens) < 2:
+        raise ConfigurationError(f"Cannot auto-create root-level key '{path}'")
+
+    parent_tokens = tokens[:-1]
+    leaf_token = tokens[-1]
+
+    # Resolve parent - this will raise if parent doesn't exist
+    doc = handler.read_document()
+    parent = handler._resolve_tokens(doc, parent_tokens)
+
+    # Create the key in the parent
+    new_item = parsed_value if isinstance(parsed_value, tomlkit.items.Item) else tomlkit.item(parsed_value)
+    try:
+        parent[leaf_token] = new_item  # type: ignore[index]
+    except (TypeError, AttributeError) as exc:
+        raise ConfigurationError(
+            f"Cannot create key '{leaf_token}' in parent (not a table/dict)"
+        ) from exc
+
+    handler.write_document(doc)
+    return None, parsed_value if not hasattr(parsed_value, "unwrap") else parsed_value.unwrap()
 
 
 def _parse_value(raw_value: str) -> tomlkit.items.Item:
@@ -111,17 +287,41 @@ def update_settings_value(
     value: str,
     settings_path: str | Path = DEFAULT_SETTINGS_PATH,
 ) -> Dict[str, object]:
-    """Update a value within settings.toml using dotted-path access."""
+    """Update a value within settings.toml using dotted-path access.
+
+    Supports shorthand aliases (e.g. ``"tip_reuse"`` resolves to
+    ``"settings.general.tip_reuse"``).  When an aliased path's leaf key
+    is missing from the TOML file the key is auto-created.
+    """
+
+    original_path = path
+    is_known = _is_known_path(path)
+    path = _resolve_path_alias(path)
 
     handler = TomlHandler(settings_path)
     if _is_working_plate_position(path):
         sanitized = value.strip()
         if len(sanitized) >= 2 and sanitized[0] == sanitized[-1] and sanitized[0] in {'"', "'"}:
             sanitized = sanitized[1:-1]
-        parsed_value = tomlkit.string(sanitized)
+        parsed_value: object = tomlkit.string(sanitized)
     else:
         parsed_value = _parse_value(value)
-    old_value, new_value = handler.set_value(path, parsed_value)
+
+    try:
+        old_value, new_value = handler.set_value(path, parsed_value)
+    except ConfigurationError:
+        # If the path is a known alias or alias target, try to auto-create the key
+        if is_known:
+            old_value, new_value = _auto_create_value(handler, path, parsed_value)
+        else:
+            raise ConfigurationError(
+                _build_settings_error(
+                    f"Path '{original_path}' not found in settings.",
+                    original_path,
+                    settings_path,
+                )
+            )
+
     return {
         "settings_file": str(handler.path),
         "path": path,
@@ -144,7 +344,12 @@ def apply_liquid_preset(
     try:
         preset_values = handler.get_value(preset_path)
     except ConfigurationError as exc:
-        raise ConfigurationError(f"Preset '{preset_name}' not found: {exc}") from exc
+        raise ConfigurationError(
+            f"Preset '{preset_name}' not found.\n"
+            f"Available presets in settings.toml: standard, viscous "
+            f"(check [settings.liquid_handling.presets] section for the full list).\n"
+            f"Use ot2_list_settings() to see all presets defined in your file."
+        ) from exc
 
     if not isinstance(preset_values, dict):
         raise ConfigurationError(f"Preset '{preset_name}' is not a table of values")
@@ -176,47 +381,38 @@ def register_config_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="ot2_update_settings",
-        description="""Update settings.toml values from natural language or exact dotted paths.
+        description="""Update a single setting in settings.toml.
 
-**WORKFLOW - When user gives natural language request:**
-1. Consult the common mappings below OR read config://settings resource
-2. Identify the exact dotted path and TOML-formatted value
-3. Call this tool with precise path and value
+WHEN TO USE: For individual parameter changes (tip reuse, speed, delay, etc.).
+For bulk liquid-handling changes, prefer ot2_apply_liquid_preset instead.
 
-**COMMON NATURAL LANGUAGE MAPPINGS:**
+SHORTHAND ALIASES (use these instead of full dotted paths):
+- "tip_reuse" → settings.general.tip_reuse  (values: "always", "never", "per_source")
+- "mode" → settings.general.mode  (values: "single_X1", "multi_X1", "multi", "dual")
+  "single_X1" = single-channel pipette
+  "multi_X1" = 8-channel pipette picking up only ONE tip (single-tip precision)
+  "multi" = 8-channel pipette using all 8 tips (full column transfers)
+  "dual" = multi-pipette mode (requires Mode column in CSV)
+- "speed" or "head_speed" → settings.general.head_speed.speed  (100-600 mm/min)
+- "starting_tip" → settings.general.starting_tip_well  (e.g. "H1")
+- "protocol_name" → settings.general.protocol_name  (display name on OT-2)
+- "pre_aspirate" → settings.liquid_handling.pre_aspirate_contact.enabled
+- "pre_aspirate_volume" → settings.liquid_handling.pre_aspirate_contact.aspirate_volume
+- "wick" or "wicking" → settings.liquid_handling.post_aspirate_wick.enabled
+- "delay" or "post_aspirate_delay" → settings.liquid_handling.delays.post_aspirate  (seconds)
+- "push_out" → settings.liquid_handling.push_out.enabled
+- "push_out_volume" → settings.liquid_handling.push_out.volume_ul  (uL)
+- "mixing" → settings.liquid_handling.mixing.enabled
+- "mixing_location" → settings.liquid_handling.mixing.location  ("destination", "source", "none")
+- "mixing_reps" → settings.liquid_handling.mixing.repetitions  (number)
+- "source_remixing" → settings.liquid_handling.mixing.source_remixing  ("once", "always")
 
-LIQUID HANDLING:
-- "enable/disable pre-aspirate contact" → path: "settings.liquid_handling.pre_aspirate_contact.enabled", value: "true"/"false"
-- "set pre-aspirate volume to X" → path: "settings.liquid_handling.pre_aspirate_contact.aspirate_volume", value: X (number)
-- "enable/disable tip wick[ing]" → path: "settings.liquid_handling.post_aspirate_wick.enabled", value: "true"/"false"
-- "set post-aspirate delay to X" → path: "settings.liquid_handling.delays.post_aspirate", value: X (number)
-- "enable/disable push[-]out" → path: "settings.liquid_handling.push_out.enabled", value: "true"/"false"
-- "set push[-]out volume to X" → path: "settings.liquid_handling.push_out.volume_ul", value: X (number)
+Full dotted paths also accepted (e.g. "settings.general.head_speed.speed").
+For deck positions use array notation: "settings.working_plate[0].position_rack".
 
-GENERAL SETTINGS:
-- "set tip reuse to always/never/per_source" → path: "settings.general.tip_reuse", value: "always"/"never"/"per_source"
-- "set mode to single_X1/multi_X1/multi" → path: "settings.general.mode", value: "single_X1"/"multi_X1"/"multi"
-- "set [head] speed to X" → path: "settings.general.head_speed.speed", value: X (number, mm/min)
-- "set starting tip [well] to X" → path: "settings.general.starting_tip_well", value: "H1" (well name)
+VALUE FORMAT: Booleans as "true"/"false", numbers as bare digits (400, 2.5), strings as plain text (quotes added automatically).
 
-DECK POSITIONS (working_plate array items use [index] notation):
-- "set source labware position to X" → path: "settings.working_plate[0].position_rack", value: "X" (slot number as string)
-- "set destination position to X" → path: "settings.working_plate[1].position_rack", value: "X"
-- (Check list_settings tool output to see exact indices)
-
-**IF UNSURE:** Use list_settings tool to see all available paths with current values, then match user intent.
-
-**Value formatting rules:**
-- Booleans: "true" or "false" (lowercase, no quotes in value string)
-- Strings: just the value (quotes added automatically)
-- Numbers: bare number like 400 or 2.0
-- For position_rack: always use quoted string like "4" or "5"
-
-**IMPORTANT:** If user request doesn't match common mappings:
-1. Read config://settings resource to see full structure
-2. Use list_settings tool to get all dotted paths
-3. Match user's intent to visible structure
-4. Then call update_settings with exact path
+IF UNSURE about valid paths, call ot2_list_settings first.
 """,
         annotations={
             "readOnlyHint": False,
@@ -230,32 +426,35 @@ DECK POSITIONS (working_plate array items use [index] notation):
         value: str,
         settings_path: str = str(DEFAULT_SETTINGS_PATH),
     ) -> Dict[str, object]:
-        try:
-            return update_settings_value(path=path, value=value, settings_path=settings_path)
-        except ConfigurationError as exc:
-            raise ConfigurationError(f"Failed to update settings: {exc}") from exc
+        return update_settings_value(path=path, value=value, settings_path=settings_path)
 
     @mcp.tool(
         name="ot2_apply_liquid_preset",
-        description="""Apply liquid handling preset configuration for different liquid types.
+        description="""Apply a named liquid-handling preset that configures multiple parameters at once.
 
-AVAILABLE PRESETS:
-- "standard": Default for aqueous buffers (water, PBS, media)
-- "viscous": DMSO, glycerol, oils (slower speeds, longer delays)
-- "slippery": Volatile solvents (reduced speed to prevent dripping)
-- "minimal": Bare minimum handling (no contact, no wicking)
-- "aggressive": Maximum mixing and contact (for difficult liquids)
+WHEN TO USE: When the user describes a LIQUID TYPE rather than specific parameters.
+Use this instead of multiple ot2_update_settings calls for liquid handling.
+For individual parameter tweaks after applying a preset, use ot2_update_settings.
 
-EXAMPLE:
-apply_liquid_preset(preset_name="viscous")
+LIQUID TYPE → PRESET MAPPING:
+- Water, PBS, buffers, cell media → preset_name="standard"
+- DMSO, glycerol, oils, PEG, viscous liquids → preset_name="viscous"
+- Chloroform, hexane, acetone, ethanol, volatile/slippery solvents → preset_name="slippery"
+- Minimal handling, no extra steps → preset_name="minimal"
+- Difficult liquids, maximum precision → preset_name="aggressive"
 
-Presets update multiple parameters atomically:
-- Flow rates (aspirate/dispense speeds)
-- Delays (post-aspirate wait times)
-- Contact/wicking behavior
-- Push-out volumes
+WHAT PRESETS CONFIGURE (atomically):
+- Pre-aspirate contact and pre-wetting behavior
+- Post-aspirate tip wicking (removes external droplets)
+- Post-aspirate delays (settling time for viscous liquids)
+- Push-out volume (expels residual liquid from tip)
+- Mixing parameters (repetitions, location)
 
-Check status://liquid-handling-config after applying to see active parameters.
+AFTER APPLYING: Settings are updated immediately. You do NOT need to call
+ot2_update_settings for the same parameters unless overriding individual values.
+Check status://liquid-handling-config to see the active parameters.
+
+EXAMPLE: ot2_apply_liquid_preset(preset_name="viscous")
 """,
         annotations={
             "readOnlyHint": False,
@@ -272,7 +471,17 @@ Check status://liquid-handling-config after applying to see active parameters.
 
     @mcp.tool(
         name="ot2_list_settings",
-        description="List every setting and value from settings.toml using dotted paths.",
+        description="""List every setting path and current value from settings.toml.
+
+WHEN TO USE:
+- To discover valid configuration paths for ot2_update_settings
+- To inspect current values before or after changes
+- To debug "path not found" errors from ot2_update_settings
+- To see the full TOML structure including deck layout and presets
+
+Returns dotted-path notation (e.g. "settings.general.mode") with current values.
+These paths can be passed directly to ot2_update_settings(path=...).
+""",
         annotations={
             "readOnlyHint": True,
             "openWorldHint": False

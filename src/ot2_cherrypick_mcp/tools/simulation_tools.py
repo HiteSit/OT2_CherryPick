@@ -46,31 +46,23 @@ def register_simulation_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="ot2_simulate_protocol",
-        description="""Validate protocol using opentrons_simulate.
+        description="""Run opentrons_simulate to validate a compiled protocol without real hardware.
 
-EXAMPLE:
-simulate_protocol(protocol_path="CherryPick_OT2.py")
+WHEN TO USE: After ot2_generate_protocol to verify the protocol is valid.
+NOT needed if using ot2_full_workflow (it simulates automatically).
+
+LABWARE PATH: Defaults to LABWARE_PATH env variable (directory with custom JSON labware files).
+Only override if you have .json labware files in a non-standard location.
+This is NOT labware_dict.toml - it's the Opentrons custom labware directory.
+
+COMMON ERRORS AND FIXES:
+- "Labware not found" → Check labware_id in labware_dict.toml matches Opentrons library names
+- "Slot conflict" → Ensure unique position_rack values in settings.toml working_plate array
+- "No tips available" → Add tip racks to deck or change tip_reuse to "always"
+- "Invalid well" → CSV references a well that doesn't exist on that labware type
 
 Check logs://last-simulation for detailed output after running.
-
-LABWARE PATH (IMPORTANT):
-- labware_path expects DIRECTORY with JSON files, NOT labware_dict.toml
-- Default: Uses LABWARE_PATH env variable (custom labware directory)
-- Only override if you have specific .json labware files elsewhere
-
-COMMON SIMULATION ERRORS:
-- "Labware not found": Check labware_id in labware_dict.toml matches Opentrons library
-- "Slot conflict": Ensure unique position_rack values in working_plate array
-- "No tips available": Add tip racks or change tip_reuse strategy
-- "Module not found": Verify pipette definitions in labware_dict.toml
-- "Invalid well": CSV references non-existent well for labware type
-
-Response Format Options:
-- json (default): Full simulation output including stdout/stderr
-- markdown: Formatted summary with collapsible output (recommended for large logs)
-- concise: Single-line pass/fail status (minimal context)
-
-Returns simulation output (stdout/stderr) and success status.
+Response Format: json (default), markdown (formatted summary), concise (pass/fail).
 """,
         annotations={
             "readOnlyHint": True,

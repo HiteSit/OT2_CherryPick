@@ -21,48 +21,51 @@ from .utils.logging_config import configure_logging
 APP_NAME = "OT-2 Cherry Pick MCP Server"
 APP_INSTRUCTIONS = """OT-2 Cherry-Pick Protocol Generator.
 
-STANDARD WORKFLOW:
-1. Configure settings: update_settings(path="...", value="...")
-2. Create/upload CSV: generate_csv_template() or upload_csv_content()
-3. Generate protocol: generate_protocol(csv_path="CSVs/file.csv")
-4. Simulate: simulate_protocol() - check logs://last-simulation
-5. Deploy: deploy_to_opentrons(copy_to_clipboard=True)
+TOOL SELECTION GUIDE - match user intent to the right tool:
+- "Set up for viscous/DMSO/glycerol" → ot2_apply_liquid_preset(preset_name="viscous")
+- "Set up for volatile/chloroform/hexane" → ot2_apply_liquid_preset(preset_name="slippery")
+- "Set up for water/PBS/buffers" → ot2_apply_liquid_preset(preset_name="standard")
+- "Change tip reuse/mode/speed/delay" → ot2_update_settings(path="tip_reuse", value="never")
+- "Run everything / generate and simulate" → ot2_full_workflow(csv_path="CSVs/file.csv")
+- "Just validate my config" → ot2_validate_configuration(csv_path="CSVs/file.csv")
+- "What settings exist?" → ot2_list_settings()
+- "What CSVs are available?" → ot2_list_csv_files()
+- "Create a CSV template" → ot2_generate_csv_template(...)
+- "I have CSV data as text" → ot2_upload_csv_content(csv_content="...", filename="...")
+- "Use 8-channel with single tip" → ot2_update_settings(path="mode", value="multi_X1")
+- "Configure for cell suspensions" → ot2_update_settings(path="mixing_location", value="source")
+- "Make robot move slower" → ot2_update_settings(path="speed", value="200")
 
-WORKSPACE MODES:
-- With OT2_PROJECT_DIR set: Persistent workspace (files survive restarts)
-- Without OT2_PROJECT_DIR: Temporary workspace (auto-created, use export_project_archive() before session ends)
-- Templates auto-copy on first access: settings.toml, labware_dict.toml, CherryPick_OT2.py
+SHORTHAND ALIASES for ot2_update_settings (use instead of full dotted paths):
+tip_reuse, mode, speed, head_speed, starting_tip, protocol_name,
+pre_aspirate, pre_aspirate_volume, wick, wicking, delay, post_aspirate_delay,
+push_out, push_out_volume, mixing, mixing_location, mixing_reps, source_remixing
+
+STANDARD WORKFLOW:
+1. Configure: ot2_apply_liquid_preset or ot2_update_settings
+2. Create CSV: ot2_generate_csv_template or ot2_upload_csv_content
+3. Run pipeline: ot2_full_workflow(csv_path="CSVs/file.csv")
+
+WORKSPACE: Templates auto-copy on first access. initialize_project() is OPTIONAL.
+With OT2_PROJECT_DIR: persistent. Without: temporary (use export_project_archive before session ends).
 
 KEY RESOURCES:
-- config://settings - Current TOML configuration
+- config://settings - TOML configuration
 - config://labware - Labware catalog
 - status://deck-layout - Visual deck setup
 - status://liquid-handling-config - Active liquid params
 - logs://last-simulation - Simulation output
-- files://csvs - Available CSV files
-
-COMMON SETTINGS PATHS:
-- settings.general.tip_reuse: "never" | "per_source" | "always"
-- settings.general.mode: "single_X1" | "multi" | "multi_X1"
-- settings.general.head_speed.speed: 100-600 (mm/min)
-- settings.liquid_handling.delays.post_aspirate: 0-5 (seconds)
-- settings.liquid_handling.post_aspirate_wick.enabled: true | false
-- settings.working_plate: Array of deck labware
-
-Use list_settings() to explore full configuration structure.
 
 LIQUID PRESETS:
-- apply_liquid_preset(preset_name="standard") - Aqueous buffers
-- apply_liquid_preset(preset_name="viscous") - DMSO, glycerol
-- apply_liquid_preset(preset_name="slippery") - Volatile solvents
+- "standard" → water, PBS, buffers, cell media (contact + wick, no delays)
+- "viscous" → DMSO, glycerol, oils, PEG (delays + push-out + wick)
+- "slippery" → chloroform, hexane, acetone, ethanol (pre-wet + slow speed)
 
 TROUBLESHOOTING:
-- "Labware not found": Check labware_id in labware_dict.toml matches Opentrons library
-- "Slot conflict": Ensure unique position_rack values in working_plate array
-- "No tips": Add tip racks to deck or change tip_reuse strategy
-- "Multi mode incompatible": Only works with 96/384-well plates
-
-initialize_project() is OPTIONAL (templates auto-copy on access).
+- "Labware not found" → labware_id in labware_dict.toml must match Opentrons library
+- "Slot conflict" → unique position_rack values in working_plate array
+- "No tips" → add tip racks or set tip_reuse to "always"
+- "Multi mode incompatible" → multi mode requires 96/384-well plates only
 """
 
 __all__ = ["create_mcp_app", "main"]

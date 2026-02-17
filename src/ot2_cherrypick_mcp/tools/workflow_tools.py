@@ -124,35 +124,29 @@ def register_workflow_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="ot2_full_workflow",
-        description="""Execute complete protocol workflow: validate → generate → simulate → deploy.
+        description="""Execute the complete protocol pipeline: validate → generate → simulate → deploy.
+
+WHEN TO USE: This is the PREFERRED tool when you want to go from configured settings
+to a validated protocol in a single call. Use this instead of calling ot2_validate_configuration,
+ot2_generate_protocol, and ot2_simulate_protocol separately.
+
+WHEN NOT TO USE: When you only need one step (just validation, just simulation, etc.)
+Use the individual tools instead.
 
 TYPICAL USAGE:
-full_workflow(
-    csv_path="CSVs/experiment.csv",
-    simulate=True,
-    deploy=False
-)
+ot2_full_workflow(csv_path="CSVs/experiment.csv")  # validate + generate + simulate
+ot2_full_workflow(csv_path="CSVs/experiment.csv", deploy=True, copy_to_clipboard=True)
 
-STEPS PERFORMED:
-1. Validate configuration (CSV format, deck layout, labware references)
-2. Generate protocol (compile TOML + CSV → CherryPick_OT2.py)
-3. Simulate (optional, validates with opentrons_simulate)
-4. Deploy (optional, copy to target path or clipboard)
+STEPS (in order):
+1. Validate: CSV format, deck layout, labware references
+2. Generate: Compile TOML + CSV into CherryPick_OT2.py
+3. Simulate: Run opentrons_simulate (skip with simulate=False)
+4. Deploy: Copy to target path / clipboard (skip with deploy=False)
 
-Response Format Options:
-- json (default): Full nested results from all stages
-- markdown: Pipeline view with per-stage status (recommended for complex workflows)
-- concise: Single-line completion status with stage count
+Stops on first error and reports which stage failed.
+Check logs://last-simulation for simulation details after running.
 
-Returns comprehensive results from all stages.
-Check logs://last-simulation for simulation details.
-
-PARAMETERS:
-- csv_path: Transfer map CSV file
-- simulate: Run opentrons_simulate (default: True)
-- deploy: Deploy after successful simulation (default: False)
-- deployment_target: Path to copy protocol file
-- copy_to_clipboard: Also copy to clipboard (default: False)
+Response Format: json (default), markdown (pipeline view), concise (one-line status).
 """,
         annotations={
             "readOnlyHint": False,
