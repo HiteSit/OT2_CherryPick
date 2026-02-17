@@ -66,8 +66,8 @@ class TestDistributionCSVSave:
     def test_save_distribution_with_air_gaps(self, tmp_path: Path) -> None:
         """Distribution CSV with air gap parameters should save."""
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Air Gap,Source Height,Dest Top
-tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,A1|B1|C1|D1,15,equal,20,2,-5
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Air Gap,Source Height,Dest Top,Tip Action
+tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,A1|B1|C1|D1,15,equal,20,2,-5,keep
 """.strip()
 
         result = save_csv_content(
@@ -104,8 +104,8 @@ tube_rack_96_1500ul_4,A2,384_ppv_55ul_2,D1|D2|D3,25,equal,drop,2,-5
     def test_save_distribution_with_mixing(self, tmp_path: Path) -> None:
         """Distribution CSV with mixing parameters should save."""
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Mix Volume,Mix Height,Source Height,Dest Top
-tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,A1|B1|C1|D1,30,equal,15,1.5,2,-5
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Mix Volume,Mix Height,Source Height,Dest Top,Tip Action
+tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,A1|B1|C1|D1,30,equal,15,1.5,2,-5,keep
 """.strip()
 
         result = save_csv_content(
@@ -122,8 +122,8 @@ tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,A1|B1|C1|D1,30,equal,15,1.5,2,-5
     def test_distribution_csv_missing_all_volumes_fails(self, tmp_path: Path) -> None:
         """Distribution CSV without any volume column should fail."""
         bad_csv = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution
-tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,A1|B1|C1,equal
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution,Tip Action
+tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,A1|B1|C1,equal,keep
 """.strip()
 
         with pytest.raises(ConfigurationError, match="volume column"):
@@ -136,8 +136,8 @@ tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,A1|B1|C1,equal
     def test_distribution_csv_missing_dest_well_fails(self, tmp_path: Path) -> None:
         """Distribution CSV missing Dest Well column should fail."""
         bad_csv = """\
-Source Labware,Source Well,Dest Labware,Distribution Volume (ul),Distribution,Source Height,Dest Top
-tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,25,equal,2,-5
+Source Labware,Source Well,Dest Labware,Distribution Volume (ul),Distribution,Source Height,Dest Top,Tip Action
+tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,25,equal,2,-5,keep
 """.strip()
 
         with pytest.raises(ConfigurationError, match="Dest Well"):
@@ -150,8 +150,8 @@ tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,25,equal,2,-5
     def test_distribution_csv_missing_source_labware_fails(self, tmp_path: Path) -> None:
         """Distribution CSV missing Source Labware column should fail."""
         bad_csv = """\
-Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
-A1,384_ppv_55ul_2,A1|B1|C1,25,equal,2,-5
+Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top,Tip Action
+A1,384_ppv_55ul_2,A1|B1|C1,25,equal,2,-5,keep
 """.strip()
 
         with pytest.raises(ConfigurationError, match="Source Labware"):
@@ -164,9 +164,9 @@ A1,384_ppv_55ul_2,A1|B1|C1,25,equal,2,-5
     def test_distribution_csv_preserves_formatting(self, tmp_path: Path) -> None:
         """Distribution CSV formatting should be preserved when saved."""
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
-tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,A1|B1|C1|D1,50.5,equal,2.0,-5.0
-tube_rack_96_1500ul_4,A2,384_ppv_55ul_2,E1|F1|G1|H1,100,geometric:0.5,2.0,-5.0
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top,Tip Action
+tube_rack_96_1500ul_4,A1,384_ppv_55ul_2,A1|B1|C1|D1,50.5,equal,2.0,-5.0,keep
+tube_rack_96_1500ul_4,A2,384_ppv_55ul_2,E1|F1|G1|H1,100,geometric:0.5,2.0,-5.0,keep
 """.strip()
 
         result = save_csv_content(

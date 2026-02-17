@@ -23,23 +23,59 @@ def _copy_settings(tmp_path: Path) -> Path:
 
 
 def test_update_settings_value_overrides_scalar(tmp_path: Path) -> None:
-    """Updating a scalar value writes the new content and backup."""
+    """Updating an existing scalar value writes the new content and backup."""
 
     settings_copy = _copy_settings(tmp_path)
+    result = update_settings_value(
+        path="settings.general.mode",
+        value='"single_X1"',
+        settings_path=str(settings_copy),
+    )
+
+    assert result["old_value"] == "multi"
+    assert result["new_value"] == "single_X1"
+
+    updated_text = settings_copy.read_text(encoding="utf-8")
+    assert 'mode = "single_X1"' in updated_text
+
+    backup_path = Path(result["backup_file"])
+    assert backup_path.exists()
+
+
+def test_update_settings_autocreates_missing_aliased_key(tmp_path: Path) -> None:
+    """Known alias targets are auto-created when missing from the TOML file."""
+
+    settings_copy = _copy_settings(tmp_path)
+    # tip_reuse does not exist in the template settings.toml
     result = update_settings_value(
         path="settings.general.tip_reuse",
         value='"never"',
         settings_path=str(settings_copy),
     )
 
-    assert result["old_value"] == "always"
+    assert result["old_value"] is None
     assert result["new_value"] == "never"
+    assert result["path"] == "settings.general.tip_reuse"
 
     updated_text = settings_copy.read_text(encoding="utf-8")
     assert 'tip_reuse = "never"' in updated_text
 
-    backup_path = Path(result["backup_file"])
-    assert backup_path.exists()
+
+def test_update_settings_shorthand_alias(tmp_path: Path) -> None:
+    """Shorthand aliases resolve to their full dotted path."""
+
+    settings_copy = _copy_settings(tmp_path)
+    result = update_settings_value(
+        path="tip_reuse",
+        value='"per_source"',
+        settings_path=str(settings_copy),
+    )
+
+    assert result["path"] == "settings.general.tip_reuse"
+    assert result["new_value"] == "per_source"
+
+    updated_text = settings_copy.read_text(encoding="utf-8")
+    assert 'tip_reuse = "per_source"' in updated_text
 
 
 def test_update_settings_value_handles_numbers(tmp_path: Path) -> None:
@@ -98,7 +134,7 @@ def test_list_settings_values_returns_flattened_entries(tmp_path: Path) -> None:
     assert result["total_entries"] > 0
 
     entries = {entry["path"]: entry["value"] for entry in result["entries"]}
-    assert entries["settings.general.tip_reuse"] == "always"
+    assert entries["settings.general.mode"] == "multi"
     assert entries["settings.liquid_handling.push_out.enabled"] is True
 
     data = result["data"]
@@ -121,7 +157,7 @@ def test_apply_liquid_preset_updates_multiple_sections(tmp_path: Path) -> None:
 
     updated_text = settings_copy.read_text(encoding="utf-8")
     assert 'post_aspirate = 2.0' in updated_text
-    assert 'push_out = { enabled = true, volume_ul = 5 }' in updated_text
+    assert '{ enabled = true, volume_ul = 5 }' in updated_text
 
     backup_path = Path(result["backup_file"])
     assert backup_path.exists()

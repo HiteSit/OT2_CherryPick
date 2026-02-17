@@ -23,7 +23,7 @@ def test_toml_handler_gets_scalar_value(tmp_path: Path, monkeypatch) -> None:
     settings_copy = _copy_settings(tmp_path)
     monkeypatch.setenv("OT2_PROJECT_DIR", str(tmp_path))
     handler = TomlHandler("settings.toml")
-    assert handler.get_value("settings.general.tip_reuse") == "always"
+    assert handler.get_value("settings.general.mode") == "multi"
 
 
 def test_toml_handler_handles_array_indices(tmp_path: Path, monkeypatch) -> None:
@@ -31,7 +31,7 @@ def test_toml_handler_handles_array_indices(tmp_path: Path, monkeypatch) -> None
     settings_copy = _copy_settings(tmp_path)
     monkeypatch.setenv("OT2_PROJECT_DIR", str(tmp_path))
     handler = TomlHandler("settings.toml")
-    assert handler.get_value("settings.working_plate[0].type") == "source"
+    assert handler.get_value("settings.working_plate[0].type") == "module"
 
 
 def test_toml_handler_invalid_path_raises(tmp_path: Path, monkeypatch) -> None:
@@ -49,18 +49,18 @@ def test_toml_handler_set_value_updates_file(tmp_path: Path) -> None:
     settings_copy = _copy_settings(tmp_path)
     handler = TomlHandler(settings_copy)
 
-    old_value, new_value = handler.set_value("settings.general.tip_reuse", "never")
+    old_value, new_value = handler.set_value("settings.general.mode", "single_X1")
 
-    assert old_value == "always"
-    assert new_value == "never"
+    assert old_value == "multi"
+    assert new_value == "single_X1"
 
     content = settings_copy.read_text(encoding="utf-8")
-    assert "tip_reuse = \"never\"" in content
+    assert 'mode = "single_X1"' in content
 
     backup = settings_copy.with_suffix(settings_copy.suffix + ".backup")
     assert backup.exists()
     backup_content = backup.read_text(encoding="utf-8")
-    assert "tip_reuse = \"always\"" in backup_content
+    assert 'mode = "multi"' in backup_content
 
 
 def test_toml_handler_set_value_missing_path_raises(tmp_path: Path) -> None:

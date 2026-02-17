@@ -262,10 +262,10 @@ class TestDistributionValidation:
         settings_copy, labware_copy = _setup_inputs(tmp_path)
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
-tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,25,equal,2,-5
-tube_rack_96_1500ul_1,A2,384_pp_standard_100ul_2,E1|F1|G1|H1,25,equal,2,-5
-tube_rack_96_1500ul_1,A3,384_pp_standard_100ul_2,I1|J1|K1|L1,25,equal,2,-5
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top,Tip Action
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,25,equal,2,-5,keep
+tube_rack_96_1500ul_1,A2,384_pp_standard_100ul_2,E1|F1|G1|H1,25,equal,2,-5,keep
+tube_rack_96_1500ul_1,A3,384_pp_standard_100ul_2,I1|J1|K1|L1,25,equal,2,-5,keep
 """.strip()
 
         csv_path = tmp_path / "test.csv"
@@ -305,8 +305,8 @@ tube_rack_96_1500ul_1,A2,384_pp_standard_100ul_2,E1|F1|G1|H1,20,equal,drop,2,-5
         settings_copy, labware_copy = _setup_inputs(tmp_path)
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Air Gap,Source Height,Dest Top
-tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,20,equal,15,2,-5
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Air Gap,Source Height,Dest Top,Tip Action
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,20,equal,15,2,-5,keep
 """.strip()
 
         csv_path = tmp_path / "test.csv"
@@ -325,8 +325,8 @@ tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,20,equal,15,2,-5
         settings_copy, labware_copy = _setup_inputs(tmp_path)
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Mix Volume,Mix Height,Source Height,Dest Top
-tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,30,equal,15,1.5,2,-5
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Mix Volume,Mix Height,Source Height,Dest Top,Tip Action
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,30,equal,15,1.5,2,-5,keep
 """.strip()
 
         csv_path = tmp_path / "test.csv"

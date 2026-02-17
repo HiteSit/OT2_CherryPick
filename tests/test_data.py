@@ -6,11 +6,11 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
 
 CSV_BASIC = """\
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top
-tube_rack_96_1500ul_4,A1,100,384_ppv_55ul_2,B1,2,-5
-tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,B2,2,-5
-tube_rack_96_1500ul_4,A3,75,384_ppv_55ul_2,B3,2,-5
-tube_rack_96_1500ul_4,A4,25,384_ppv_55ul_2,B4,2,-5
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+tube_rack_96_1500ul_4,A1,100,384_ppv_55ul_2,B1,2,-5,new
+tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,B2,2,-5,keep
+tube_rack_96_1500ul_4,A3,75,384_ppv_55ul_2,B3,2,-5,keep
+tube_rack_96_1500ul_4,A4,25,384_ppv_55ul_2,B4,2,-5,drop
 """.strip()
 
 CSV_WITH_MIXING = """\
@@ -34,31 +34,31 @@ tube_rack_96_1500ul_1,A4,384_pp_standard_100ul_2,A19|B19|A20|B20|A21|B21|A22|B22
 """.strip()
 
 CSV_DISTRIBUTION_GEOMETRIC = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
-tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,100,geometric:0.5,6,-0.5
-tube_rack_96_1500ul_1,A2,384_pp_standard_100ul_2,E1|F1|G1|H1,50,geometric:2,6,-0.5
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top,Tip Action
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,100,geometric:0.5,6,-0.5,keep
+tube_rack_96_1500ul_1,A2,384_pp_standard_100ul_2,E1|F1|G1|H1,50,geometric:2,6,-0.5,keep
 """.strip()
 
 CSV_MIXED_MODE = """\
-Source Labware,Source Well,Volume (ul),Distribution Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Distribution
-tube_rack_96_1500ul_1,A1,50,,384_pp_standard_100ul_2,A1,6,-0.5,
-tube_rack_96_1500ul_1,A2,,25,384_pp_standard_100ul_2,B1|B2|B3|B4,6,-0.5,equal
-tube_rack_96_1500ul_1,A3,75,,384_pp_standard_100ul_2,C1,6,-0.5,
+Source Labware,Source Well,Volume (ul),Distribution Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Distribution,Tip Action
+tube_rack_96_1500ul_1,A1,50,,384_pp_standard_100ul_2,A1,6,-0.5,,keep
+tube_rack_96_1500ul_1,A2,,25,384_pp_standard_100ul_2,B1|B2|B3|B4,6,-0.5,equal,keep
+tube_rack_96_1500ul_1,A3,75,,384_pp_standard_100ul_2,C1,6,-0.5,,keep
 """.strip()
 
 CSV_DISTRIBUTION_INVALID_WELLS = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution
-tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|INVALID|B1,10,equal
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Tip Action
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|INVALID|B1,10,equal,keep
 """.strip()
 
 CSV_DISTRIBUTION_MISSING_VOLUME = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution
-tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1,equal
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution,Tip Action
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1,equal,keep
 """.strip()
 
 CSV_DISTRIBUTION_INVALID_PATTERN = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution
-tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1,10,invalid_pattern
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Tip Action
+tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1,10,invalid_pattern,keep
 """.strip()
 
 # Validation test scenarios for parametrized tests

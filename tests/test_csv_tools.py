@@ -30,7 +30,7 @@ def test_generate_csv_template_creates_file(tmp_path: Path) -> None:
     assert output.exists()
 
     content = output.read_text(encoding="utf-8").strip().splitlines()
-    assert content[0] == "Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top"
+    assert content[0] == "Source Labware,Source Well,Dest Labware,Dest Well,Volume (ul),Source Height,Dest Top,Tip Action"
     assert len(content) == 1 + 3
     assert "tube_rack_96_1500ul" in content[1]
     assert "384_ppv_55ul" in content[1]
@@ -63,7 +63,7 @@ def test_list_csv_files_returns_sorted(tmp_path: Path) -> None:
 
 
 def test_save_csv_content_writes_file(tmp_path: Path) -> None:
-    content = "Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top\n"
+    content = "Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action\n"
     result = save_csv_content(
         csv_content=content,
         filename="uploaded.csv",
