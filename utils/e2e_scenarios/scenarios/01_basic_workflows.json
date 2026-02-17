@@ -1,0 +1,167 @@
+{
+  "suite_name": "basic_workflows",
+  "description": "Tests basic tool chain operations with explicit tool references. These scenarios use deterministic prompts that name specific tools, verifying core functionality works.",
+  "scenarios": [
+    {
+      "id": "01_001",
+      "name": "Initialize project and list tools",
+      "description": "Agent initializes the project and reports available tools.",
+      "tags": ["basic", "init"],
+      "difficulty": "easy",
+      "expected_tools": ["initialize_project"],
+      "max_steps": 10,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Use the initialize_project tool to set up the OT-2 project, then tell me what tools are available for working with cherry-pick protocols.",
+      "validations": {
+        "files_exist": [
+          "settings.toml",
+          "labware_dict.toml",
+          "CherryPick_OT2.py"
+        ],
+        "response_contains_any": ["initialize", "tool", "protocol", "settings"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "01_002",
+      "name": "Full pipeline: init, configure, CSV, generate, validate",
+      "description": "Step-by-step explicit workflow covering the main tool chain without simulation.",
+      "tags": ["basic", "pipeline", "deterministic"],
+      "difficulty": "easy",
+      "expected_tools": ["initialize_project", "update_settings", "generate_csv_template", "generate_protocol", "validate_configuration"],
+      "max_steps": 25,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Execute these steps one at a time:\n1. Initialize the project\n2. Use update_settings to set 'settings.general.mode' to 'single_X1'\n3. Use generate_csv_template to create 'CSVs/test_pipeline.csv' with 4 transfers from tube_rack_96_1500ul_4 to 384_ppv_55ul_2 with default volume 50\n4. Use generate_protocol to create the protocol from 'CSVs/test_pipeline.csv'\n5. Use validate_configuration to check the configuration for 'CSVs/test_pipeline.csv'\n\nComplete each step fully before moving to the next. Report each outcome.",
+      "validations": {
+        "files_exist": [
+          "settings.toml",
+          "CherryPick_OT2.py",
+          "CSVs/test_pipeline.csv"
+        ],
+        "toml_values": {
+          "settings.toml": {
+            "settings.general.mode": "single_X1"
+          }
+        },
+        "csv_row_count": {
+          "CSVs/test_pipeline.csv": 4
+        },
+        "file_contains": {
+          "CherryPick_OT2.py": ["get_values"]
+        },
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "01_003",
+      "name": "Apply preset then generate protocol",
+      "description": "Agent applies viscous liquid preset and generates a protocol from existing CSV.",
+      "tags": ["basic", "preset", "protocol"],
+      "difficulty": "easy",
+      "expected_tools": ["apply_liquid_preset", "generate_protocol"],
+      "max_steps": 15,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Apply the 'viscous' liquid handling preset using the apply_liquid_preset tool. Then generate a protocol from CSVs/example_basic.csv using the generate_protocol tool.",
+      "validations": {
+        "toml_values": {
+          "settings.toml": {
+            "settings.liquid_handling.delays.post_aspirate": 2.0,
+            "settings.liquid_handling.push_out.enabled": true,
+            "settings.liquid_handling.push_out.volume_ul": 5
+          }
+        },
+        "file_contains": {
+          "CherryPick_OT2.py": ["get_values"]
+        },
+        "response_not_contains": ["traceback", "error:"]
+      }
+    },
+    {
+      "id": "01_004",
+      "name": "Upload CSV content and validate",
+      "description": "Agent saves inline CSV data and validates configuration.",
+      "tags": ["basic", "csv", "validation"],
+      "difficulty": "easy",
+      "expected_tools": ["upload_csv_content", "validate_configuration"],
+      "max_steps": 12,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Save the following CSV data to 'CSVs/uploaded_test.csv' using the upload_csv_content tool:\n\nSource Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action\ntube_rack_96_1500ul_4,A1,100,384_ppv_55ul_2,B1,2,-5,new\ntube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,B2,2,-5,keep\ntube_rack_96_1500ul_4,A3,75,384_ppv_55ul_2,B3,2,-5,drop\n\nThen validate the configuration for that CSV using validate_configuration.",
+      "validations": {
+        "files_exist": [
+          "CSVs/uploaded_test.csv"
+        ],
+        "csv_row_count": {
+          "CSVs/uploaded_test.csv": 3
+        },
+        "file_contains": {
+          "CSVs/uploaded_test.csv": ["tube_rack_96_1500ul_4", "384_ppv_55ul_2", "Tip Action"]
+        },
+        "response_contains_any": ["valid", "ok", "success", "passed"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "01_005",
+      "name": "List all settings",
+      "description": "Agent uses list_settings to enumerate all configuration values.",
+      "tags": ["basic", "settings", "discovery"],
+      "difficulty": "easy",
+      "expected_tools": ["list_settings"],
+      "max_steps": 8,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Use the list_settings tool to show me every configuration value currently set in settings.toml.",
+      "validations": {
+        "response_contains_any": ["mode", "tip", "push", "delay", "aspirate"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "01_006",
+      "name": "Initialize and list settings combo",
+      "description": "Agent initializes project then immediately lists settings to verify template.",
+      "tags": ["basic", "init", "settings"],
+      "difficulty": "easy",
+      "expected_tools": ["initialize_project", "list_settings"],
+      "max_steps": 12,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Initialize the project using initialize_project, then use list_settings to show all available settings.",
+      "validations": {
+        "files_exist": [
+          "settings.toml",
+          "labware_dict.toml"
+        ],
+        "response_contains_any": ["mode", "tip", "settings"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "01_007",
+      "name": "Full workflow tool with simulation",
+      "description": "Agent uses the full_workflow tool to run validation, generation, and simulation in one call.",
+      "tags": ["basic", "workflow", "simulation"],
+      "difficulty": "easy",
+      "expected_tools": ["full_workflow"],
+      "max_steps": 25,
+      "requires_simulation": true,
+      "requires_workspace": true,
+      "prompt": "Run the full_workflow tool for CSVs/example_basic.csv with simulation enabled and deployment disabled. Report the outcome.",
+      "validations": {
+        "file_contains": {
+          "CherryPick_OT2.py": ["get_values"]
+        },
+        "simulation_log": {
+          "exists": true,
+          "returncode": 0
+        },
+        "response_contains_any": ["success", "passed", "completed", "simulation"],
+        "response_not_contains": ["traceback"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,240 @@
+{
+  "suite_name": "natural_language",
+  "description": "Tests natural language fluidity - can the agent figure out which tools to use without being told explicitly? These prompts use domain vocabulary and loose instructions.",
+  "scenarios": [
+    {
+      "id": "02_001",
+      "name": "Set up viscous liquid cherry-pick",
+      "description": "Loose prompt asking for viscous liquid handling. Agent should infer apply_liquid_preset(viscous).",
+      "tags": ["fluidity", "loose", "preset"],
+      "difficulty": "medium",
+      "expected_tools": ["apply_liquid_preset"],
+      "max_steps": 15,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "I need to set up a cherry-pick protocol for viscous DMSO-like liquid. Configure everything appropriately for this liquid type.",
+      "validations": {
+        "toml_values": {
+          "settings.toml": {
+            "settings.liquid_handling.delays.post_aspirate": 2.0,
+            "settings.liquid_handling.push_out.enabled": true
+          }
+        },
+        "response_contains_any": ["viscous", "dmso", "preset", "delay", "push"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "02_002",
+      "name": "Transfer from tubes to 384 plate",
+      "description": "User describes transfers in plain language. Agent should generate a CSV template.",
+      "tags": ["fluidity", "loose", "csv"],
+      "difficulty": "medium",
+      "expected_tools": ["generate_csv_template"],
+      "max_steps": 15,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "I have samples in a 96-tube rack in slot 4 and I want to cherry-pick 10 of them into a 384-well plate in slot 2. Each transfer is 50 uL. Set it up for me.",
+      "validations": {
+        "files_exist": [
+          "CSVs/*.csv"
+        ],
+        "response_contains_any": ["csv", "transfer", "template", "generated", "created"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "02_003",
+      "name": "Slow down for volatile solvents",
+      "description": "Domain-specific request about volatile solvents. Agent should reduce head speed and/or apply slippery preset.",
+      "tags": ["fluidity", "domain-knowledge", "settings"],
+      "difficulty": "hard",
+      "expected_tools": ["update_settings", "apply_liquid_preset"],
+      "max_steps": 15,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "I'm working with chloroform which is very volatile and slippery. Reduce the head speed and configure the liquid handling to minimize dripping.",
+      "validations": {
+        "response_contains_any": ["speed", "slippery", "preset", "head", "drip", "volatile"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "02_004",
+      "name": "Switch to individual well control",
+      "description": "User wants individual well control instead of full columns. Agent should switch to single_X1 or multi_X1.",
+      "tags": ["fluidity", "mode"],
+      "difficulty": "medium",
+      "expected_tools": ["update_settings"],
+      "max_steps": 10,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "I realized I need individual well control, not whole columns. Change the pipette mode accordingly.",
+      "validations": {
+        "response_contains_any": ["single", "multi_x1", "mode", "individual", "well"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "02_005",
+      "name": "New user basic setup",
+      "description": "Onboarding scenario - new user wants a basic experiment set up from scratch.",
+      "tags": ["fluidity", "onboarding"],
+      "difficulty": "hard",
+      "expected_tools": ["initialize_project", "apply_liquid_preset", "generate_csv_template"],
+      "max_steps": 20,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "I'm new to this system. Set up a basic cherry-pick experiment with standard liquid handling. I want to transfer from tubes to a 384 plate.",
+      "validations": {
+        "response_contains_any": ["settings", "csv", "config", "deck", "standard"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "02_006",
+      "name": "Gentle settings for fragile cells",
+      "description": "Domain-specific request about fragile cells. Agent should configure gentle liquid handling.",
+      "tags": ["fluidity", "domain-knowledge"],
+      "difficulty": "hard",
+      "expected_tools": ["update_settings", "apply_liquid_preset"],
+      "max_steps": 15,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "I'm working with fragile cells that can't tolerate aggressive pipetting. Configure the gentlest liquid handling possible.",
+      "validations": {
+        "response_contains_any": ["gentle", "slow", "minimal", "mixing", "cell", "speed", "flow"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "02_007",
+      "name": "Fix splashing from previous run",
+      "description": "Troubleshooting scenario - user reports splashing. Agent should reduce speed settings.",
+      "tags": ["fluidity", "troubleshooting"],
+      "difficulty": "medium",
+      "expected_tools": ["update_settings"],
+      "max_steps": 12,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "The last run had splashing issues because the robot moved too fast. Can you slow everything down?",
+      "validations": {
+        "response_contains_any": ["speed", "slow", "head", "flow", "rate", "reduce"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "02_008",
+      "name": "Implicit post-aspirate delay setting",
+      "description": "User asks for a specific setting change using natural language, not tool/path names.",
+      "tags": ["fluidity", "implicit"],
+      "difficulty": "medium",
+      "expected_tools": ["update_settings"],
+      "max_steps": 10,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Make the post-aspirate delay 3 seconds.",
+      "validations": {
+        "toml_values": {
+          "settings.toml": {
+            "settings.liquid_handling.delays.post_aspirate": 3.0
+          }
+        },
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "02_009",
+      "name": "Multi-setting with natural language",
+      "description": "User requests multiple settings changes in one natural sentence. Tests compound NL understanding.",
+      "tags": ["fluidity", "compound"],
+      "difficulty": "hard",
+      "expected_tools": ["update_settings", "apply_liquid_preset", "validate_configuration"],
+      "max_steps": 20,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Set tip reuse to never, add a 2.5 second post-aspirate delay, then validate my config with CSVs/example_basic.csv.",
+      "validations": {
+        "toml_values": {
+          "settings.toml": {
+            "settings.liquid_handling.delays.post_aspirate": 2.5
+          }
+        },
+        "response_contains_any": ["valid", "ok", "success", "tip", "delay"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "02_010",
+      "name": "DMSO implicit preset and generate",
+      "description": "User mentions DMSO and asks to generate protocol. Agent should apply viscous preset then generate.",
+      "tags": ["fluidity", "preset", "implicit"],
+      "difficulty": "hard",
+      "expected_tools": ["apply_liquid_preset", "generate_protocol"],
+      "max_steps": 15,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "I'm working with DMSO today. Configure the liquid handling appropriately and generate a protocol from CSVs/example_basic.csv.",
+      "validations": {
+        "toml_values": {
+          "settings.toml": {
+            "settings.liquid_handling.delays.post_aspirate": 2.0,
+            "settings.liquid_handling.push_out.enabled": true
+          }
+        },
+        "file_contains": {
+          "CherryPick_OT2.py": ["get_values"]
+        },
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "02_011",
+      "name": "End-to-end with no tool names",
+      "description": "Complete workflow using only domain language, no tool names at all.",
+      "tags": ["fluidity", "end-to-end", "no-tool-names"],
+      "difficulty": "hard",
+      "expected_tools": ["apply_liquid_preset", "generate_csv_template", "generate_protocol"],
+      "max_steps": 25,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "I want to handle DMSO samples going from 96-tube racks into 384-well plates. Configure everything for viscous liquid handling, make a transfer file with 6 transfers of 30 uL each, and compile the protocol.",
+      "validations": {
+        "toml_values": {
+          "settings.toml": {
+            "settings.liquid_handling.push_out.enabled": true
+          }
+        },
+        "files_exist": [
+          "CSVs/*.csv",
+          "CherryPick_OT2.py"
+        ],
+        "file_contains": {
+          "CherryPick_OT2.py": ["get_values"]
+        },
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "02_012",
+      "name": "Cell suspension source mixing",
+      "description": "Domain-specific: user wants source mixing for cell suspensions. Tests mixing.location='source' mapping.",
+      "tags": ["fluidity", "domain-knowledge", "mixing"],
+      "difficulty": "hard",
+      "expected_tools": ["update_settings"],
+      "max_steps": 15,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Configure for cell suspension work. I need source mixing before aspiration to keep cells in suspension.",
+      "validations": {
+        "toml_values": {
+          "settings.toml": {
+            "settings.liquid_handling.mixing.enabled": true,
+            "settings.liquid_handling.mixing.location": "source"
+          }
+        },
+        "response_not_contains": ["traceback"]
+      }
+    }
+  ]
+}
