@@ -968,9 +968,15 @@ def run(protocol: protocol_api.ProtocolContext):
         raise ValueError(f"Invalid source_remixing: '{source_remixing}'. Must be 'once' or 'always'")
 
     # Warn about distribution mode + mixing (mixing is ignored in distribution)
+    # Only emit warning if CSV actually contains distribution-mode rows
     if mixing_enabled and mixing_location == 'destination':
-        protocol.comment("⚠️  NOTE: Destination mixing is NOT supported in distribution mode (ignored by distribute() API).")
-        protocol.comment("    If you need per-destination mixing, use cherry-pick mode instead.")
+        has_distribution_rows = any(
+            '|' in t.get('Dest Well', '') or t.get('Distribution Volume (ul)', '').strip() != ''
+            for t in transfers
+        )
+        if has_distribution_rows:
+            protocol.comment("⚠️  NOTE: Destination mixing is NOT supported in distribution mode (ignored by distribute() API).")
+            protocol.comment("    If you need per-destination mixing, use cherry-pick mode instead.")
 
     # Extract general settings
     general_settings = settings['settings']['general']
