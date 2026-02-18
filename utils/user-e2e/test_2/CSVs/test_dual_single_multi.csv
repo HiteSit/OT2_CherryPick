@@ -1,6 +1,0 @@
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mode,Tip Action
-tube_rack_96_1500ul_4,A1,500,384_ppv_55ul_2,A1,2,-5,single_X1,drop
-tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,multi,drop
-tube_rack_96_1500ul_4,B1,800,384_ppv_55ul_2,B1,2,-5,single_X1,drop
-tube_rack_96_1500ul_4,B2,50,384_ppv_55ul_2,B2,2,-5,multi,drop
-tube_rack_96_1500ul_4,C1,600,384_ppv_55ul_2,C1,2,-5,single_X1,drop
