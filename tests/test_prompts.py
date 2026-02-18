@@ -15,4 +15,5 @@ def test_prompts_registered() -> None:
     else:
         prompt_names = {prompt.name for prompt in prompts}
     assert "setup_new_experiment" in prompt_names
-    assert "troubleshoot_simulation_error" in prompt_names
+    assert "optimize_liquid_handling" in prompt_names
+    assert "switch_project" in prompt_names
