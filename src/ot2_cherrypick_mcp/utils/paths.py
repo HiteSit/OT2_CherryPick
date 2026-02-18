@@ -115,10 +115,21 @@ def _ensure_auto_project_dir() -> Path:
     return _AUTO_PROJECT_DIR
 
 
+def reset_auto_project_dir() -> None:
+    """Reset the auto-created project directory cache.
+
+    Called when switching projects so that ``get_project_root()`` re-reads
+    from ``os.environ`` instead of returning the cached temp dir.
+    """
+    global _AUTO_PROJECT_DIR
+    _AUTO_PROJECT_DIR = None
+
+
 __all__ = [
     "get_repo_root",
     "get_project_root",
     "resolve_repo_path",
     "resolve_project_path",
     "project_directory_info",
+    "reset_auto_project_dir",
 ]

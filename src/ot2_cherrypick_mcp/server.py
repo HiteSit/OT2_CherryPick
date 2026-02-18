@@ -4,10 +4,15 @@ Server entry point for the OpenTron cherry-pick MCP integration.
 
 from __future__ import annotations
 
-import os
+import json
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastmcp import FastMCP
 
+from .core.project_context import ProjectContext
 from .prompts import register_prompts
 from .resources import (
     register_config_resources,
@@ -17,6 +22,8 @@ from .resources import (
 )
 from .tools import register_tools
 from .utils.logging_config import configure_logging
+
+logger = logging.getLogger(__name__)
 
 APP_NAME = "OT-2 Cherry Pick MCP Server"
 APP_INSTRUCTIONS = """OT-2 Cherry-Pick Protocol Generator.
@@ -35,6 +42,8 @@ TOOL SELECTION GUIDE - match user intent to the right tool:
 - "Use 8-channel with single tip" → ot2_update_settings(path="mode", value="multi_X1")
 - "Configure for cell suspensions" → ot2_update_settings(path="mixing_location", value="source")
 - "Make robot move slower" → ot2_update_settings(path="speed", value="200")
+- "Switch to a different project" → ot2_set_project_directory(path="/abs/path")
+- "What projects have I used?" → ot2_list_projects()
 
 SHORTHAND ALIASES for ot2_update_settings (use instead of full dotted paths):
 tip_reuse, mode, speed, head_speed, starting_tip, protocol_name,
@@ -48,6 +57,7 @@ STANDARD WORKFLOW:
 
 WORKSPACE: Templates auto-copy on first access. initialize_project() is OPTIONAL.
 With OT2_PROJECT_DIR: persistent. Without: temporary (use export_project_archive before session ends).
+Use ot2_set_project_directory to switch between projects at runtime.
 
 KEY RESOURCES:
 - config://settings - TOML configuration
@@ -68,12 +78,45 @@ TROUBLESHOOTING:
 - "Multi mode incompatible" → multi mode requires 96/384-well plates only
 """
 
+_RECENT_PROJECTS_FILE = Path.home() / ".ot2_cherrypick_recent_projects.json"
+
 __all__ = ["create_mcp_app", "main"]
+
+
+@asynccontextmanager
+async def app_lifespan(app: FastMCP) -> AsyncIterator[ProjectContext]:
+    """Create the ProjectContext on startup and persist history on shutdown."""
+    from .utils.paths import get_project_root, project_directory_info
+
+    project_dir = get_project_root()
+    dir_info = project_directory_info()
+    ctx = ProjectContext(
+        project_dir=project_dir,
+        auto_created=bool(dir_info["auto_created"]),
+    )
+
+    # Load recent projects from disk
+    if _RECENT_PROJECTS_FILE.exists():
+        try:
+            data = json.loads(_RECENT_PROJECTS_FILE.read_text())
+            if isinstance(data, list):
+                ctx.recent_projects = [str(p) for p in data[:10]]
+        except (json.JSONDecodeError, OSError):
+            logger.debug("Could not load recent projects file, starting fresh")
+
+    try:
+        yield ctx
+    finally:
+        # Persist recent projects on shutdown
+        try:
+            _RECENT_PROJECTS_FILE.write_text(json.dumps(ctx.recent_projects))
+        except OSError:
+            logger.debug("Could not persist recent projects file")
 
 
 def create_mcp_app() -> FastMCP:
     """Instantiate the FastMCP application with registered tools."""
-    app = FastMCP(name=APP_NAME, instructions=APP_INSTRUCTIONS)
+    app = FastMCP(name=APP_NAME, instructions=APP_INSTRUCTIONS, lifespan=app_lifespan)
     register_tools(app)
     register_config_resources(app)
     register_file_resources(app)
@@ -87,17 +130,7 @@ def main() -> None:
     """Run the MCP server via STDIO transport."""
     configure_logging()
 
-    from .utils.paths import get_project_root
-
-    try:
-        project_dir = get_project_root()
-    except ValueError as e:
-        raise ValueError(f"Project directory validation failed: {e}") from e
-
-    # Change to project directory for all operations
-    os.chdir(project_dir)
-
-    # Run the MCP server
+    # Run the MCP server (project directory is resolved inside the lifespan)
     create_mcp_app().run()
 
 

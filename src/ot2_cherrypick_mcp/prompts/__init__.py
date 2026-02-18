@@ -1,8 +1,9 @@
 """MCP workflow prompts for guided OT-2 protocol setup and optimization.
 
-This module provides two comprehensive workflow prompts:
+This module provides workflow prompts:
 1. setup_new_experiment - Complete project setup from initialization to deployment
 2. optimize_liquid_handling - Problem-driven liquid handling parameter optimization
+3. switch_project - Guide for switching between project directories
 """
 
 from __future__ import annotations
@@ -627,4 +628,77 @@ For complex cases, I'll reference:
 I'll diagnose the root cause and guide you through targeted parameter adjustments using `ot2_update_settings` to solve your specific issue.
 
 **Remember:** We're using manual parameter tuning (NO presets) to give you precise control and understanding of each adjustment.
+"""
+
+    @mcp.prompt(
+        name="switch_project",
+        description="Guide for switching between OT-2 project directories at runtime"
+    )
+    def switch_project_prompt() -> str:
+        return """I'll help you switch to a different OT-2 project directory.
+
+## Step 1: Check Current Project State
+
+First, let's see where you are now and what projects are available.
+
+**Action:** I'll run `ot2_list_projects()` to show:
+- The currently active project directory
+- Recent project history (directories you've used before)
+
+If you have a parent folder that contains multiple project directories, I can scan it:
+```
+ot2_list_projects(scan_parent_directory="/path/to/experiments")
+```
+This finds all subdirectories containing a `settings.toml` file.
+
+---
+
+## Step 2: Choose Your Target
+
+**Option A: Switch to an existing project**
+- Pick from the recent projects list, or
+- Provide the absolute path to a project directory that already has configuration files
+
+**Option B: Create a new project**
+- Provide an absolute path for a new directory
+- Templates (settings.toml, labware_dict.toml, CherryPick_OT2.py) will be copied automatically
+
+---
+
+## Step 3: Execute the Switch
+
+**Action:** I'll run `ot2_set_project_directory(path="/absolute/path/to/project")`.
+
+This will:
+1. Save the current project to the recent-projects history
+2. Create the target directory if it does not exist
+3. Copy template files if `initialize_templates=True` (the default)
+4. Update the active project so all subsequent tools use the new directory
+
+If you do NOT want templates copied (e.g. switching to a fully configured project):
+```
+ot2_set_project_directory(path="/path/to/project", initialize_templates=false)
+```
+
+---
+
+## Step 4: Verify the New Project
+
+After switching, I'll confirm the state:
+
+**Action:** `ot2_get_project_directory()` to verify the new active path.
+
+**Action:** `ot2_list_settings()` to inspect the configuration in the new project.
+
+**Action:** `ot2_list_csv_files()` to see available CSV transfer maps.
+
+---
+
+## Ready to Switch?
+
+**Tell me:**
+1. Do you want to switch to an existing project or create a new one?
+2. What is the absolute path? (or should I scan a parent directory to find projects?)
+
+I'll handle the switch and verify everything is configured correctly.
 """

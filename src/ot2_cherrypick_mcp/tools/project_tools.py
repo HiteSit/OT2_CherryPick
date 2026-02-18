@@ -5,18 +5,27 @@ from __future__ import annotations
 import os
 import shutil
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 
-from fastmcp import FastMCP
+from fastmcp import Context, FastMCP
 
 from ..core.archive import create_project_archive
-from ..utils.paths import get_project_root, get_repo_root, project_directory_info
+from ..core.project_context import ProjectContext
+from ..utils.paths import (
+    _ensure_templates_exist,
+    get_project_root,
+    get_repo_root,
+    project_directory_info,
+    reset_auto_project_dir,
+)
 
 __all__ = [
     "register_project_tools",
     "initialize_project",
     "get_active_project_directory",
     "export_project_archive",
+    "set_project_directory",
+    "list_projects",
 ]
 
 
@@ -139,6 +148,143 @@ def export_project_archive(*, as_base64: bool = False) -> Dict[str, object]:
     return create_project_archive(as_base64=as_base64)
 
 
+def set_project_directory(
+    *,
+    path: str,
+    initialize_templates: bool = True,
+    project_ctx: ProjectContext | None = None,
+) -> str:
+    """Switch the active project directory at runtime.
+
+    Args:
+        path: Absolute path to the new project directory.
+        initialize_templates: Whether to copy template files into the directory.
+        project_ctx: The lifespan ProjectContext (passed from the tool wrapper).
+
+    Returns:
+        A human-readable summary of the switch.
+    """
+    if not os.path.isabs(path):
+        raise ValueError(f"Path must be absolute, got: {path}")
+
+    new_path = Path(path)
+    old_path = get_project_root()
+
+    # Create directory if needed
+    new_path.mkdir(parents=True, exist_ok=True)
+
+    # Optionally copy templates
+    if initialize_templates:
+        _ensure_templates_exist(new_path)
+
+    # Update the environment variable for backward compat
+    os.environ["OT2_PROJECT_DIR"] = str(new_path)
+
+    # Reset the cached auto-created dir so get_project_root() re-reads env
+    reset_auto_project_dir()
+
+    # Update the lifespan context if available
+    if project_ctx is not None:
+        project_ctx.switch_to(new_path, auto_created=False)
+
+    # Build summary
+    existing_files = [f.name for f in new_path.iterdir() if f.is_file()]
+    csv_dir = new_path / "CSVs"
+    available_csvs: List[str] = []
+    if csv_dir.is_dir():
+        available_csvs = [f.name for f in csv_dir.glob("*.csv")]
+
+    lines = [
+        f"Switched project directory.",
+        f"  Old: {old_path}",
+        f"  New: {new_path}",
+    ]
+    if existing_files:
+        lines.append(f"  Existing files: {', '.join(sorted(existing_files))}")
+    if available_csvs:
+        lines.append(f"  Available CSVs: {', '.join(sorted(available_csvs))}")
+    if not existing_files and not available_csvs:
+        lines.append("  Directory is empty (templates were copied)." if initialize_templates else "  Directory is empty.")
+
+    return "\n".join(lines)
+
+
+def list_projects(
+    *,
+    scan_parent_directory: str = "",
+    project_ctx: ProjectContext | None = None,
+) -> str:
+    """List active, recent, and optionally discovered projects.
+
+    Args:
+        scan_parent_directory: If provided, scan this absolute path for
+            subdirectories containing a settings.toml file.
+        project_ctx: The lifespan ProjectContext (passed from the tool wrapper).
+
+    Returns:
+        Formatted text listing projects.
+    """
+    lines: List[str] = []
+
+    # Current active project
+    current = get_project_root()
+    info = project_directory_info()
+    mode = "temporary" if info["auto_created"] else "persistent"
+    lines.append(f"Active project: {current} ({mode})")
+
+    # Recent projects from context
+    recent: List[str] = []
+    if project_ctx is not None:
+        recent = project_ctx.recent_projects
+
+    if recent:
+        lines.append("")
+        lines.append("Recent projects:")
+        for i, rp in enumerate(recent, 1):
+            exists = Path(rp).is_dir()
+            marker = "" if exists else " [not found]"
+            lines.append(f"  {i}. {rp}{marker}")
+    else:
+        lines.append("")
+        lines.append("Recent projects: (none)")
+
+    # Optional scan
+    if scan_parent_directory:
+        if not os.path.isabs(scan_parent_directory):
+            lines.append("")
+            lines.append(f"Error: scan_parent_directory must be absolute, got: {scan_parent_directory}")
+        else:
+            parent = Path(scan_parent_directory)
+            if parent.is_dir():
+                discovered: List[str] = []
+                for child in sorted(parent.iterdir()):
+                    if child.is_dir() and (child / "settings.toml").exists():
+                        discovered.append(str(child))
+                lines.append("")
+                if discovered:
+                    lines.append(f"Projects found in {parent}:")
+                    for dp in discovered:
+                        lines.append(f"  - {dp}")
+                else:
+                    lines.append(f"No projects with settings.toml found in {parent}")
+            else:
+                lines.append("")
+                lines.append(f"Directory not found: {parent}")
+
+    return "\n".join(lines)
+
+
+def _get_project_ctx(ctx: Context) -> ProjectContext | None:
+    """Safely extract the ProjectContext from the FastMCP lifespan context."""
+    try:
+        lc = ctx.request_context.lifespan_context
+        if isinstance(lc, ProjectContext):
+            return lc
+    except (AttributeError, ValueError):
+        pass
+    return None
+
+
 def register_project_tools(mcp: FastMCP) -> None:
     """Register project management tools with the MCP server."""
 
@@ -195,3 +341,55 @@ def register_project_tools(mcp: FastMCP) -> None:
     def export_project_archive_tool(as_base64: bool = False) -> Dict[str, object]:
         """Generate an archive and return its location (and optional payload)."""
         return export_project_archive(as_base64=as_base64)
+
+    @mcp.tool(
+        name="ot2_set_project_directory",
+        description=(
+            "Switch the active project directory at runtime. "
+            "Provide an absolute path. The directory is created if it does not "
+            "exist. By default, template files are copied into the new directory. "
+            "The previous project is saved to the recent-projects history. "
+            "Use ot2_list_projects() to see history and discover projects."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True
+        }
+    )
+    def set_project_directory_tool(
+        ctx: Context,
+        path: str,
+        initialize_templates: bool = True,
+    ) -> str:
+        """Switch the active project directory."""
+        project_ctx = _get_project_ctx(ctx)
+        return set_project_directory(
+            path=path,
+            initialize_templates=initialize_templates,
+            project_ctx=project_ctx,
+        )
+
+    @mcp.tool(
+        name="ot2_list_projects",
+        description=(
+            "List the active project, recent project history, and optionally "
+            "scan a parent directory for subdirectories that contain a "
+            "settings.toml file (i.e. valid OT-2 project directories)."
+        ),
+        annotations={
+            "readOnlyHint": True,
+            "openWorldHint": True
+        }
+    )
+    def list_projects_tool(
+        ctx: Context,
+        scan_parent_directory: str = "",
+    ) -> str:
+        """List active and recent projects."""
+        project_ctx = _get_project_ctx(ctx)
+        return list_projects(
+            scan_parent_directory=scan_parent_directory,
+            project_ctx=project_ctx,
+        )
