@@ -25,10 +25,6 @@
       ],
       "env": {}
     },
-    "mermaid-mcp": {
-      "url": "https://mcp.mermaid.ai/sse",
-      "type": "sse"
-    },
     "playwright": {
       "command": "npx",
       "args": [
@@ -36,6 +32,19 @@
         "--browser",
         "firefox"
       ]
+    },
+    "ot2-cherrypick": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick",
+        "run",
+        "ot2-mcp-server"
+      ],
+      "env": {
+        "LABWARE_PATH": "/mnt/c/Users/ricca/AppData/Roaming/Opentrons/labware"
+      }
     }
   }
 }
