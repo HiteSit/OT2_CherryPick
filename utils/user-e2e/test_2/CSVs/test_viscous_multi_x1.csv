@@ -1,0 +1,9 @@
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+tube_rack_96_1500ul_4,A1,50,384_pp_standard_100ul_2,A1,4,-3,new
+tube_rack_96_1500ul_4,A2,50,384_pp_standard_100ul_2,A3,4,-3,new
+tube_rack_96_1500ul_4,A3,75,384_pp_standard_100ul_2,B1,4,-3,new
+tube_rack_96_1500ul_4,B1,60,384_pp_standard_100ul_2,B3,4,-3,new
+tube_rack_96_1500ul_4,B2,45,384_pp_standard_100ul_2,C1,4,-3,new
+tube_rack_96_1500ul_4,B3,80,384_pp_standard_100ul_2,C3,4,-3,new
+tube_rack_96_1500ul_4,C1,55,384_pp_standard_100ul_2,D1,4,-3,new
+tube_rack_96_1500ul_4,C2,70,384_pp_standard_100ul_2,D3,4,-3,new

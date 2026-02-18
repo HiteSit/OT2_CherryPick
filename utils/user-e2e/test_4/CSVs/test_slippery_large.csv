@@ -1,0 +1,7 @@
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+tube_rack_24_4000ul_1,A1,500,tube_rack_96_2000ul_3,A1,8,-5,new
+tube_rack_24_4000ul_1,A2,350,tube_rack_96_2000ul_3,A2,8,-5,new
+tube_rack_24_4000ul_1,A3,200,tube_rack_96_2000ul_3,A3,8,-5,new
+tube_rack_24_4000ul_1,B1,450,tube_rack_96_2000ul_3,B1,8,-5,new
+tube_rack_24_4000ul_1,B2,300,tube_rack_96_2000ul_3,B2,8,-5,new
+tube_rack_24_4000ul_1,B3,250,tube_rack_96_2000ul_3,B3,8,-5,new

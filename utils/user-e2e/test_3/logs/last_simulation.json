@@ -1,0 +1,14 @@
+{
+  "command": [
+    "opentrons_simulate",
+    "--custom-labware",
+    "/mnt/c/Users/ricca/AppData/Roaming/Opentrons/labware",
+    "/mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick/utils/user-e2e/test_3/CherryPick_OT2.py"
+  ],
+  "stdout": "Starting Cherry-Pick Protocol\n\u26a0\ufe0f  NOTE: Destination mixing is NOT supported in distribution mode (ignored by distribute() API).\n    If you need per-destination mixing, use cherry-pick mode instead.\nProtocol: full-multi-column-transfer\nDual-pipette mode: DISABLED (legacy single-pipette)\nUsing legacy mode: multi\nMulti mode: A1 \u2192 8 source wells, A1 \u2192 8 dest wells\nPicking up tip from A1 of Opentrons OT-2 96 Tip Rack 300 \u00b5L on slot 5\nMoving to A1 of tube_rack_96_1500ul on slot 4\nMoving to A1 of tube_rack_96_1500ul on slot 4\nAspirating 40.0 uL from A1 of tube_rack_96_1500ul on slot 4 at 94.0 uL/sec\nTouching tip\nDispensing 40.0 uL into A1 of 384_ppv_55ul on slot 2 at 94.0 uL/sec\nBlowing out at A1 of 384_ppv_55ul on slot 2\nMulti mode: A2 \u2192 8 source wells, A3 \u2192 8 dest wells\nAspirating 40.0 uL from A2 of tube_rack_96_1500ul on slot 4 at 94.0 uL/sec\nTouching tip\nDispensing 40.0 uL into A3 of 384_ppv_55ul on slot 2 at 94.0 uL/sec\nBlowing out at A3 of 384_ppv_55ul on slot 2\nMulti mode: A3 \u2192 8 source wells, A5 \u2192 8 dest wells\nAspirating 40.0 uL from A3 of tube_rack_96_1500ul on slot 4 at 94.0 uL/sec\nTouching tip\nDispensing 40.0 uL into A5 of 384_ppv_55ul on slot 2 at 94.0 uL/sec\nBlowing out at A5 of 384_ppv_55ul on slot 2\nMulti mode: A4 \u2192 8 source wells, A7 \u2192 8 dest wells\nAspirating 40.0 uL from A4 of tube_rack_96_1500ul on slot 4 at 94.0 uL/sec\nTouching tip\nDispensing 40.0 uL into A7 of 384_ppv_55ul on slot 2 at 94.0 uL/sec\nBlowing out at A7 of 384_ppv_55ul on slot 2\nMulti mode: A5 \u2192 8 source wells, A9 \u2192 8 dest wells\nAspirating 40.0 uL from A5 of tube_rack_96_1500ul on slot 4 at 94.0 uL/sec\nTouching tip\nDispensing 40.0 uL into A9 of 384_ppv_55ul on slot 2 at 94.0 uL/sec\nBlowing out at A9 of 384_ppv_55ul on slot 2\nMulti mode: A6 \u2192 8 source wells, A11 \u2192 8 dest wells\nAspirating 40.0 uL from A6 of tube_rack_96_1500ul on slot 4 at 94.0 uL/sec\nTouching tip\nDispensing 40.0 uL into A11 of 384_ppv_55ul on slot 2 at 94.0 uL/sec\nBlowing out at A11 of 384_ppv_55ul on slot 2\nReturning tip\n\tDropping tip into A1 of Opentrons OT-2 96 Tip Rack 300 \u00b5L on slot 5\nProtocol complete: 6 transfers\n",
+  "stderr": "/home/hitesit/.opentrons/robot_settings.json not found. Loading defaults\nDeck calibration not found.\n/home/hitesit/.opentrons/deck_calibration.json not found. Loading defaults\n",
+  "returncode": 0,
+  "protocol_path": "/mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick/utils/user-e2e/test_3/CherryPick_OT2.py",
+  "labware_path": "/mnt/c/Users/ricca/AppData/Roaming/Opentrons/labware",
+  "timestamp": "2026-02-18T12:31:22.291555+00:00"
+}

@@ -1,0 +1,6 @@
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mix Volume,Flow Aspirate,Flow Dispense,Air Gap,Tip Action
+tube_rack_96_1500ul_4,A1,30,384_ppv_55ul_2,B1,2,-5,0,1,1,20,keep
+tube_rack_96_1500ul_4,A2,30,384_ppv_55ul_2,B2,2,-5,0,1,1,20,keep
+tube_rack_96_1500ul_4,A3,30,384_ppv_55ul_2,B3,3,-8,0,1,1,20,keep
+tube_rack_96_1500ul_4,A4,30,384_ppv_55ul_2,B4,1,-3,0,1,1,20,keep
+tube_rack_96_1500ul_4,A5,30,384_ppv_55ul_2,B5,4,-10,0,1,1,20,keep
