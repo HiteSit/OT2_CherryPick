@@ -19,16 +19,27 @@ from ot2_cherrypick_mcp.core.project_context import ProjectContext
 from ot2_cherrypick_mcp.utils.paths import reset_auto_project_dir
 
 
-def test_initialize_project_requires_env_var() -> None:
-    """initialize_project raises ValueError if OT2_PROJECT_DIR is not set."""
-    # Ensure env var is not set
+def test_initialize_project_works_without_env_var() -> None:
+    """initialize_project auto-creates a temp workspace when OT2_PROJECT_DIR is not set."""
+    import shutil
+    from ot2_cherrypick_mcp.utils.paths import reset_auto_project_dir
+
     original = os.environ.pop("OT2_PROJECT_DIR", None)
+    reset_auto_project_dir()
+    created_path = None
     try:
-        with pytest.raises(ValueError, match="OT2_PROJECT_DIR.*required"):
-            initialize_project()
+        result = initialize_project()
+        assert result["status"] == "success"
+        assert "project_directory" in result
+        created_path = result["project_directory"]
+        # Should have auto-created a workspace
+        assert result["workspace_mode"] == "temporary"
     finally:
         if original:
             os.environ["OT2_PROJECT_DIR"] = original
+        reset_auto_project_dir()
+        if created_path:
+            shutil.rmtree(created_path, ignore_errors=True)
 
 
 def test_initialize_project_creates_structure(tmp_path: Path, monkeypatch) -> None:

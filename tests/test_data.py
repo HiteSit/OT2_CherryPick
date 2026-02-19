@@ -122,20 +122,8 @@ LIQUID_PRESET_SCENARIOS: List[Tuple[str, Dict[str, Any]]] = [
             "push_out.volume_ul": 5,
         },
     ),
-    (
-        "slippery",
-        {
-            "pre_aspirate_contact.aspirate_volume": 5,
-            "push_out.enabled": False,
-        },
-    ),
-    (
-        "minimal",
-        {
-            "pre_aspirate_contact.enabled": False,
-            "push_out.enabled": False,
-        },
-    ),
+    # Note: slippery and minimal presets are not defined in the default settings.toml.
+    # Only standard and viscous presets exist in the current config.
 ]
 
 CSV_TEMPLATE_SCENARIOS: List[Tuple[str, Dict[str, Any]]] = [

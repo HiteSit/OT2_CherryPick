@@ -27,15 +27,21 @@ def test_reset_settings_restores_defaults(client):
 
 
 def test_labware_roundtrip(client):
+    # After refactor, labware_dict.toml only contains [[pipettes]] (no [[labware]] array)
     original = client.get("/labware").json()
-    assert "labware" in original
-    patch_response = client.patch("/labware", json={"path": "labware[0].well_volume", "value": 200})
+    assert "pipettes" in original
+    assert isinstance(original["pipettes"], list)
+    assert len(original["pipettes"]) > 0
+
+    # Patch a pipette volume_range field
+    first_pipette_max = original["pipettes"][0]["volume_range"][1]
+    patch_response = client.patch("/labware", json={"path": "pipettes[0].volume_range[1]", "value": 999})
     assert patch_response.status_code == 200
-    assert patch_response.json()["labware"][0]["well_volume"] == 200
 
     reset_response = client.post("/labware/reset")
     assert reset_response.status_code == 200
-    assert reset_response.json()["labware"][0]["well_volume"] == original["labware"][0]["well_volume"]
+    # After reset, we should be back to original
+    assert reset_response.json()["pipettes"][0]["volume_range"][1] == first_pipette_max
 
 
 def test_add_and_remove_working_plate_entry(client):

@@ -49,7 +49,8 @@ def test_labware_resource_registered_and_readable(tmp_path: Path, monkeypatch) -
     resources = asyncio.run(app.get_resources())
     assert "config://labware" in resources
     content = resources["config://labware"].fn()
-    assert "[[labware]]" in content
+    # After refactor, labware_dict.toml only contains [[pipettes]] (no [[labware]])
+    assert "[[pipettes]]" in content
 
 
 def test_csv_file_resource_lists_files(tmp_path: Path, monkeypatch) -> None:

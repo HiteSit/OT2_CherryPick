@@ -39,6 +39,8 @@ def test_validate_configuration_returns_ok(tmp_path: Path) -> None:
 def test_validate_configuration_detects_missing_labware(tmp_path: Path) -> None:
     settings_copy, labware_copy, csv_copy = _setup_inputs(tmp_path)
 
+    # Remove tube_rack_96_1500ul from settings.toml working_plate entries
+    # so the CSV reference to tube_rack_96_1500ul_4 becomes invalid
     text = settings_copy.read_text(encoding="utf-8").replace("tube_rack_96_1500ul", "unknown_labware")
     settings_copy.write_text(text, encoding="utf-8")
 
@@ -49,7 +51,9 @@ def test_validate_configuration_detects_missing_labware(tmp_path: Path) -> None:
     )
 
     assert result["status"] == "error"
-    assert any("unknown_labware" in err for err in result["errors"])
+    # The CSV references tube_rack_96_1500ul_4 but working_plate now has unknown_labware
+    # so the error reports that tube_rack_96_1500ul is not found in working_plate
+    assert any("tube_rack_96_1500ul" in err for err in result["errors"])
 
 
 def test_validate_configuration_reports_csv_column_issue(tmp_path: Path) -> None:
