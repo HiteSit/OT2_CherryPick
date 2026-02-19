@@ -22,8 +22,8 @@ import { IconDeviceFloppy, IconRefresh } from '@tabler/icons-react'
 import * as TOML from '@ltd/j-toml'
 import {
   useAddWorkingPlateEntry,
+  useAvailableLabwareQuery,
   useDeleteWorkingPlateEntry,
-  useLabwareQuery,
   useMoveWorkingPlateEntry,
   usePatchSetting,
   useRawSettingsQuery,
@@ -31,7 +31,7 @@ import {
   useSavePreset,
   useSettingsQuery,
 } from '../api/hooks'
-import type { LabwareEntry, LiquidHandlingPreset } from '../api/types'
+import type { AvailableLabware, LiquidHandlingPreset } from '../api/types'
 import { SectionCard } from './SectionCard'
 import { WorkingPlateTable } from './WorkingPlateTable'
 
@@ -53,9 +53,9 @@ const sourceRemixOptions = [
   { value: 'always', label: 'Always' },
 ]
 
-function useLabwareOptions(): { options: LabwareEntry[]; isLoading: boolean } {
-  const { data, isLoading } = useLabwareQuery()
-  return { options: data?.labware ?? [], isLoading }
+function useLabwareOptions(): { options: AvailableLabware[]; isLoading: boolean } {
+  const { data, isLoading } = useAvailableLabwareQuery()
+  return { options: data ?? [], isLoading }
 }
 
 export function SettingsEditor() {

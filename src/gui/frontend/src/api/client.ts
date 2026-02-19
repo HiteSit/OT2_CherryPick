@@ -1,10 +1,12 @@
 import axios from 'axios'
 import type {
+  AvailableLabware,
   CsvListResponse,
   CsvUploadPayload,
   LabwareDocument,
-  LabwareEntry,
   LiquidHandlingPreset,
+  OffsetDatabase,
+  OffsetEntry,
   PipetteEntry,
   SettingsDocument,
   ShellSettings,
@@ -93,18 +95,18 @@ export const replaceLabware = async (doc: Record<string, unknown>): Promise<Labw
   return data
 }
 
-export const addLabwareEntry = async (payload: Omit<LabwareEntry, 'offset_x' | 'offset_y' | 'offset_z'> & { offset_x?: number; offset_y?: number; offset_z?: number }): Promise<LabwareDocument> => {
-  const { data } = await api.post<LabwareDocument>('/labware/entries', payload)
+export const fetchAvailableLabware = async (): Promise<AvailableLabware[]> => {
+  const { data } = await api.get<AvailableLabware[]>('/labware/available')
   return data
 }
 
-export const updateLabwareEntry = async (index: number, payload: LabwareEntry): Promise<LabwareDocument> => {
-  const { data } = await api.put<LabwareDocument>(`/labware/entries/${index}`, payload)
+export const fetchOffsetDatabase = async (): Promise<OffsetDatabase> => {
+  const { data } = await api.get<OffsetDatabase>('/labware/offsets')
   return data
 }
 
-export const deleteLabwareEntry = async (index: number): Promise<LabwareDocument> => {
-  const { data } = await api.delete<LabwareDocument>(`/labware/entries/${index}`)
+export const saveOffset = async (payload: Omit<OffsetEntry, 'last_calibrated'>): Promise<Record<string, unknown>> => {
+  const { data } = await api.post<Record<string, unknown>>('/labware/offsets', payload)
   return data
 }
 

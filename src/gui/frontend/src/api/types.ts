@@ -47,6 +47,9 @@ export interface WorkingPlateEntry {
   target_temperature?: number
   target_shake_speed?: number
   persist_after_protocol?: boolean
+  offset_x?: number
+  offset_y?: number
+  offset_z?: number
 }
 
 export interface LiquidHandlingPreset {
@@ -75,14 +78,26 @@ export interface SettingsDocument {
   }
 }
 
-export interface LabwareEntry {
-  category: string
+export interface AvailableLabware {
   labware_id: string
-  well_count: number
-  well_volume: number
-  offset_x?: number
-  offset_y?: number
-  offset_z?: number
+  well_count: number | null
+  display_name: string
+  display_category: string
+  source: 'custom' | 'official'
+}
+
+export interface OffsetEntry {
+  labware_id: string
+  position_rack: string
+  offset_x: number
+  offset_y: number
+  offset_z: number
+  last_calibrated?: string
+  notes?: string
+}
+
+export interface OffsetDatabase {
+  offsets?: OffsetEntry[]
 }
 
 export interface PipetteEntry {
@@ -96,7 +111,6 @@ export interface PipetteEntry {
 
 export interface LabwareDocument {
   pipettes: PipetteEntry[]
-  labware: LabwareEntry[]
 }
 
 export interface CsvListResponse {

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Stack, Alert, Text, Select, Group, Tooltip, ActionIcon, Paper, Title, TextInput } from '@mantine/core'
-import { IconAlertCircle, IconHelp } from '@tabler/icons-react'
+import { Stack, Alert, Text, Select, Group, Tooltip, ActionIcon, Paper, Title, TextInput, Button } from '@mantine/core'
+import { IconAlertCircle, IconHelp, IconFolder, IconDeviceFloppy } from '@tabler/icons-react'
 import { DeckGrid } from '../deck/DeckGrid'
 import { LabwareEditor } from '../deck/LabwareEditor'
 import { useWizard } from '../WizardContext'
-import { useSettingsQuery, usePatchSetting } from '../../../api/hooks'
+import { useSettingsQuery, usePatchSetting, useShellSettingsQuery, useUpdateShellSettings, useBrowseShellSettings } from '../../../api/hooks'
 import { notifications } from '@mantine/notifications'
 import { HELP_TEXT } from '../../../constants/helpText'
 
@@ -12,12 +12,62 @@ export function DeckSetupStep() {
   const { state } = useWizard()
   const { data: settings } = useSettingsQuery()
   const patchMutation = usePatchSetting()
+  const shellSettingsQuery = useShellSettingsQuery()
+  const shellSettingsUpdate = useUpdateShellSettings()
+  const shellSettingsBrowse = useBrowseShellSettings()
 
   const [localProtocolName, setLocalProtocolName] = useState('')
+  const [labwarePathWin, setLabwarePathWin] = useState('')
+  const [isBrowsingLabware, setIsBrowsingLabware] = useState(false)
+  const [isSavingLabware, setIsSavingLabware] = useState(false)
 
   useEffect(() => {
     setLocalProtocolName(settings?.settings?.general?.protocol_name || '')
   }, [settings?.settings?.general?.protocol_name])
+
+  useEffect(() => {
+    if (shellSettingsQuery.data) {
+      setLabwarePathWin(shellSettingsQuery.data.labware_path_win ?? '')
+    }
+  }, [shellSettingsQuery.data])
+
+  const handleBrowseLabwarePath = () => {
+    setIsBrowsingLabware(true)
+    shellSettingsBrowse.mutate(
+      { field: 'labware_path_win' },
+      {
+        onSuccess: (data) => {
+          setLabwarePathWin(data.labware_path_win ?? '')
+          notifications.show({ color: 'teal', title: 'Folder selected', message: 'Custom labware folder updated.' })
+        },
+        onError: (error) =>
+          notifications.show({
+            color: 'red',
+            title: 'Browse failed',
+            message: error instanceof Error ? error.message : 'Unable to open folder picker.',
+          }),
+        onSettled: () => setIsBrowsingLabware(false),
+      }
+    )
+  }
+
+  const handleSaveLabwarePath = () => {
+    if (!labwarePathWin) {
+      notifications.show({ color: 'red', title: 'Folder required', message: 'Enter a custom labware folder path before saving.' })
+      return
+    }
+    setIsSavingLabware(true)
+    shellSettingsUpdate.mutate(
+      { labware_path_win: labwarePathWin },
+      {
+        onSuccess: () =>
+          notifications.show({ color: 'teal', title: 'Labware path saved', message: 'Will be used for simulation and scanning.' }),
+        onError: (error) =>
+          notifications.show({ color: 'red', title: 'Save failed', message: error instanceof Error ? error.message : 'Unable to save.' }),
+        onSettled: () => setIsSavingLabware(false),
+      }
+    )
+  }
 
   const hasSource = state.deckLayout.some(l => l.type === 'source')
   const hasDestination = state.deckLayout.some(l => l.type === 'destination')
@@ -173,6 +223,40 @@ export function DeckSetupStep() {
               placeholder="H1 or A1"
             />
           )}
+        </Stack>
+      </Paper>
+
+      <Paper p="md" withBorder>
+        <Stack gap="sm">
+          <Title order={5}>Custom Labware Folder</Title>
+          <Text size="sm" c="dimmed">
+            Point to your Opentrons custom labware JSON folder. Custom labware will appear first in the labware selector when adding deck slots.
+          </Text>
+          <TextInput
+            label="Custom labware folder (Windows path)"
+            description="Example: C:\\Users\\you\\AppData\\Roaming\\Opentrons\\labware"
+            value={labwarePathWin}
+            onChange={(e) => setLabwarePathWin(e.currentTarget.value)}
+            placeholder="C:\\Users\\..."
+          />
+          <Group gap="xs">
+            <Button
+              variant="default"
+              leftSection={<IconFolder size={16} />}
+              loading={isBrowsingLabware}
+              onClick={handleBrowseLabwarePath}
+            >
+              Browse…
+            </Button>
+            <Button
+              variant="light"
+              leftSection={<IconDeviceFloppy size={16} />}
+              loading={isSavingLabware}
+              onClick={handleSaveLabwarePath}
+            >
+              Save as default
+            </Button>
+          </Group>
         </Stack>
       </Paper>
 

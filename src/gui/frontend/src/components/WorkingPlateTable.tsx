@@ -1,11 +1,11 @@
 import { Fragment, useState } from 'react'
 import { ActionIcon, Group, NumberInput, Select, Stack, Switch, Table, Text, TextInput, Tooltip } from '@mantine/core'
 import { IconArrowDown, IconArrowUp, IconSettings, IconTrash } from '@tabler/icons-react'
-import type { LabwareEntry, WorkingPlateEntry } from '../api/types'
+import type { AvailableLabware, WorkingPlateEntry } from '../api/types'
 
 interface WorkingPlateTableProps {
   entries: WorkingPlateEntry[]
-  labware: LabwareEntry[]
+  labware: AvailableLabware[]
   onUpdate: (index: number, field: keyof WorkingPlateEntry, value: string | number | boolean | null) => void
   onRemove?: (index: number) => void
   onMove?: (index: number, direction: 'up' | 'down') => void
@@ -34,7 +34,7 @@ const tipModeOptions = [
 export function WorkingPlateTable({ entries, labware, onUpdate, onRemove, onMove, generalMode }: WorkingPlateTableProps) {
   const labwareOptions = labware.map((lw) => ({
     value: lw.labware_id,
-    label: `${lw.labware_id} (${lw.category})`,
+    label: `${lw.labware_id} (${lw.display_category})`,
   }))
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({})
 

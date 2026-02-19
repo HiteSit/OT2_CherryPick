@@ -1,8 +1,8 @@
 import { Loader, Table, Text } from '@mantine/core'
-import { useLabwareQuery } from '../api/hooks'
+import { useAvailableLabwareQuery } from '../api/hooks'
 
 export function LabwareSummary() {
-  const { data, isLoading } = useLabwareQuery()
+  const { data, isLoading } = useAvailableLabwareQuery()
 
   if (isLoading || !data) {
     return (
@@ -18,17 +18,17 @@ export function LabwareSummary() {
         <Table.Tr>
           <Table.Th>ID</Table.Th>
           <Table.Th>Category</Table.Th>
-          <Table.Th>Volume (µL)</Table.Th>
           <Table.Th>Wells</Table.Th>
+          <Table.Th>Source</Table.Th>
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {data.labware.map((entry) => (
+        {data.map((entry) => (
           <Table.Tr key={entry.labware_id}>
             <Table.Td>{entry.labware_id}</Table.Td>
-            <Table.Td>{entry.category}</Table.Td>
-            <Table.Td>{entry.well_volume}</Table.Td>
-            <Table.Td>{entry.well_count}</Table.Td>
+            <Table.Td>{entry.display_category}</Table.Td>
+            <Table.Td>{entry.well_count ?? '-'}</Table.Td>
+            <Table.Td>{entry.source}</Table.Td>
           </Table.Tr>
         ))}
       </Table.Tbody>

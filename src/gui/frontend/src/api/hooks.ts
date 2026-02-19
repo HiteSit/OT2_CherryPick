@@ -1,18 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { PatchPayload } from './client'
 import {
-  addLabwareEntry,
   addPipetteEntry,
   addWorkingPlateEntry,
   browseShellSettings,
   deleteCsv,
-  deleteLabwareEntry,
   deletePipetteEntry,
   deletePreset,
   deleteWorkingPlateEntry,
+  fetchAvailableLabware,
   fetchCsvContent,
   fetchCsvList,
   fetchLabware,
+  fetchOffsetDatabase,
   fetchRawSettings,
   fetchSettings,
   fetchShellSettings,
@@ -20,16 +20,16 @@ import {
   patchSetting,
   replaceSettings,
   runWorkflow,
+  saveOffset,
   savePreset,
-  updateLabwareEntry,
   updatePipetteEntry,
   updateShellSettings,
   uploadCsv,
 } from './client'
 import type {
   CsvUploadPayload,
-  LabwareEntry,
   LiquidHandlingPreset,
+  OffsetEntry,
   PipetteEntry,
   ShellSettingsBrowseRequest,
   ShellSettingsUpdate,
@@ -54,32 +54,24 @@ export const useLabwareQuery = () =>
     queryFn: fetchLabware,
   })
 
-export const useAddLabwareEntry = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: Omit<LabwareEntry, 'offset_x' | 'offset_y' | 'offset_z'> & { offset_x?: number; offset_y?: number; offset_z?: number }) => addLabwareEntry(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['labware'] })
-    },
+export const useAvailableLabwareQuery = () =>
+  useQuery({
+    queryKey: ['labware', 'available'],
+    queryFn: fetchAvailableLabware,
   })
-}
 
-export const useUpdateLabwareEntry = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ index, payload }: { index: number; payload: LabwareEntry }) => updateLabwareEntry(index, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['labware'] })
-    },
+export const useOffsetDatabaseQuery = () =>
+  useQuery({
+    queryKey: ['labware', 'offsets'],
+    queryFn: fetchOffsetDatabase,
   })
-}
 
-export const useDeleteLabwareEntry = () => {
+export const useSaveOffsetMutation = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (index: number) => deleteLabwareEntry(index),
+    mutationFn: (payload: Omit<OffsetEntry, 'last_calibrated'>) => saveOffset(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['labware'] })
+      queryClient.invalidateQueries({ queryKey: ['labware', 'offsets'] })
     },
   })
 }

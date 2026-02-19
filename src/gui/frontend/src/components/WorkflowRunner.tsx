@@ -22,7 +22,6 @@ export function WorkflowRunner() {
   const [runSimulation, setRunSimulation] = useState(true)
   const [sendToOpentrons, setSendToOpentrons] = useState(false)
   const [shellTargetPathWin, setShellTargetPathWin] = useState('')
-  const [labwarePathWin, setLabwarePathWin] = useState('')
   const [activeBrowseField, setActiveBrowseField] = useState<ShellSettingsField | null>(null)
   const [activeSaveField, setActiveSaveField] = useState<ShellSettingsField | null>(null)
   const [copyToClipboard, setCopyToClipboard] = useState(false)
@@ -30,7 +29,6 @@ export function WorkflowRunner() {
   useEffect(() => {
     if (shellSettingsQuery.data) {
       setShellTargetPathWin(shellSettingsQuery.data.target_protocol_src_win ?? '')
-      setLabwarePathWin(shellSettingsQuery.data.labware_path_win ?? '')
     }
   }, [shellSettingsQuery.data])
 
@@ -82,9 +80,7 @@ export function WorkflowRunner() {
       {
         onSuccess: (data) => {
           setShellTargetPathWin(data.target_protocol_src_win ?? '')
-          setLabwarePathWin(data.labware_path_win ?? '')
-          const message = field === 'target_protocol_src_win' ? 'Deployment folder updated.' : 'Labware folder updated.'
-          notifications.show({ color: 'teal', title: 'Folder selected', message })
+          notifications.show({ color: 'teal', title: 'Folder selected', message: 'Deployment folder updated.' })
         },
         onError: (error) =>
           notifications.show({
@@ -103,13 +99,9 @@ export function WorkflowRunner() {
       return
     }
     setActiveSaveField(field)
-    const payload =
-      field === 'target_protocol_src_win' ? { target_protocol_src_win: value } : { labware_path_win: value }
-    shellSettingsUpdate.mutate(payload, {
-      onSuccess: () => {
-        const title = field === 'target_protocol_src_win' ? 'Deployment path saved' : 'Labware path saved'
-        notifications.show({ color: 'teal', title, message: 'Will be used for future shell runs.' })
-      },
+    shellSettingsUpdate.mutate({ target_protocol_src_win: value }, {
+      onSuccess: () =>
+        notifications.show({ color: 'teal', title: 'Deployment path saved', message: 'Will be used for future runs.' }),
       onError: (error) =>
         notifications.show({ color: 'red', title: 'Save failed', message: error instanceof Error ? error.message : 'Unable to save folder.' }),
       onSettled: () => setActiveSaveField(null),
@@ -161,7 +153,7 @@ export function WorkflowRunner() {
           <Stack gap="sm">
             <Title order={5}>Shell runner Windows folders</Title>
             <Text size="sm" c="dimmed">
-              Configure Windows paths for opentrons_simulate custom labware and optional manual shell script usage (simulate_protocol.sh).
+              Configure the Opentrons protocol deployment path. Custom labware folder is configured in the Deck Setup step.
             </Text>
 
             <Stack gap="xs">
@@ -185,33 +177,6 @@ export function WorkflowRunner() {
                 leftSection={<IconDeviceFloppy size={16} />}
                 loading={shellSettingsUpdate.isPending && activeSaveField === 'target_protocol_src_win'}
                 onClick={() => handleSaveShellPath('target_protocol_src_win', shellTargetPathWin)}
-              >
-                Save as default
-              </Button>
-            </Group>
-            </Stack>
-
-            <Stack gap="xs">
-            <TextInput
-              label="Custom labware folder (Windows)"
-              description="Example: C:\\Users\\you\\AppData\\Roaming\\Opentrons\\labware"
-              value={labwarePathWin}
-              onChange={(event) => setLabwarePathWin(event.currentTarget.value)}
-            />
-            <Group gap="xs">
-              <Button
-                variant="default"
-                leftSection={<IconFolder size={16} />}
-                loading={shellSettingsBrowse.isPending && activeBrowseField === 'labware_path_win'}
-                onClick={() => handleBrowseShellPath('labware_path_win')}
-              >
-                Browse…
-              </Button>
-              <Button
-                variant="light"
-                leftSection={<IconDeviceFloppy size={16} />}
-                loading={shellSettingsUpdate.isPending && activeSaveField === 'labware_path_win'}
-                onClick={() => handleSaveShellPath('labware_path_win', labwarePathWin)}
               >
                 Save as default
               </Button>

@@ -1,6 +1,6 @@
 import { Modal, Select, Button, Stack, NumberInput, Switch } from '@mantine/core'
 import { useEffect, useMemo, useState } from 'react'
-import { useLabwareQuery, usePatchSetting } from '../../../api/hooks'
+import { useAvailableLabwareQuery, useOffsetDatabaseQuery, useSaveOffsetMutation, usePatchSetting } from '../../../api/hooks'
 import { useWizard } from '../WizardContext'
 import type { WorkingPlateEntry } from '../../../api/types'
 
@@ -13,7 +13,9 @@ interface LabwareModalProps {
 
 export function LabwareModal({ opened, onClose, slot, existingLabware }: LabwareModalProps) {
   const { state, setDeckLayout } = useWizard()
-  const { data: labwareOptions } = useLabwareQuery()
+  const { data: availableLabware } = useAvailableLabwareQuery()
+  const { data: offsetDb } = useOffsetDatabaseQuery()
+  const saveOffsetMutation = useSaveOffsetMutation()
   const patchSettings = usePatchSetting()
 
   const normalizeModuleType = (value: string | undefined) => {
@@ -40,9 +42,26 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
   const [persistAfterProtocol, setPersistAfterProtocol] = useState<boolean>(
     existingLabware?.persist_after_protocol ?? false
   )
+  const [offsetX, setOffsetX] = useState<number | string>(existingLabware?.offset_x ?? '')
+  const [offsetY, setOffsetY] = useState<number | string>(existingLabware?.offset_y ?? '')
+  const [offsetZ, setOffsetZ] = useState<number | string>(existingLabware?.offset_z ?? '')
+  const [saveOffsetToDb, setSaveOffsetToDb] = useState<boolean>(false)
 
   // Check if dual mode is enabled
   const isDualMode = state.settings?.settings?.general?.mode === 'dual'
+
+  // Pre-populate offsets from offset database when labwareId or slot changes
+  useEffect(() => {
+    if (!labwareId || !offsetDb?.offsets) return
+    const dbEntry = offsetDb.offsets.find(
+      e => e.labware_id === labwareId && String(e.position_rack) === String(slot)
+    )
+    if (dbEntry && !existingLabware?.offset_x && !existingLabware?.offset_y && !existingLabware?.offset_z) {
+      setOffsetX(dbEntry.offset_x)
+      setOffsetY(dbEntry.offset_y)
+      setOffsetZ(dbEntry.offset_z)
+    }
+  }, [labwareId, slot, offsetDb])
 
   // Re-sync when opening a different labware card; prevents stale state and crashes
   useEffect(() => {
@@ -54,6 +73,10 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
     setTargetTemperature(existingLabware?.target_temperature ?? '')
     setTargetShakeSpeed(existingLabware?.target_shake_speed ?? '')
     setPersistAfterProtocol(existingLabware?.persist_after_protocol ?? false)
+    setOffsetX(existingLabware?.offset_x ?? '')
+    setOffsetY(existingLabware?.offset_y ?? '')
+    setOffsetZ(existingLabware?.offset_z ?? '')
+    setSaveOffsetToDb(false)
   }, [existingLabware])
 
   const handleSave = () => {
@@ -92,6 +115,22 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
       newEntry.persist_after_protocol = persistAfterProtocol
     }
 
+    // Add offsets if set
+    if (typeof offsetX === 'number') newEntry.offset_x = offsetX
+    if (typeof offsetY === 'number') newEntry.offset_y = offsetY
+    if (typeof offsetZ === 'number') newEntry.offset_z = offsetZ
+
+    // Optionally save offsets to database
+    if (saveOffsetToDb && labwareId && (typeof offsetX === 'number' || typeof offsetY === 'number' || typeof offsetZ === 'number')) {
+      saveOffsetMutation.mutate({
+        labware_id: labwareId,
+        position_rack: String(slot),
+        offset_x: typeof offsetX === 'number' ? offsetX : 0,
+        offset_y: typeof offsetY === 'number' ? offsetY : 0,
+        offset_z: typeof offsetZ === 'number' ? offsetZ : 0,
+      })
+    }
+
     const existingIndex = state.deckLayout.findIndex(item => item.position_rack === String(slot))
     const updatedLayout =
       existingIndex >= 0
@@ -105,55 +144,39 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
   }
 
   const labwareSelectData = useMemo(() => {
-    if (!labwareOptions?.labware) return []
+    if (!availableLabware) return []
 
-    // Group labware by category
-    const grouped: Record<string, Array<{ value: string; label: string }>> = {}
+    // Group by source: Custom first, then Official
+    const custom = availableLabware.filter(l => l.source === 'custom')
+    const official = availableLabware.filter(l => l.source === 'official')
 
-    labwareOptions.labware.forEach(l => {
-      const category = l.category || 'other'
-      if (!grouped[category]) grouped[category] = []
-      grouped[category].push({
-        value: l.labware_id,
-        label: `${l.labware_id} (${l.well_count} wells, ${l.well_volume}µL)`
-      })
-    })
-
-    // Convert to Mantine Select format with groups
     const selectData: Array<{ group: string; items: Array<{ value: string; label: string }> }> = []
 
-    // Define preferred order for categories
-    const categoryOrder = ['tip_rack', 'plate', 'tube_rack', 'reservoir']
-    const categoryLabels: Record<string, string> = {
-      tip_rack: 'Tip Racks',
-      plate: 'Plates',
-      tube_rack: 'Tube Racks',
-      reservoir: 'Reservoirs',
-      other: 'Other'
+    if (custom.length > 0) {
+      selectData.push({
+        group: 'Custom Labware',
+        items: custom.map(l => ({
+          value: l.labware_id,
+          label: l.well_count != null
+            ? `${l.display_name} (${l.well_count} wells)`
+            : l.display_name,
+        }))
+      })
     }
 
-    // Add groups in preferred order
-    categoryOrder.forEach(cat => {
-      if (grouped[cat]) {
-        selectData.push({
-          group: categoryLabels[cat] || cat,
-          items: grouped[cat]
-        })
-      }
-    })
-
-    // Add remaining categories not in preferred order
-    Object.keys(grouped).forEach(cat => {
-      if (!categoryOrder.includes(cat)) {
-        selectData.push({
-          group: categoryLabels[cat] || cat,
-          items: grouped[cat]
-        })
-      }
-    })
+    if (official.length > 0) {
+      selectData.push({
+        group: 'Official Opentrons',
+        items: official.map(l => ({
+          value: l.labware_id,
+          label: l.labware_id,
+        }))
+      })
+    }
 
     // Add current labware if not found in list
-    if (labwareId && !labwareOptions.labware.find(l => l.labware_id === labwareId)) {
+    const allIds = availableLabware.map(l => l.labware_id)
+    if (labwareId && !allIds.includes(labwareId)) {
       selectData.unshift({
         group: 'Current Selection',
         items: [{ value: labwareId, label: labwareId }]
@@ -161,7 +184,9 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
     }
 
     return selectData
-  }, [labwareOptions, labwareId])
+  }, [availableLabware, labwareId])
+
+  const showOffsets = type !== 'module'
 
   return (
     <Modal
@@ -187,7 +212,7 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
 
         <Select
           label="Labware"
-          placeholder="Select labware definition..."
+          placeholder="Select labware..."
           data={labwareSelectData}
           value={labwareId}
           onChange={(v) => setLabwareId(v || '')}
@@ -263,6 +288,41 @@ export function LabwareModal({ opened, onClose, slot, existingLabware }: Labware
               description="Keep module settings active after protocol ends"
               checked={persistAfterProtocol}
               onChange={(e) => setPersistAfterProtocol(e.currentTarget.checked)}
+            />
+          </>
+        )}
+
+        {showOffsets && (
+          <>
+            <NumberInput
+              label="Offset X (mm)"
+              description="Left/right adjustment: negative=left, positive=right"
+              value={typeof offsetX === 'number' ? offsetX : undefined}
+              onChange={setOffsetX}
+              decimalScale={2}
+              step={0.1}
+            />
+            <NumberInput
+              label="Offset Y (mm)"
+              description="Front/back adjustment: negative=front, positive=back"
+              value={typeof offsetY === 'number' ? offsetY : undefined}
+              onChange={setOffsetY}
+              decimalScale={2}
+              step={0.1}
+            />
+            <NumberInput
+              label="Offset Z (mm)"
+              description="Height adjustment: negative=down, positive=up"
+              value={typeof offsetZ === 'number' ? offsetZ : undefined}
+              onChange={setOffsetZ}
+              decimalScale={2}
+              step={0.1}
+            />
+            <Switch
+              label="Save offset to database"
+              description="Persist this offset in offset_database.toml for future protocols"
+              checked={saveOffsetToDb}
+              onChange={(e) => setSaveOffsetToDb(e.currentTarget.checked)}
             />
           </>
         )}
