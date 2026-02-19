@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Dict, Any
+from pathlib import Path
+from typing import Dict, Any, Optional
 
 try:
     import toml
@@ -71,11 +72,59 @@ def read_csv_file(filepath: str) -> str:
         raise Exception(f"Error reading CSV file {filepath}: {e}")
 
 
+def _load_offset_database(offset_db_path: Optional[str]) -> Dict[str, Dict[str, float]]:
+    """Load offset_database.toml and return a lookup keyed by 'labware_id:position_rack'."""
+    if not offset_db_path:
+        return {}
+    path = Path(offset_db_path)
+    if not path.exists():
+        return {}
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            if hasattr(toml, 'load'):
+                data = toml.load(f)
+            else:
+                with open(path, 'rb') as fb:
+                    data = toml.load(fb)
+    except Exception:
+        return {}
+
+    lookup: Dict[str, Dict[str, float]] = {}
+    for entry in data.get('offsets', []):
+        labware_id = entry.get('labware_id', '')
+        position_rack = str(entry.get('position_rack', ''))
+        if labware_id and position_rack:
+            key = f"{labware_id}:{position_rack}"
+            lookup[key] = {
+                'offset_x': float(entry.get('offset_x', 0.0)),
+                'offset_y': float(entry.get('offset_y', 0.0)),
+                'offset_z': float(entry.get('offset_z', 0.0)),
+            }
+    return lookup
+
+
+def _merge_offsets_into_settings(sample_settings: Dict[str, Any], offset_db: Dict[str, Dict[str, float]]) -> None:
+    """Merge offset_database entries into working_plate entries that lack explicit offsets."""
+    if not offset_db:
+        return
+    working_plate = sample_settings.get('settings', {}).get('working_plate', [])
+    for plate in working_plate:
+        labware_id = plate.get('labware_id', '')
+        position_rack = str(plate.get('position_rack', ''))
+        # Only fill in offsets if not already explicitly set in settings.toml
+        has_explicit_offsets = any(k in plate for k in ('offset_x', 'offset_y', 'offset_z'))
+        if not has_explicit_offsets and labware_id and position_rack:
+            key = f"{labware_id}:{position_rack}"
+            if key in offset_db:
+                plate.update(offset_db[key])
+
+
 def create_json_config(
     labware_toml: str,
     settings_toml: str,
     csv_file: str,
-    verbose: bool = True
+    verbose: bool = True,
+    offset_db_path: Optional[str] = None,
 ) -> str:
     """Create the JSON configuration from TOML and CSV files.
 
@@ -84,6 +133,7 @@ def create_json_config(
         settings_toml: Path to settings TOML
         csv_file: Path to CSV transfer file
         verbose: Print progress messages (default True for CLI compatibility)
+        offset_db_path: Optional path to offset_database.toml for merging calibration offsets
 
     Returns:
         str: Compact JSON configuration string
@@ -107,6 +157,10 @@ def create_json_config(
 
     if verbose:
         print("✓ Successfully read all configuration files")
+
+    # Merge calibration offsets from offset_database.toml into working_plate entries
+    offset_db = _load_offset_database(offset_db_path)
+    _merge_offsets_into_settings(sample_settings, offset_db)
 
     # Create the combined configuration
     config = {
@@ -205,7 +259,8 @@ def generate_protocol(
     settings_toml_path: str,
     csv_path: str,
     protocol_path: str,
-    verbose: bool = False
+    verbose: bool = False,
+    offset_db_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     High-level orchestration function for MCP usage.
@@ -247,7 +302,8 @@ def generate_protocol(
         labware_toml_path,
         settings_toml_path,
         csv_path,
-        verbose=verbose
+        verbose=verbose,
+        offset_db_path=offset_db_path,
     )
 
     # Embed JSON in protocol file

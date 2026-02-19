@@ -120,7 +120,9 @@ mixing               = { enabled = true, location = "destination", repetitions =
 # =============================================================================
 
 # Deck layout configuration - specify which labware goes in which slots
-# Labware calibration offsets are now defined in labware_dict.toml for each labware type
+# Optional per-entry calibration offsets: offset_x, offset_y, offset_z (mm)
+# These override any matching entry in offset_database.toml for that slot.
+# Leave unset to use offsets from offset_database.toml (recommended).
 
 [[settings.working_plate]]
 type = "module"

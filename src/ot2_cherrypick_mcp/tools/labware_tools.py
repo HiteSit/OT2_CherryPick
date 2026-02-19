@@ -1,8 +1,8 @@
-"""Labware management tools for the MCP server."""
+"""Labware offset management tools for the MCP server."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -10,95 +10,91 @@ import tomlkit
 from fastmcp import FastMCP
 
 from ..utils.errors import ConfigurationError
-from ..utils.toml import TomlHandler
+from ..utils.paths import resolve_project_path
 
-DEFAULT_LABWARE_PATH = Path("labware_dict.toml")
+DEFAULT_OFFSET_DB_PATH = Path("offset_database.toml")
 
-__all__ = ["register_labware_tools", "add_labware_definition"]
-
-
-@dataclass
-class LabwareSpecification:
-    labware_id: str
-    category: str
-    well_count: int
-    well_volume: int
-    offset_x: Optional[float] = None
-    offset_y: Optional[float] = None
-    offset_z: Optional[float] = None
-
-    def to_toml_table(self) -> tomlkit.items.Table:
-        table = tomlkit.table()
-        table.add("category", tomlkit.item(self.category))
-        table.add("labware_id", tomlkit.item(self.labware_id))
-        table.add("well_count", tomlkit.item(self.well_count))
-        table.add("well_volume", tomlkit.item(self.well_volume))
-
-        if self.offset_x is not None:
-            table.add("offset_x", tomlkit.item(self.offset_x))
-        if self.offset_y is not None:
-            table.add("offset_y", tomlkit.item(self.offset_y))
-        if self.offset_z is not None:
-            table.add("offset_z", tomlkit.item(self.offset_z))
-
-        return table
+__all__ = ["register_labware_tools", "update_labware_offset"]
 
 
-def add_labware_definition(
+def update_labware_offset(
     *,
     labware_id: str,
-    category: str,
-    well_count: int,
-    well_volume: int,
-    offset_x: Optional[float] = None,
-    offset_y: Optional[float] = None,
-    offset_z: Optional[float] = None,
-    labware_path: str | Path = DEFAULT_LABWARE_PATH,
+    position_rack: str,
+    offset_x: float,
+    offset_y: float,
+    offset_z: float,
+    notes: str = "",
+    offset_db_path: str | Path = DEFAULT_OFFSET_DB_PATH,
 ) -> Dict[str, object]:
-    """Append a new labware entry to labware_dict.toml."""
+    """Write or update a calibration offset entry in offset_database.toml."""
 
-    handler = TomlHandler(labware_path)
+    resolved = resolve_project_path(offset_db_path)
 
-    existing = handler.get_value("labware")
-    if any(entry.get("labware_id") == labware_id for entry in existing):
-        raise ConfigurationError(
-            f"Labware with id '{labware_id}' already exists in {handler.path}.\n"
-            f"Use config://labware resource to see existing labware definitions."
-        )
+    if resolved.exists():
+        content = resolved.read_text(encoding="utf-8")
+        doc = tomlkit.loads(content)
+    else:
+        doc = tomlkit.document()
 
-    spec = LabwareSpecification(
-        labware_id=labware_id,
-        category=category,
-        well_count=well_count,
-        well_volume=well_volume,
-        offset_x=offset_x,
-        offset_y=offset_y,
-        offset_z=offset_z,
-    )
+    offsets_array = doc.get("offsets")
+    if offsets_array is None:
+        offsets_array = tomlkit.aot()
+        doc.add("offsets", offsets_array)
 
-    handler.append_array_item("labware", spec.to_toml_table())
+    # Check for existing entry and update it
+    position_rack_str = str(position_rack)
+    for entry in offsets_array:
+        if entry.get("labware_id") == labware_id and str(entry.get("position_rack", "")) == position_rack_str:
+            entry["offset_x"] = offset_x
+            entry["offset_y"] = offset_y
+            entry["offset_z"] = offset_z
+            entry["last_calibrated"] = date.today().isoformat()
+            if notes:
+                entry["notes"] = notes
+            resolved.write_text(tomlkit.dumps(doc), encoding="utf-8")
+            return {
+                "offset_db_file": str(resolved),
+                "labware_id": labware_id,
+                "position_rack": position_rack_str,
+                "action": "updated",
+            }
 
+    # Create new entry
+    new_entry = tomlkit.table()
+    new_entry.add("labware_id", labware_id)
+    new_entry.add("position_rack", position_rack_str)
+    new_entry.add("offset_x", offset_x)
+    new_entry.add("offset_y", offset_y)
+    new_entry.add("offset_z", offset_z)
+    new_entry.add("last_calibrated", date.today().isoformat())
+    if notes:
+        new_entry.add("notes", notes)
+    offsets_array.append(new_entry)
+
+    resolved.write_text(tomlkit.dumps(doc), encoding="utf-8")
     return {
-        "labware_file": str(handler.path),
+        "offset_db_file": str(resolved),
         "labware_id": labware_id,
-        "category": category,
-        "backup_file": str(handler.path.with_suffix(handler.path.suffix + ".backup")),
+        "position_rack": position_rack_str,
+        "action": "created",
     }
 
 
 def register_labware_tools(mcp: FastMCP) -> None:
-    """Register labware manipulation tools."""
+    """Register labware management tools."""
 
     @mcp.tool(
         name="ot2_add_labware_definition",
-        description="""Add labware to catalog with calibration offsets.
+        description="""Save or update a calibration offset for a specific labware in a specific deck slot.
+
+Offsets are stored in offset_database.toml and automatically merged into the protocol
+during generation. They are applied per labware_id + slot combination.
 
 EXAMPLE:
-add_labware_definition(
-    labware_id="custom_96_plate",
-    category="plate",
-    well_count=96,
-    well_volume=200,
+update_labware_offset(
+    labware_id="nest_96_wellplate_200ul_flat",
+    position_rack="4",
     offset_x=-0.5,
     offset_y=0.8,
     offset_z=-0.3
@@ -109,13 +105,6 @@ CALIBRATION OFFSETS:
 - offset_y: Negative = front, Positive = back (mm)
 - offset_z: Negative = down, Positive = up (mm)
 
-Offsets compensate for:
-- Manufacturing tolerances (±0.1-0.5mm typical)
-- Deck positioning variations
-- Thermal expansion
-- Wear and tear
-
-Without offsets, tips may crash into edges or miss wells entirely.
 Determine offsets via "Labware Position Check" in Opentrons App.
 """,
         annotations={
@@ -125,23 +114,21 @@ Determine offsets via "Labware Position Check" in Opentrons App.
             "openWorldHint": False
         }
     )
-    def add_labware_definition_tool(  # pragma: no cover - exercised via tests
+    def update_labware_offset_tool(  # pragma: no cover - exercised via tests
         labware_id: str,
-        category: str,
-        well_count: int,
-        well_volume: int,
-        offset_x: Optional[float] = None,
-        offset_y: Optional[float] = None,
-        offset_z: Optional[float] = None,
-        labware_path: str = str(DEFAULT_LABWARE_PATH),
+        position_rack: str,
+        offset_x: float,
+        offset_y: float,
+        offset_z: float,
+        notes: str = "",
+        offset_db_path: str = str(DEFAULT_OFFSET_DB_PATH),
     ) -> Dict[str, object]:
-        return add_labware_definition(
+        return update_labware_offset(
             labware_id=labware_id,
-            category=category,
-            well_count=well_count,
-            well_volume=well_volume,
+            position_rack=position_rack,
             offset_x=offset_x,
             offset_y=offset_y,
             offset_z=offset_z,
-            labware_path=labware_path,
+            notes=notes,
+            offset_db_path=offset_db_path,
         )

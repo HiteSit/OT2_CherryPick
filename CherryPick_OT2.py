@@ -40,7 +40,7 @@ metadata = {
 
 requirements = {"robotType": "OT-2", "apiLevel": "2.24"}
 
-def validate_multi_mode_compatibility(labware_dict, settings):
+def validate_multi_mode_compatibility(settings, loaded_labware):
     """Validate that multi mode is only used with compatible labware.
 
     Compatible labware includes:
@@ -57,15 +57,12 @@ def validate_multi_mode_compatibility(labware_dict, settings):
     for plate_config in settings['settings']['working_plate']:
         if plate_config['type'] in ['source', 'dest', 'reservoir']:
             labware_id = plate_config['labware_id']
-
-            # Find labware definition in table array and check well count
-            if 'labware' in labware_dict:
-                for labware_item in labware_dict['labware']:
-                    if labware_item['labware_id'] == labware_id:
-                        well_count = labware_item.get('well_count')
-                        if well_count and well_count not in compatible_well_counts:
-                            raise ValueError(f"Multi mode requires 96/384-well plates or reservoirs (1,2,8,12 wells). Found {well_count}-well labware: {labware_id}")
-                        break
+            slot = plate_config['position_rack']
+            unique_name = f"{labware_id}_{slot}"
+            if unique_name in loaded_labware:
+                well_count = len(loaded_labware[unique_name].wells())
+                if well_count not in compatible_well_counts:
+                    raise ValueError(f"Multi mode requires 96/384-well plates or reservoirs (1,2,8,12 wells). Found {well_count}-well labware: {labware_id}")
     return True
 
 def get_multi_channel_wells(labware, well_name, well_count):
@@ -913,8 +910,6 @@ def run(protocol: protocol_api.ProtocolContext):
     try:
         [labware_dict, settings, csv_data] = get_values(  # noqa: F821
             "labware_dict", "settings", "csv_data")
-        # Validate multi mode compatibility
-        validate_multi_mode_compatibility(labware_dict, settings)
     except Exception as e:
         raise ValueError(f"Failed to parse configuration: {e}")
 
@@ -991,14 +986,7 @@ def run(protocol: protocol_api.ProtocolContext):
     speed = head_speed_cfg["speed"] if head_speed_cfg else 400
 
     # Create lookup mappings from table array structure
-    available_labware = {}
     available_pipettes = {}
-
-    # Process labware definitions (now array of tables)
-    if 'labware' in labware_dict:
-        for labware_item in labware_dict['labware']:
-            labware_id = labware_item['labware_id']
-            available_labware[labware_id] = labware_item
 
     # Process pipette definitions (now array of tables)
     if 'pipettes' in labware_dict:
@@ -1043,11 +1031,10 @@ def run(protocol: protocol_api.ProtocolContext):
             loaded_labware[unique_labware_name] = loaded  # Store with unique name for CSV compatibility
             used_slots.add(slot)
 
-            # Apply labware offsets if configured in labware definition
-            labware_def = available_labware.get(labware_id, {})
-            offset_x = float(labware_def.get('offset_x', 0.0))
-            offset_y = float(labware_def.get('offset_y', 0.0))
-            offset_z = float(labware_def.get('offset_z', 0.0))
+            # Apply labware offsets if configured in plate_config (from settings.toml or offset_database)
+            offset_x = float(plate_config.get('offset_x', 0.0))
+            offset_y = float(plate_config.get('offset_y', 0.0))
+            offset_z = float(plate_config.get('offset_z', 0.0))
 
             if offset_x != 0.0 or offset_y != 0.0 or offset_z != 0.0:
                 loaded.set_offset(x=offset_x, y=offset_y, z=offset_z)
@@ -1058,6 +1045,12 @@ def run(protocol: protocol_api.ProtocolContext):
             raise
 
     # Labware and module loading complete (no dynamic CSV loading)
+
+    # Validate multi mode compatibility now that labware objects are available
+    try:
+        validate_multi_mode_compatibility(settings, loaded_labware)
+    except ValueError as e:
+        raise ValueError(f"Multi mode validation failed: {e}")
 
     # ========== DUAL-PIPETTE MODE DETECTION & SETUP ==========
 
@@ -1419,20 +1412,9 @@ def run(protocol: protocol_api.ProtocolContext):
 
         # Handle well mapping based on mode
         if mode == "multi":
-            # Get well counts for both labware
-            source_well_count = None
-            dest_well_count = None
-
-            # Find well counts from labware dictionary (simplified structure)
-            # Extract labware_id from CSV names (format: labware_id_slot)
-            source_labware_id = source_labware_name.rsplit('_', 1)[0] if '_' in source_labware_name else source_labware_name
-            dest_labware_id = dest_labware_name.rsplit('_', 1)[0] if '_' in dest_labware_name else dest_labware_name
-
-            # Look up well counts directly
-            if source_labware_id in available_labware:
-                source_well_count = available_labware[source_labware_id].get('well_count', 96)
-            if dest_labware_id in available_labware:
-                dest_well_count = available_labware[dest_labware_id].get('well_count', 96)
+            # Get well counts directly from loaded labware objects
+            source_well_count = len(loaded_labware[source_labware_name].wells())
+            dest_well_count = len(loaded_labware[dest_labware_name].wells())
 
             # Get multi-channel well patterns
             source_wells = get_multi_channel_wells(source_labware, source_well, source_well_count)

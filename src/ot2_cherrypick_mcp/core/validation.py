@@ -87,28 +87,6 @@ def validate_configuration(
         errors.append(str(exc))
         labware_data = {}
 
-    labware_entries = labware_data.get("labware", []) if isinstance(labware_data, dict) else []
-    labware_ids = {entry.get("labware_id") for entry in labware_entries if isinstance(entry, dict)}
-
-    if settings_data:
-        working_plate = settings_data.get("settings", {}).get("working_plate", [])  # type: ignore[index]
-        if isinstance(working_plate, list):
-            for entry in working_plate:
-                if not isinstance(entry, dict):
-                    continue
-                # Skip validation for module entries (modules don't require labware validation)
-                entry_type = entry.get("type", "").lower()
-                if entry_type == "module":
-                    continue
-                labware_id = entry.get("labware_id", "").strip()
-                # Skip empty labware_id (some configurations may not require it)
-                if not labware_id:
-                    continue
-                if labware_id not in labware_ids:
-                    errors.append(
-                        f"Labware '{labware_id}' referenced in settings.working_plate is not defined in labware_dict.toml"
-                    )
-
     # ── Build pipette lookup: name -> {volume_range, channels} ──
     pipette_entries = labware_data.get("pipettes", []) if isinstance(labware_data, dict) else []
     pipettes_by_name: Dict[str, Dict[str, object]] = {}
@@ -116,11 +94,20 @@ def validate_configuration(
         if isinstance(pentry, dict) and pentry.get("name"):
             pipettes_by_name[pentry["name"]] = pentry
 
-    # ── Build labware lookup: labware_id -> {well_count, category} ──
-    labware_by_id: Dict[str, Dict[str, object]] = {}
-    for lentry in labware_entries:
-        if isinstance(lentry, dict) and lentry.get("labware_id"):
-            labware_by_id[lentry["labware_id"]] = lentry
+    # Build working_plate labware_id set for CSV reference validation
+    working_plate_ids: set = set()
+    if settings_data:
+        working_plate = settings_data.get("settings", {}).get("working_plate", [])  # type: ignore[index]
+        if isinstance(working_plate, list):
+            for entry in working_plate:
+                if not isinstance(entry, dict):
+                    continue
+                entry_type = entry.get("type", "").lower()
+                if entry_type == "module":
+                    continue
+                labware_id = entry.get("labware_id", "").strip()
+                if labware_id:
+                    working_plate_ids.add(labware_id)
 
     # ── Determine mode and active pipette(s) ──
     mode = ""
@@ -146,29 +133,8 @@ def validate_configuration(
             if pname in pipettes_by_name:
                 active_pipette_configs.append(pipettes_by_name[pname])
 
-    # ── Multi-mode vs labware compatibility (deck-level check) ──
-    # Multi mode (full 8-tip) only works with 96/384-well plates and reservoirs
-    if mode == "multi" and settings_data:
-        compatible_well_counts = {1, 2, 8, 12, 96, 384}
-        working_plates = (
-            settings_data.get("settings", {})  # type: ignore[union-attr]
-            .get("working_plate", [])
-        )
-        if isinstance(working_plates, list):
-            for wp_entry in working_plates:
-                if not isinstance(wp_entry, dict):
-                    continue
-                wp_type = wp_entry.get("type", "").lower()
-                if wp_type in ("source", "dest", "reservoir"):
-                    wp_labware_id = wp_entry.get("labware_id", "").strip()
-                    if wp_labware_id and wp_labware_id in labware_by_id:
-                        well_count = labware_by_id[wp_labware_id].get("well_count")
-                        if well_count and well_count not in compatible_well_counts:
-                            errors.append(
-                                f"Multi mode requires 96/384-well plates or reservoirs "
-                                f"(1,2,8,12 wells). Labware '{wp_labware_id}' has "
-                                f"{well_count} wells"
-                            )
+    # Note: multi-mode well_count compatibility is now validated at runtime
+    # in CherryPick_OT2.py after labware loading (uses len(loaded.wells())).
 
     csv_file = resolve_project_path(csv_path)
     if not csv_file.exists():
@@ -331,25 +297,10 @@ def validate_configuration(
                     for key in ("Source Labware", "Dest Labware"):
                         labware_value = (row.get(key) or "").strip()
                         base_id = _base_labware_id(labware_value)
-                        if base_id and base_id not in labware_ids:
+                        if base_id and base_id not in working_plate_ids:
                             errors.append(
-                                f"Row {row_number}: labware '{labware_value}' (base '{base_id}') not defined in labware_dict.toml"
+                                f"Row {row_number}: labware '{labware_value}' (base '{base_id}') not found in settings.toml working_plate"
                             )
-
-                    # ── Multi-mode: check CSV labware compatibility per row ──
-                    if mode == "multi":
-                        compatible_well_counts_csv = {1, 2, 8, 12, 96, 384}
-                        for key in ("Source Labware", "Dest Labware"):
-                            labware_value = (row.get(key) or "").strip()
-                            base_id = _base_labware_id(labware_value)
-                            if base_id and base_id in labware_by_id:
-                                wc = labware_by_id[base_id].get("well_count")
-                                if wc and wc not in compatible_well_counts_csv:
-                                    errors.append(
-                                        f"Row {row_number}: multi mode is incompatible with "
-                                        f"labware '{labware_value}' ({wc} wells). Multi mode "
-                                        f"requires 96/384-well plates or reservoirs"
-                                    )
 
                 # HOME control row validation:
                 # If previous row was HOME, current row MUST have Tip Action: new (firmware requirement)
