@@ -16,8 +16,10 @@ import tomlkit
 from fastapi import HTTPException, status
 
 from ot2_cherrypick_mcp.core.deployment import deploy_protocol
+from ot2_cherrypick_mcp.core.labware_scanner import scan_available_labware
 from ot2_cherrypick_mcp.core.protocol_generator import generate_protocol
 from ot2_cherrypick_mcp.core.simulation import DEFAULT_LOG_FILE, simulate_protocol
+from ot2_cherrypick_mcp.tools.labware_tools import update_labware_offset
 from ot2_cherrypick_mcp.utils.errors import SimulationError
 from ot2_cherrypick_mcp.utils.paths import get_repo_root, resolve_project_path
 
@@ -44,10 +46,14 @@ class FileStateStore:
 
         self.protocol_output = self.workspace_dir / "CherryPick_OT2.py"
         self.shell_settings_path = self.workspace_dir / "shell_settings.json"
+        self.offset_db_path = self.workspace_dir / "offset_database.toml"
+        self.official_labware_path = self.workspace_dir / "opentrons_labware_official.txt"
 
         self._bootstrap_file(self.repo_root / "settings.toml", self.settings_path)
         self._bootstrap_file(self.repo_root / "labware_dict.toml", self.labware_path)
         self._bootstrap_file(self.repo_root / "CherryPick_OT2.py", self.protocol_output)
+        self._bootstrap_file(self.repo_root / "offset_database.toml", self.offset_db_path)
+        self._bootstrap_file(self.repo_root / "opentrons_labware_official.txt", self.official_labware_path)
         self._ensure_shell_settings()
 
     # ------------------------------------------------------------------ #
@@ -121,27 +127,37 @@ class FileStateStore:
         self._bootstrap_file(self.repo_root / "labware_dict.toml", self.labware_path, force=True)
         return self.get_labware()
 
-    def add_labware_entry(self, payload: dict[str, Any]) -> dict[str, Any]:
-        current = self.get_labware()
-        labware_list = current.setdefault("labware", [])
-        labware_list.append(payload)
-        return self.write_labware(current)
+    def get_offset_database(self) -> dict[str, Any]:
+        if not self.offset_db_path.exists():
+            return {"offsets": []}
+        return self._doc_to_plain(self._read_doc(self.offset_db_path))
 
-    def remove_labware_entry(self, index: int) -> dict[str, Any]:
-        current = self.get_labware()
-        labware_list = current.get("labware", [])
-        if index < 0 or index >= len(labware_list):
-            raise IndexError(f"Labware index {index} out of range (0-{len(labware_list) - 1})")
-        del labware_list[index]
-        return self.write_labware(current)
+    def update_offset_entry(
+        self,
+        labware_id: str,
+        position_rack: str,
+        offset_x: float,
+        offset_y: float,
+        offset_z: float,
+        notes: str = "",
+    ) -> dict[str, Any]:
+        return update_labware_offset(
+            labware_id=labware_id,
+            position_rack=position_rack,
+            offset_x=offset_x,
+            offset_y=offset_y,
+            offset_z=offset_z,
+            notes=notes,
+            offset_db_path=self.offset_db_path,
+        )
 
-    def update_labware_entry(self, index: int, payload: dict[str, Any]) -> dict[str, Any]:
-        current = self.get_labware()
-        labware_list = current.get("labware", [])
-        if index < 0 or index >= len(labware_list):
-            raise IndexError(f"Labware index {index} out of range (0-{len(labware_list) - 1})")
-        labware_list[index] = payload
-        return self.write_labware(current)
+    def scan_available_labware(self) -> list[dict]:
+        custom_path = self._resolve_labware_path()
+        official_path = str(self.official_labware_path) if self.official_labware_path.exists() else None
+        return scan_available_labware(
+            custom_labware_path=custom_path,
+            official_list_path=official_path,
+        )
 
     def add_pipette_entry(self, payload: dict[str, Any]) -> dict[str, Any]:
         current = self.get_labware()
@@ -271,6 +287,7 @@ class FileStateStore:
                 str(csv_file),
                 str(protocol_file),
                 verbose=False,
+                offset_db_path=str(self.offset_db_path) if self.offset_db_path.exists() else None,
             )
         except Exception as exc:  # pragma: no cover - bubbled up to API
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc

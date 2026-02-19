@@ -32,6 +32,16 @@ echo "Preparing development environment..."
 free_port "${PORT_API}"
 free_port "${PORT_UI}"
 
+# Bootstrap new database files to gui_state if they don't exist yet
+GUI_STATE_DIR="${REPO_ROOT}/gui_state"
+mkdir -p "${GUI_STATE_DIR}"
+for f in offset_database.toml opentrons_labware_official.txt; do
+  if [[ -f "${REPO_ROOT}/${f}" && ! -f "${GUI_STATE_DIR}/${f}" ]]; then
+    echo "Bootstrapping ${f} to gui_state/"
+    cp "${REPO_ROOT}/${f}" "${GUI_STATE_DIR}/${f}"
+  fi
+done
+
 echo "Ports ${PORT_API} (API) and ${PORT_UI} (UI) are free. Launching dev servers..."
 cd "${FRONTEND_DIR}"
 

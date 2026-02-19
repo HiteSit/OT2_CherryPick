@@ -1,5 +1,5 @@
 """
-Labware endpoints mirroring the settings functionality.
+Labware endpoints.
 """
 
 from __future__ import annotations
@@ -41,27 +41,34 @@ def reset_labware(store: FileStateStore = Depends(get_state_store)) -> dict[str,
     return store.reset_labware()
 
 
-# --- Labware entry CRUD ---
+# --- Available labware scan ---
 
-@router.post("/entries")
-def add_labware_entry(payload: Dict[str, Any], store: FileStateStore = Depends(get_state_store)) -> dict[str, object]:
-    return store.add_labware_entry(payload)
-
-
-@router.put("/entries/{index}")
-def update_labware_entry(index: int, payload: Dict[str, Any], store: FileStateStore = Depends(get_state_store)) -> dict[str, object]:
-    try:
-        return store.update_labware_entry(index, payload)
-    except IndexError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+@router.get("/available")
+def get_available_labware(store: FileStateStore = Depends(get_state_store)) -> list[dict]:
+    return store.scan_available_labware()
 
 
-@router.delete("/entries/{index}")
-def delete_labware_entry(index: int, store: FileStateStore = Depends(get_state_store)) -> dict[str, object]:
-    try:
-        return store.remove_labware_entry(index)
-    except IndexError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+# --- Offset database ---
+
+@router.get("/offsets")
+def get_offsets(store: FileStateStore = Depends(get_state_store)) -> dict[str, object]:
+    return store.get_offset_database()
+
+
+@router.post("/offsets")
+def save_offset(payload: Dict[str, Any], store: FileStateStore = Depends(get_state_store)) -> dict[str, object]:
+    labware_id = payload.get("labware_id", "")
+    position_rack = str(payload.get("position_rack", ""))
+    if not labware_id or not position_rack:
+        raise HTTPException(status_code=400, detail="labware_id and position_rack are required")
+    return store.update_offset_entry(
+        labware_id=labware_id,
+        position_rack=position_rack,
+        offset_x=float(payload.get("offset_x", 0.0)),
+        offset_y=float(payload.get("offset_y", 0.0)),
+        offset_z=float(payload.get("offset_z", 0.0)),
+        notes=str(payload.get("notes", "")),
+    )
 
 
 # --- Pipette entry CRUD ---
