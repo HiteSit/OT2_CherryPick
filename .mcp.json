@@ -40,6 +40,7 @@
         "--directory",
         "/mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick",
         "run",
+        "--no-sync",
         "ot2-mcp-server"
       ],
       "env": {
