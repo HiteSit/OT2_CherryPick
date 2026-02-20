@@ -32,6 +32,7 @@ def run_full_workflow(
     settings_path: str | Path = DEFAULT_SETTINGS_PATH,
     labware_path: str | Path = DEFAULT_LABWARE_PATH,
     protocol_path: str | Path = DEFAULT_PROTOCOL_PATH,
+    offset_db_path: str | Path = "offset_database.toml",
     simulate: bool = True,
     labware_env_path: Optional[str | Path] = None,
     deploy: bool = False,
@@ -63,6 +64,7 @@ def run_full_workflow(
             settings_path=settings_path,
             labware_path=labware_path,
             protocol_path=protocol_path,
+            offset_db_path=offset_db_path,
         )
     except (ConfigurationError, ProtocolGenerationError) as exc:
         response.update({
@@ -160,6 +162,7 @@ Response Format: json (default), markdown (pipeline view), concise (one-line sta
         settings_path: str = str(DEFAULT_SETTINGS_PATH),
         labware_path: str = str(DEFAULT_LABWARE_PATH),
         protocol_path: str = str(DEFAULT_PROTOCOL_PATH),
+        offset_db_path: str = "offset_database.toml",
         simulate: bool = True,
         labware_env_path: Optional[str] = None,
         deploy: bool = False,
@@ -173,6 +176,7 @@ Response Format: json (default), markdown (pipeline view), concise (one-line sta
             settings_path=settings_path,
             labware_path=labware_path,
             protocol_path=protocol_path,
+            offset_db_path=offset_db_path,
             simulate=simulate,
             labware_env_path=labware_env_path,
             deploy=deploy,

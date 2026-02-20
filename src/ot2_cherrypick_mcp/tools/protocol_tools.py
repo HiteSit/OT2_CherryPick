@@ -20,6 +20,7 @@ from ..utils.paths import resolve_project_path
 DEFAULT_LABWARE_PATH = Path("labware_dict.toml")
 DEFAULT_SETTINGS_PATH = Path("settings.toml")
 DEFAULT_PROTOCOL_PATH = Path("CherryPick_OT2.py")
+DEFAULT_OFFSET_DB_PATH = Path("offset_database.toml")
 
 __all__ = ["register_protocol_tools", "run_generate_protocol"]
 
@@ -30,6 +31,7 @@ def run_generate_protocol(
     settings_path: str | Path = DEFAULT_SETTINGS_PATH,
     labware_path: str | Path = DEFAULT_LABWARE_PATH,
     protocol_path: str | Path = DEFAULT_PROTOCOL_PATH,
+    offset_db_path: str | Path = DEFAULT_OFFSET_DB_PATH,
     verbose: bool = False,
 ) -> Dict[str, Any]:
     """
@@ -40,6 +42,7 @@ def run_generate_protocol(
         settings_path: Path to the settings TOML file.
         labware_path: Path to the labware dictionary TOML file.
         protocol_path: Path to the target OT-2 protocol file.
+        offset_db_path: Path to the offset database TOML file.
         verbose: Enable legacy verbose output (defaults to False for MCP use).
 
     Returns:
@@ -54,6 +57,7 @@ def run_generate_protocol(
     labware_file = resolve_project_path(labware_path)
     settings_file = resolve_project_path(settings_path)
     protocol_file = resolve_project_path(protocol_path)
+    offset_db_file = resolve_project_path(offset_db_path)
 
     for path, description in (
         (csv_file, "CSV transfer map"),
@@ -73,6 +77,7 @@ def run_generate_protocol(
             str(csv_file),
             str(protocol_file),
             verbose=verbose,
+            offset_db_path=str(offset_db_file) if offset_db_file.exists() else None,
         )
     except FileNotFoundError as exc:
         raise ConfigurationError(str(exc)) from exc
@@ -85,6 +90,7 @@ def run_generate_protocol(
         "protocol_file": str(protocol_file),
         "json_size": result.get("json_size"),
         "message": result.get("message"),
+        "offset_db_file": str(offset_db_file) if offset_db_file.exists() else None,
     }
 
 
@@ -118,6 +124,7 @@ Response Format: json (default, structured), markdown (human-readable), concise 
         settings_path: str = str(DEFAULT_SETTINGS_PATH),
         labware_path: str = str(DEFAULT_LABWARE_PATH),
         protocol_path: str = str(DEFAULT_PROTOCOL_PATH),
+        offset_db_path: str = str(DEFAULT_OFFSET_DB_PATH),
         verbose: bool = False,
         response_format: Literal["json", "markdown", "concise"] = "json",
     ) -> str | Dict[str, Any]:
@@ -129,6 +136,7 @@ Response Format: json (default, structured), markdown (human-readable), concise 
             settings_path: Path to the protocol settings TOML file.
             labware_path: Path to the labware dictionary TOML file.
             protocol_path: Path to the protocol file to update.
+            offset_db_path: Path to the offset database TOML file.
             verbose: Enable verbose logging from the legacy helper.
             response_format: Output format (json, markdown, or concise).
         """
@@ -138,6 +146,7 @@ Response Format: json (default, structured), markdown (human-readable), concise 
             settings_path=settings_path,
             labware_path=labware_path,
             protocol_path=protocol_path,
+            offset_db_path=offset_db_path,
             verbose=verbose,
         )
 
