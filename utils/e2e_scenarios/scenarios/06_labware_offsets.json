@@ -1,0 +1,166 @@
+{
+  "suite_name": "labware_offsets",
+  "description": "Tests the offset database CRUD operations and labware management after the labware refactoring. labware_dict.toml now contains only pipette definitions; labware is referenced by Opentrons load names in settings.toml; calibration offsets live in offset_database.toml.",
+  "scenarios": [
+    {
+      "id": "06_001",
+      "name": "Create new offset entry for labware in slot",
+      "description": "Agent uses ot2_add_labware_definition (update_labware_offset) to create a calibration offset entry in offset_database.toml for a specific labware+slot combination.",
+      "tags": ["offsets", "crud", "create"],
+      "difficulty": "easy",
+      "expected_tools": ["add_labware_definition"],
+      "max_steps": 10,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Use the add_labware_definition tool to save a calibration offset for labware 'nest_96_wellplate_200ul_flat' in deck slot '4' with offset_x=-0.5, offset_y=0.8, offset_z=-0.3.",
+      "validations": {
+        "files_exist": [
+          "offset_database.toml"
+        ],
+        "file_contains": {
+          "offset_database.toml": [
+            "nest_96_wellplate_200ul_flat",
+            "offset_x",
+            "offset_y",
+            "offset_z"
+          ]
+        },
+        "response_contains_any": ["offset", "calibration", "saved", "created", "success"],
+        "response_not_contains": ["traceback", "error:"]
+      }
+    },
+    {
+      "id": "06_002",
+      "name": "Update existing offset entry",
+      "description": "Agent saves an offset, then updates it. The second call should overwrite the values for the same labware+slot combination.",
+      "tags": ["offsets", "crud", "update"],
+      "difficulty": "medium",
+      "expected_tools": ["add_labware_definition"],
+      "max_steps": 15,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "multi_turn": [
+        "Use add_labware_definition to save an offset for labware 'biorad_96_wellplate_200ul_pcr' in slot '2' with offset_x=0.1, offset_y=0.2, offset_z=-0.1.",
+        "Now update the same labware 'biorad_96_wellplate_200ul_pcr' in slot '2' with new values: offset_x=-0.3, offset_y=0.5, offset_z=0.0. Use the add_labware_definition tool again."
+      ],
+      "validations": {
+        "files_exist": [
+          "offset_database.toml"
+        ],
+        "file_contains": {
+          "offset_database.toml": [
+            "biorad_96_wellplate_200ul_pcr"
+          ]
+        },
+        "response_contains_any": ["updated", "saved", "offset", "success", "calibration"],
+        "response_not_contains": ["traceback", "error:"]
+      }
+    },
+    {
+      "id": "06_003",
+      "name": "Save multiple offsets for different slots",
+      "description": "Agent saves calibration offsets for two different labware items in different slots. Both should appear in offset_database.toml.",
+      "tags": ["offsets", "crud", "multi-slot"],
+      "difficulty": "medium",
+      "expected_tools": ["add_labware_definition"],
+      "max_steps": 15,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Save calibration offsets for two labware items: (1) 'corning_96_wellplate_360ul_flat' in slot '1' with offset_x=-0.2, offset_y=0.3, offset_z=-0.1 and (2) 'nest_12_reservoir_15ml' in slot '5' with offset_x=0.0, offset_y=-0.4, offset_z=0.2. Use the add_labware_definition tool for each.",
+      "validations": {
+        "files_exist": [
+          "offset_database.toml"
+        ],
+        "file_contains": {
+          "offset_database.toml": [
+            "corning_96_wellplate_360ul_flat",
+            "nest_12_reservoir_15ml"
+          ]
+        },
+        "response_contains_any": ["offset", "calibration", "saved", "success"],
+        "response_not_contains": ["traceback", "error:"]
+      }
+    },
+    {
+      "id": "06_004",
+      "name": "Save offset with notes field",
+      "description": "Agent saves a calibration offset including optional notes about the calibration session.",
+      "tags": ["offsets", "crud", "notes"],
+      "difficulty": "easy",
+      "expected_tools": ["add_labware_definition"],
+      "max_steps": 10,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Use add_labware_definition to save an offset for labware 'greiner_384_wellplate_240ul' in slot '3' with offset_x=-0.5, offset_y=0.0, offset_z=-0.2. Add the note: 'Calibrated after plate warping correction'.",
+      "validations": {
+        "files_exist": [
+          "offset_database.toml"
+        ],
+        "file_contains": {
+          "offset_database.toml": [
+            "greiner_384_wellplate_240ul",
+            "notes"
+          ]
+        },
+        "response_contains_any": ["offset", "saved", "created", "success", "note"],
+        "response_not_contains": ["traceback", "error:"]
+      }
+    },
+    {
+      "id": "06_005",
+      "name": "Labware dict has no catalog entries",
+      "description": "Verify that labware_dict.toml only contains pipette definitions after the refactoring. It should NOT have [[labware]] entries.",
+      "tags": ["offsets", "refactoring", "labware-dict"],
+      "difficulty": "easy",
+      "expected_tools": [],
+      "max_steps": 8,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "Read the labware configuration file (config://labware resource) and tell me what it contains. Does it have pipette definitions? Does it have labware catalog entries?",
+      "validations": {
+        "files_exist": [
+          "labware_dict.toml"
+        ],
+        "file_contains": {
+          "labware_dict.toml": [
+            "[[pipettes]]"
+          ]
+        },
+        "file_not_contains": {
+          "labware_dict.toml": [
+            "[[labware]]",
+            "well_count",
+            "well_volume",
+            "category = "
+          ]
+        },
+        "response_contains_any": ["pipette", "pipettes", "labware_dict"],
+        "response_not_contains": ["traceback"]
+      }
+    },
+    {
+      "id": "06_006",
+      "name": "Natural language: calibrate a plate for slot 4",
+      "description": "User asks in natural language to calibrate/add offsets. Agent should identify and use add_labware_definition.",
+      "tags": ["offsets", "fluidity", "natural-language"],
+      "difficulty": "medium",
+      "expected_tools": ["add_labware_definition"],
+      "max_steps": 12,
+      "requires_simulation": false,
+      "requires_workspace": true,
+      "prompt": "I just ran labware position check in the Opentrons app. For the 96-well plate in slot 4 (labware ID: nest_96_wellplate_200ul_flat), the calibration showed I need to shift x by -0.5mm, y by 0.3mm, and z by -0.2mm. Save these calibration offsets.",
+      "validations": {
+        "files_exist": [
+          "offset_database.toml"
+        ],
+        "file_contains": {
+          "offset_database.toml": [
+            "nest_96_wellplate_200ul_flat"
+          ]
+        },
+        "response_contains_any": ["offset", "calibration", "saved", "created", "success", "stored"],
+        "response_not_contains": ["traceback"]
+      }
+    }
+  ]
+}
