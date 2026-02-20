@@ -42,6 +42,8 @@ def initialize_project() -> Dict[str, object]:
         - settings.toml (from template, if not exists)
         - labware_dict.toml (from template, if not exists)
         - CherryPick_OT2.py (protocol template, if not exists)
+        - offset_database.toml (from template, if exists in repo root)
+        - opentrons_labware_official.txt (from template, if exists in repo root)
         - CSVs/ directory with example files
         - logs/ directory (empty)
 
@@ -66,14 +68,18 @@ def initialize_project() -> Dict[str, object]:
     created_files = []
     created_dirs = []
 
-    # Copy template files
-    templates = [
+    # Copy required template files
+    required_templates = [
         ("settings.toml", "settings.toml"),
         ("labware_dict.toml", "labware_dict.toml"),
         ("CherryPick_OT2.py", "CherryPick_OT2.py"),
     ]
+    optional_templates = [
+        ("offset_database.toml", "offset_database.toml"),
+        ("opentrons_labware_official.txt", "opentrons_labware_official.txt"),
+    ]
 
-    for src_name, dest_name in templates:
+    for src_name, dest_name in required_templates:
         src_path = repo_root / src_name
         dest_path = project_dir / dest_name
 
@@ -81,6 +87,13 @@ def initialize_project() -> Dict[str, object]:
             raise IOError(f"Template file not found: {src_path}")
         shutil.copy2(src_path, dest_path)
         created_files.append(dest_name)
+
+    for src_name, dest_name in optional_templates:
+        src_path = repo_root / src_name
+        dest_path = project_dir / dest_name
+        if src_path.exists():
+            shutil.copy2(src_path, dest_path)
+            created_files.append(dest_name)
 
     # Copy CSVs directory (or files if directory already exists)
     src_csvs = repo_root / "CSVs"

@@ -32,7 +32,13 @@ def _ensure_templates_exist(project_dir: Path) -> None:
     repo_root = get_repo_root()
 
     # Template files to auto-copy
-    templates = ["settings.toml", "labware_dict.toml", "CherryPick_OT2.py"]
+    templates = [
+        "settings.toml",
+        "labware_dict.toml",
+        "CherryPick_OT2.py",
+        "offset_database.toml",               # optional, skipped if missing
+        "opentrons_labware_official.txt",      # optional, skipped if missing
+    ]
 
     for template in templates:
         dest = project_dir / template
