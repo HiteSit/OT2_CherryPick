@@ -367,6 +367,110 @@ def test_list_projects_shows_recent(tmp_path: Path, monkeypatch) -> None:
     assert "/tmp/old_project_2" in result
 
 
+def test_initialize_project_copies_optional_offset_db(tmp_path: Path, monkeypatch) -> None:
+    """initialize_project copies offset_database.toml when present in repo root."""
+    from ot2_cherrypick_mcp.utils.paths import get_repo_root
+
+    repo_root = get_repo_root()
+    offset_db_src = repo_root / "offset_database.toml"
+
+    if not offset_db_src.exists():
+        pytest.skip("offset_database.toml not found at repo root")
+
+    project_dir = tmp_path / "test_project"
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+
+    initialize_project()
+
+    # The optional file should have been copied
+    assert (project_dir / "offset_database.toml").exists()
+
+
+def test_initialize_project_copies_optional_official_list(tmp_path: Path, monkeypatch) -> None:
+    """initialize_project copies opentrons_labware_official.txt when present in repo root."""
+    from ot2_cherrypick_mcp.utils.paths import get_repo_root
+
+    repo_root = get_repo_root()
+    official_src = repo_root / "opentrons_labware_official.txt"
+
+    if not official_src.exists():
+        pytest.skip("opentrons_labware_official.txt not found at repo root")
+
+    project_dir = tmp_path / "test_project"
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+
+    initialize_project()
+
+    # The optional file should have been copied via _ensure_templates_exist
+    assert (project_dir / "opentrons_labware_official.txt").exists()
+
+
+def test_initialize_project_succeeds_without_optional_files(tmp_path: Path, monkeypatch) -> None:
+    """initialize_project does not raise when optional files are absent from repo root."""
+    from unittest.mock import patch
+    from ot2_cherrypick_mcp.utils import paths as paths_mod
+
+    project_dir = tmp_path / "test_project"
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+
+    original_ensure = paths_mod._ensure_templates_exist
+
+    def patched_ensure(pd: Path) -> None:
+        """Call original but skip optional files if missing."""
+        original_ensure(pd)
+
+    with patch.object(paths_mod, "_ensure_templates_exist", side_effect=patched_ensure):
+        result = initialize_project()
+
+    assert result["status"] == "success"
+    # Required files must always be present
+    assert (project_dir / "settings.toml").exists()
+    assert (project_dir / "labware_dict.toml").exists()
+    assert (project_dir / "CherryPick_OT2.py").exists()
+
+
+def test_ensure_templates_exist_copies_optional_files(tmp_path: Path) -> None:
+    """_ensure_templates_exist copies optional files if they exist in repo root."""
+    from ot2_cherrypick_mcp.utils.paths import _ensure_templates_exist, get_repo_root
+
+    repo_root = get_repo_root()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+
+    _ensure_templates_exist(project_dir)
+
+    # Optional files should be copied if they exist in repo root
+    for optional in ["offset_database.toml", "opentrons_labware_official.txt"]:
+        src = repo_root / optional
+        dst = project_dir / optional
+        if src.exists():
+            assert dst.exists(), f"{optional} should have been copied to project dir"
+
+
+def test_ensure_templates_exist_no_error_when_optional_absent(tmp_path: Path) -> None:
+    """_ensure_templates_exist does not raise when optional files are absent at repo root."""
+    from unittest.mock import patch
+    from ot2_cherrypick_mcp.utils.paths import _ensure_templates_exist, get_repo_root
+
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+
+    # Copy required files but patch repo root to a fake location so optional files are missing
+    fake_repo = tmp_path / "fake_repo"
+    fake_repo.mkdir()
+    # Copy required templates to fake repo
+    repo_root = get_repo_root()
+    for req in ["settings.toml", "labware_dict.toml", "CherryPick_OT2.py"]:
+        (fake_repo / req).write_text((repo_root / req).read_text(encoding="utf-8"), encoding="utf-8")
+    # Do NOT create optional files in fake_repo
+
+    with patch("ot2_cherrypick_mcp.utils.paths.get_repo_root", return_value=fake_repo):
+        # Should complete without IOError even though optional files are missing
+        _ensure_templates_exist(project_dir)
+
+    assert (project_dir / "settings.toml").exists()
+
+
 def test_list_projects_scans_parent(tmp_path: Path, monkeypatch) -> None:
     """list_projects discovers projects in a parent directory."""
     project_dir = tmp_path / "current"

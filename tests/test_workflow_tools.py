@@ -80,6 +80,66 @@ def test_full_workflow_halts_on_validation_error(monkeypatch, tmp_path: Path) ->
     assert simulated_called is False
 
 
+def test_full_workflow_passes_offset_db_path_to_generate(monkeypatch, tmp_path: Path) -> None:
+    """run_full_workflow threads offset_db_path through to run_generate_protocol."""
+    settings_copy, labware_copy, csv_copy, protocol_copy = _prepare_inputs(tmp_path)
+
+    # Create an offset database file
+    offset_db = tmp_path / "offset_database.toml"
+    offset_db.write_text("", encoding="utf-8")
+
+    captured = {}
+
+    original_generate = __import__(
+        "ot2_cherrypick_mcp.tools.protocol_tools", fromlist=["run_generate_protocol"]
+    ).run_generate_protocol
+
+    def capturing_generate(**kwargs):
+        captured["offset_db_path"] = kwargs.get("offset_db_path")
+        return original_generate(**kwargs)
+
+    monkeypatch.setattr(
+        "ot2_cherrypick_mcp.tools.workflow_tools.run_generate_protocol",
+        lambda **kwargs: capturing_generate(**kwargs),
+    )
+
+    monkeypatch.setattr(
+        "ot2_cherrypick_mcp.tools.workflow_tools.run_simulation",
+        lambda **kwargs: {"stdout": "ok", "stderr": "", "returncode": 0},
+    )
+
+    result = run_full_workflow(
+        csv_path=str(csv_copy),
+        settings_path=str(settings_copy),
+        labware_path=str(labware_copy),
+        protocol_path=str(protocol_copy),
+        offset_db_path=str(offset_db),
+    )
+
+    assert result["status"] == "ok"
+    assert captured.get("offset_db_path") == str(offset_db)
+
+
+def test_full_workflow_backward_compat_no_offset_db(monkeypatch, tmp_path: Path) -> None:
+    """run_full_workflow works when offset_db_path is not provided (backward compat)."""
+    settings_copy, labware_copy, csv_copy, protocol_copy = _prepare_inputs(tmp_path)
+
+    monkeypatch.setattr(
+        "ot2_cherrypick_mcp.tools.workflow_tools.run_simulation",
+        lambda **kwargs: {"stdout": "ok", "stderr": "", "returncode": 0},
+    )
+
+    # Call without offset_db_path — should not raise
+    result = run_full_workflow(
+        csv_path=str(csv_copy),
+        settings_path=str(settings_copy),
+        labware_path=str(labware_copy),
+        protocol_path=str(protocol_copy),
+    )
+
+    assert result["status"] == "ok"
+
+
 def test_full_workflow_with_deployment(monkeypatch, tmp_path: Path) -> None:
     settings_copy, labware_copy, csv_copy, protocol_copy = _prepare_inputs(tmp_path)
 

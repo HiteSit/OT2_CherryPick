@@ -53,3 +53,53 @@ def test_run_generate_protocol_missing_csv_raises(tmp_path: Path) -> None:
             labware_path=str(tmp_path / "labware_dict.toml"),
             protocol_path=str(protocol_copy),
         )
+
+
+def test_run_generate_protocol_with_offset_db(tmp_path: Path) -> None:
+    """When offset_database.toml exists, offset_db_file appears in result."""
+    repo_root = Path(__file__).resolve().parents[1]
+
+    protocol_copy = tmp_path / "CherryPick_OT2.py"
+    protocol_copy.write_text((repo_root / "CherryPick_OT2.py").read_text(encoding="utf-8"), encoding="utf-8")
+
+    # Create a minimal offset database
+    offset_db = tmp_path / "offset_database.toml"
+    offset_db.write_text("", encoding="utf-8")
+
+    result = run_generate_protocol(
+        csv_path=str(repo_root / "CSVs" / "example_basic.csv"),
+        settings_path=str(repo_root / "settings.toml"),
+        labware_path=str(repo_root / "labware_dict.toml"),
+        protocol_path=str(protocol_copy),
+        offset_db_path=str(offset_db),
+    )
+
+    assert "offset_db_file" in result
+    assert result["offset_db_file"] == str(offset_db)
+
+
+def test_run_generate_protocol_without_offset_db(tmp_path: Path, monkeypatch) -> None:
+    """When offset_database.toml does not exist, offset_db_file is None in result."""
+    repo_root = Path(__file__).resolve().parents[1]
+
+    project_dir = tmp_path / "proj"
+    project_dir.mkdir()
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+
+    # Ensure offset_database.toml does NOT exist in the project dir
+    offset_db = project_dir / "offset_database.toml"
+    assert not offset_db.exists()
+
+    protocol_copy = project_dir / "CherryPick_OT2.py"
+    protocol_copy.write_text((repo_root / "CherryPick_OT2.py").read_text(encoding="utf-8"), encoding="utf-8")
+
+    result = run_generate_protocol(
+        csv_path=str(repo_root / "CSVs" / "example_basic.csv"),
+        settings_path=str(repo_root / "settings.toml"),
+        labware_path=str(repo_root / "labware_dict.toml"),
+        protocol_path=str(protocol_copy),
+        offset_db_path=str(offset_db),
+    )
+
+    assert "offset_db_file" in result
+    assert result["offset_db_file"] is None

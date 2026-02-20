@@ -125,6 +125,40 @@ def test_status_resources(tmp_path: Path, monkeypatch) -> None:
     assert "Liquid Handling Configuration" in liquid
 
 
+def test_offsets_resource_returns_content_when_file_exists(tmp_path: Path, monkeypatch) -> None:
+    """config://offsets returns TOML text when offset_database.toml exists."""
+    project_dir = _setup_project_dir(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+
+    offset_db = project_dir / "offset_database.toml"
+    offset_db.write_text(
+        '[[offsets]]\nlabware_id = "nest_96"\nposition_rack = "4"\n',
+        encoding="utf-8",
+    )
+
+    app = create_mcp_app()
+    resources = asyncio.run(app.get_resources())
+    assert "config://offsets" in resources
+    content = resources["config://offsets"].fn()
+    assert "nest_96" in content
+
+
+def test_offsets_resource_returns_fallback_when_file_missing(tmp_path: Path, monkeypatch) -> None:
+    """config://offsets returns a fallback comment when offset_database.toml is absent."""
+    project_dir = _setup_project_dir(tmp_path)
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+
+    # Ensure offset_database.toml does NOT exist
+    offset_db = project_dir / "offset_database.toml"
+    offset_db.unlink(missing_ok=True)
+
+    app = create_mcp_app()
+    resources = asyncio.run(app.get_resources())
+    content = resources["config://offsets"].fn()
+    # Should return the fallback string without raising an exception
+    assert "offset_database.toml" in content or "#" in content
+
+
 def test_project_directory_status(tmp_path: Path, monkeypatch) -> None:
     """Project directory status resource reports path and auto flag."""
     project_dir = _setup_project_dir(tmp_path)
