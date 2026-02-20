@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from datetime import date
 from pathlib import Path
 from typing import Dict, Literal, Optional
@@ -96,15 +97,17 @@ def run_scan_available_labware(
     official_list_path: str | Path = "opentrons_labware_official.txt",
 ) -> Dict[str, object]:
     """Scan custom labware directory and official list, return merged catalog."""
+    # Fall back to LABWARE_PATH env var when no explicit path is provided
+    effective_custom_path = custom_labware_path or os.getenv("LABWARE_PATH")
     resolved_official = resolve_project_path(official_list_path)
     results = scan_available_labware(
-        custom_labware_path=custom_labware_path,
+        custom_labware_path=effective_custom_path,
         official_list_path=str(resolved_official) if resolved_official.exists() else None,
     )
     return {
         "labware": results,
         "count": len(results),
-        "custom_path": custom_labware_path,
+        "custom_path": effective_custom_path,
         "official_list_path": str(resolved_official),
         "official_list_exists": resolved_official.exists(),
     }

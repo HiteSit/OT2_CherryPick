@@ -213,6 +213,8 @@ def test_run_scan_available_labware_with_official_list(tmp_path: Path, monkeypat
     official_list = project_dir / "opentrons_labware_official.txt"
     official_list.write_text("nest_96_wellplate_200ul_flat\nbiorad_384_wellplate_50ul\n", encoding="utf-8")
     monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+    # Ensure LABWARE_PATH is absent so no custom directory is injected via env var.
+    monkeypatch.delenv("LABWARE_PATH", raising=False)
 
     result = run_scan_available_labware(
         official_list_path=str(official_list),
@@ -224,10 +226,15 @@ def test_run_scan_available_labware_with_official_list(tmp_path: Path, monkeypat
 
 
 def test_run_scan_available_labware_no_paths_returns_empty(tmp_path: Path, monkeypatch) -> None:
-    """run_scan_available_labware returns empty list when no paths resolve."""
+    """run_scan_available_labware returns empty list when no paths resolve.
+
+    LABWARE_PATH must be absent; otherwise the env-var fallback would supply a
+    custom directory and the empty-list assertion would break.
+    """
     project_dir = tmp_path / "proj"
     project_dir.mkdir()
     monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+    monkeypatch.delenv("LABWARE_PATH", raising=False)
 
     result = run_scan_available_labware(
         custom_labware_path=None,
@@ -236,6 +243,7 @@ def test_run_scan_available_labware_no_paths_returns_empty(tmp_path: Path, monke
 
     assert result["labware"] == []
     assert result["count"] == 0
+    assert result["custom_path"] is None
     assert result["official_list_exists"] is False
 
 
@@ -268,10 +276,15 @@ def test_run_scan_available_labware_deduplicates_custom_over_official(tmp_path: 
 
 
 def test_run_scan_available_labware_result_structure(tmp_path: Path, monkeypatch) -> None:
-    """run_scan_available_labware result has all required keys."""
+    """run_scan_available_labware result has all required keys.
+
+    When LABWARE_PATH is absent and custom_labware_path=None, custom_path in
+    the result must be None (not a stale env-var value from the test runner).
+    """
     project_dir = tmp_path / "proj"
     project_dir.mkdir()
     monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+    monkeypatch.delenv("LABWARE_PATH", raising=False)
 
     result = run_scan_available_labware(
         custom_labware_path=None,
@@ -281,8 +294,44 @@ def test_run_scan_available_labware_result_structure(tmp_path: Path, monkeypatch
     assert "labware" in result
     assert "count" in result
     assert "custom_path" in result
+    assert result["custom_path"] is None
     assert "official_list_path" in result
     assert "official_list_exists" in result
+
+
+def test_run_scan_available_labware_env_var_fallback(tmp_path: Path, monkeypatch) -> None:
+    """LABWARE_PATH env var is used as custom_labware_path when no explicit path is given.
+
+    This covers the new behaviour introduced in run_scan_available_labware:
+        effective_custom_path = custom_labware_path or os.getenv("LABWARE_PATH")
+
+    The result's ``custom_path`` must equal the env-var value, and labware
+    found in that directory must appear in the returned list.
+    """
+    # Build a temporary custom labware directory with one valid JSON file.
+    custom_dir = tmp_path / "labware_env"
+    custom_dir.mkdir()
+    (custom_dir / "env_plate.json").write_text(
+        _make_labware_json("env_plate"), encoding="utf-8"
+    )
+
+    project_dir = tmp_path / "proj"
+    project_dir.mkdir()
+    monkeypatch.setenv("OT2_PROJECT_DIR", str(project_dir))
+    # Set LABWARE_PATH to the custom directory — this is the env-var fallback.
+    monkeypatch.setenv("LABWARE_PATH", str(custom_dir))
+
+    result = run_scan_available_labware(
+        # Deliberately omit custom_labware_path so the env var must supply it.
+        official_list_path=str(tmp_path / "nonexistent.txt"),
+    )
+
+    # The returned custom_path must reflect the env-var value, not None.
+    assert result["custom_path"] == str(custom_dir)
+    # At least the plate we created must appear as custom labware.
+    custom_items = [item for item in result["labware"] if item["source"] == "custom"]
+    assert len(custom_items) >= 1
+    assert any(item["labware_id"] == "env_plate" for item in custom_items)
 
 
 # ---------------------------------------------------------------------------
