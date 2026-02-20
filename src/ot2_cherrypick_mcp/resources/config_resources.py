@@ -33,3 +33,13 @@ def register_config_resources(mcp: FastMCP) -> None:
             return _read_toml_text("labware_dict.toml")
         except ConfigurationError as exc:
             return f"Error reading labware_dict.toml: {exc}"
+
+    @mcp.resource(
+        "config://offsets",
+        description="offset_database.toml — per-slot calibration offsets for all labware"
+    )
+    def get_offsets() -> str:  # pragma: no cover - simple wrapper
+        try:
+            return _read_toml_text("offset_database.toml")
+        except ConfigurationError:
+            return "# offset_database.toml not found — no calibration offsets set yet"

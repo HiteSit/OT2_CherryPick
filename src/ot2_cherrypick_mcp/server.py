@@ -44,6 +44,11 @@ TOOL SELECTION GUIDE - match user intent to the right tool:
 - "Make robot move slower" → ot2_update_settings(path="speed", value="200")
 - "Switch to a different project" → ot2_set_project_directory(path="/abs/path")
 - "What projects have I used?" → ot2_list_projects()
+- "What offsets are set?" → ot2_list_labware_offsets()
+- "Get offset for labware X in slot Y" → ot2_get_labware_offset(labware_id="...", position_rack="...")
+- "Delete offset for labware X slot Y" → ot2_delete_labware_offset(labware_id="...", position_rack="...")
+- "Add labware to official list" → ot2_manage_official_labware(action="add", labware_id="...")
+- "Show official labware list" → ot2_manage_official_labware(action="list")
 
 SHORTHAND ALIASES for ot2_update_settings (use instead of full dotted paths):
 tip_reuse, mode, speed, head_speed, starting_tip, protocol_name,
@@ -62,6 +67,7 @@ Use ot2_set_project_directory to switch between projects at runtime.
 KEY RESOURCES:
 - config://settings - TOML configuration
 - config://labware - Labware catalog
+- config://offsets - Per-slot calibration offsets (offset_database.toml)
 - status://deck-layout - Visual deck setup
 - status://liquid-handling-config - Active liquid params
 - logs://last-simulation - Simulation output
