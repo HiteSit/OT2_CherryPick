@@ -17,4 +17,5 @@ docker/distribution/
 docker/.env
 gui_state
 manuscript/
+notebooks/
 DEV_GUIDE.md
