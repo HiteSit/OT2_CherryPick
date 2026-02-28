@@ -22,7 +22,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="OT-2 CherryPick GUI Backend",
         description="REST API for editing configuration state and running workflows.",
-        version="0.1.0",
+        version="1.0.0",
     )
 
     # Basic CORS policy for local GUI prototyping; tighten for production deployments.

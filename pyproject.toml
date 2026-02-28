@@ -1,6 +1,6 @@
 [project]
 name = "OT2_CherryPick"
-version = "0.1.0"
+version = "1.0.0"
 description = "Automated Cherry-Pick for OT2 using MCP and FastMCP integration"
 authors = [
     { name = "Riccardo_Linux", email = "riccardofusco99@gmail.com" }
