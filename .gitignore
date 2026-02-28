@@ -1,8 +1,6 @@
 # IDE
-.claude/*
-!.claude/commands/
-.serena/*
-!.serena/memories
+.claude/
+.serena/
 .idea/
 .vscode/
 .pixi/
@@ -19,3 +17,4 @@ docker/distribution/
 docker/.env
 gui_state
 manuscript/
+DEV_GUIDE.md
