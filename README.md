@@ -42,13 +42,15 @@ PROTOCOLS_DIR_HOST=/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons/protocol
 PROTOCOLS_DIR_MOUNT=/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons/protocols
 ```
 
+> **Why `_HOST` and `_MOUNT`?** Each pair maps a Docker volume: `HOST` is the path on your machine, `MOUNT` is the path inside the container. On WSL they are typically identical, but separating them allows different host OS configurations (e.g., native Linux) while the container always sees the expected path.
+
 Start the application:
 
 ```bash
 docker compose up -d
 ```
 
-Open [http://localhost](http://localhost) to access the GUI.
+Open [http://localhost](http://localhost) to access the GUI. No port number is needed because the frontend defaults to port 80, the standard HTTP port. To use a different port, set `HOST_PORT` in `.env` (e.g., `HOST_PORT=8080`) and access `http://localhost:8080`.
 
 ## Alternative: Local Development Setup
 
