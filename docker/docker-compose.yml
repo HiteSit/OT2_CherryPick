@@ -6,7 +6,11 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.backend
-    image: ot2cherrypick/backend:latest
+      args:
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+        GIT_SHA: ${GIT_SHA:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+    image: ghcr.io/hitesit/ot2-cherrypick/backend:${APP_VERSION:-latest}
     container_name: ot2-cherrypick-backend
     environment:
       OT2_GUI_WORKSPACE: ${OT2_GUI_WORKSPACE}
@@ -45,7 +49,10 @@ services:
       dockerfile: docker/Dockerfile.frontend
       args:
         VITE_API_BASE_URL: /api
-    image: ot2cherrypick/frontend:latest
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+        GIT_SHA: ${GIT_SHA:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+    image: ghcr.io/hitesit/ot2-cherrypick/frontend:${APP_VERSION:-latest}
     container_name: ot2-cherrypick-frontend
     depends_on:
       backend:

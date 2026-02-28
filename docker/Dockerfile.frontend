@@ -1,5 +1,10 @@
 # Multi-stage build for React frontend
 
+# Build-time metadata (injected by CI or docker compose build)
+ARG APP_VERSION=dev
+ARG GIT_SHA=unknown
+ARG BUILD_DATE=unknown
+
 # Stage 1: Build the React application
 FROM node:20-alpine AS build
 
@@ -24,6 +29,19 @@ RUN npm run build
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
+
+# Re-declare ARGs after FROM (multi-stage resets them)
+ARG APP_VERSION=dev
+ARG GIT_SHA=unknown
+ARG BUILD_DATE=unknown
+
+LABEL org.opencontainers.image.title="OT-2 CherryPick Frontend" \
+      org.opencontainers.image.description="Nginx-served React UI for OT-2 cherry-pick protocol configuration" \
+      org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${GIT_SHA}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.source="https://github.com/Hitesit/OT2_CherryPick" \
+      org.opencontainers.image.licenses="MIT"
 
 # Copy custom nginx configuration
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
