@@ -1,9 +1,0 @@
-# Context Consolidation Index
-# Auto-updated by /consolidate command
-
-[[entries]]
-file = "2025-12-18_distribution-mode-refactor-to-builtin-api.md"
-title = "Distribution Mode Refactoring: Manual Implementation → Built-in distribute() API"
-description = "Refactored perform_distribution() to use Opentrons built-in distribute() API, added mixing.enabled boolean, fixed CSV format for 8-channel compatibility. Updated with multi-channel distribution validation to catch simulator lies about impossible operations."
-tags = ["distribution", "opentrons-api", "multi-channel", "liquid-handling", "breaking-change", "validation"]
-date = "2025-12-18"
