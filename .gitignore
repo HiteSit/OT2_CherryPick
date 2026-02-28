@@ -22,4 +22,5 @@ agent_docs/
 utils/
 DEV_GUIDE.md
 CLAUDE.md
+.mcp.json
 test_gui_state_*/
