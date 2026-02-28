@@ -21,4 +21,5 @@ notebooks/
 agent_docs/
 utils/
 DEV_GUIDE.md
-CLAUDE.mdtest_gui_state_*/
+CLAUDE.md
+test_gui_state_*/
