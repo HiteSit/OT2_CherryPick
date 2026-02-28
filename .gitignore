@@ -19,4 +19,5 @@ gui_state
 manuscript/
 notebooks/
 agent_docs/
+utils/
 DEV_GUIDE.md
