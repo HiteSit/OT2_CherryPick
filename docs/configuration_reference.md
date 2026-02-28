@@ -254,9 +254,9 @@ Choose **one** per source and **one** per destination. Using both Height and Top
 
 | Column | Description | Example |
 |--------|-------------|---------|
-| `Source Height` | Distance from well bottom (mm) | `2`, `5.5` |
+| `Source Bottom` | Distance from well bottom (mm) | `2`, `5.5` |
 | `Source Top` | Distance from well top (mm, negative = below rim) | `-5`, `-2.0` |
-| `Dest Height` | Distance from well bottom (mm) | `1`, `2.5` |
+| `Dest Bottom` | Distance from well bottom (mm) | `1`, `2.5` |
 | `Dest Top` | Distance from well top (mm, negative = below rim) | `-3`, `-7.5` |
 | `Mix Height` | Mixing height from bottom (mm) | `1.5`, `3.0` |
 

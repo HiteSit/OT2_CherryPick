@@ -87,7 +87,7 @@ Define individual liquid transfers in a spreadsheet-style editor.
 **Labware references** use the format `labware_id_slot` (e.g., `tube_rack_96_1500ul_4` for labware in slot 4).
 
 **Positioning columns** (choose one per source/dest):
-- `Source Height` / `Dest Height` -- Distance from well bottom (mm)
+- `Source Bottom` / `Dest Bottom` -- Distance from well bottom (mm)
 - `Source Top` / `Dest Top` -- Distance from well top (mm, negative = below rim)
 
 **Optional columns:** Mix Volume, Mix Height, Flow Aspirate, Flow Dispense, Air Gap, Air Gap Rate, Tip Action

@@ -35,7 +35,7 @@ For standard aqueous solutions, the default speed of 400 mm/min should not be ch
   preAspirateContact: {
     enabled: "Touch liquid surface and optionally pre-wet tip before aspirating target volume",
     positionOffsetPercent: `Safety margin for the contact position. The robot moves to a safer position than the CSV-specified aspiration height:
-• For Source Height (bottom positioning): Adds 20% more height
+• For Source Bottom (bottom positioning): Adds 20% more height
 • For Source Top (top positioning): Moves 20% closer to top`,
     aspirateVolume: "Volume in µL to aspirate and dispense back for tip conditioning. Set to 0 for position touch only (no pre-wet). Pre-wetting coats inner tip surface with liquid - critical for high surface tension or hydrophobic liquids."
   },
@@ -88,11 +88,11 @@ Not used when mixing follows dispense (mixing already agitates sufficiently).`
 
     heightColumns: `Choose ONE for source (never both), and ONE for destination (never both):
 
-Source Height: Distance from well bottom (mm). Use when you know liquid depth. Example: 2, 5.5, 10
+Source Bottom: Distance from well bottom (mm). Use when you know liquid depth. Example: 2, 5.5, 10
 
 Source Top: Distance from well top (mm, negative goes down). Use when avoiding foam/meniscus. Example: -5, -2.0, -10
 
-Dest Height: Distance from well bottom (mm). Use for dispensing at specific depth. Example: 1, 2.5
+Dest Bottom: Distance from well bottom (mm). Use for dispensing at specific depth. Example: 1, 2.5
 
 Dest Top: Distance from well top (mm, negative goes down). Use when avoiding splashing. Example: -3, -7.5
 

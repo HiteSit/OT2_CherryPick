@@ -79,7 +79,7 @@ class TestDistributionValidationAndGeneration:
         configs_dir = Path(__file__).resolve().parent / "configs"
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Bottom,Dest Top
 tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,25,equal,2,-5
 tube_rack_96_1500ul_1,A2,384_pp_standard_100ul_2,E1|F1|G1|H1,25,equal,2,-5
 tube_rack_96_1500ul_1,A3,384_pp_standard_100ul_2,I1|J1|K1|L1,25,equal,2,-5
@@ -101,7 +101,7 @@ tube_rack_96_1500ul_1,A3,384_pp_standard_100ul_2,I1|J1|K1|L1,25,equal,2,-5
         configs_dir = Path(__file__).resolve().parent / "configs"
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Air Gap,Tip Action,Source Height,Dest Top
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Air Gap,Tip Action,Source Bottom,Dest Top
 tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,20,equal,15,keep,2,-5
 tube_rack_96_1500ul_1,A2,384_pp_standard_100ul_2,E1|F1|G1|H1,20,equal,15,drop,2,-5
 """.strip()
@@ -217,7 +217,7 @@ class TestDistributionValidationErrorCases:
         configs_dir = Path(__file__).resolve().parent / "configs"
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution,Source Height,Dest Top
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution,Source Bottom,Dest Top
 tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1,equal,2,-5
 """.strip()
 
@@ -238,7 +238,7 @@ tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1,equal,2,-5
         configs_dir = Path(__file__).resolve().parent / "configs"
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Bottom,Dest Top
 undefined_labware_1,A1,384_pp_standard_100ul_2,A1|B1|C1,25,equal,2,-5
 """.strip()
 
@@ -259,7 +259,7 @@ undefined_labware_1,A1,384_pp_standard_100ul_2,A1|B1|C1,25,equal,2,-5
         configs_dir = Path(__file__).resolve().parent / "configs"
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Bottom,Dest Top
 tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|INVALID|B1,25,equal,2,-5
 """.strip()
 
@@ -280,7 +280,7 @@ tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|INVALID|B1,25,equal,2,-5
         configs_dir = Path(__file__).resolve().parent / "configs"
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Bottom,Dest Top
 tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1,25,equal,2,-5
 """.strip()
 
@@ -305,7 +305,7 @@ class TestDistributionPatterns:
         configs_dir = Path(__file__).resolve().parent / "configs"
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Bottom,Dest Top
 tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,30,equal,2,-5
 """.strip()
 
@@ -325,7 +325,7 @@ tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,30,equal,2,-5
         configs_dir = Path(__file__).resolve().parent / "configs"
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Bottom,Dest Top
 tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,100,geometric:0.5,2,-5
 """.strip()
 
@@ -345,7 +345,7 @@ tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,100,geometric:0.5,2
         configs_dir = Path(__file__).resolve().parent / "configs"
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Bottom,Dest Top
 tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,20,geometric:2,2,-5
 """.strip()
 
@@ -365,7 +365,7 @@ tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,20,geometric:2,2,-5
         configs_dir = Path(__file__).resolve().parent / "configs"
 
         csv_content = """\
-Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Height,Dest Top
+Source Labware,Source Well,Dest Labware,Dest Well,Distribution Volume (ul),Distribution,Source Bottom,Dest Top
 tube_rack_96_1500ul_1,A1,384_pp_standard_100ul_2,A1|B1|C1|D1,100,geometric:0.5:desc,2,-5
 tube_rack_96_1500ul_1,A2,384_pp_standard_100ul_2,E1|F1|G1|H1,20,geometric:2:asc,2,-5
 """.strip()

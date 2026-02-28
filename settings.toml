@@ -33,7 +33,7 @@ active_preset = ""                  # Preset name to activate (e.g. "standard", 
 [settings.liquid_handling.pre_aspirate_contact]
 enabled = false                 # Enable liquid contact before aspiration
 position_offset_percent = 20    # How much higher/safer from CSV position (%)
-                                # For "Source Height": adds 20% more height (safer)
+                                # For "Source Bottom": adds 20% more height (safer)
                                 # For "Source Top": moves 20% closer to top (safer)
 aspirate_volume = 20            # µL to aspirate/dispense for tip conditioning
                                 # 0 = touch only (like standard/DMSO protocols)
@@ -266,14 +266,14 @@ position_rack = "9"  # Moved to slot 9 to avoid collision with multi_X1 pipette 
 # - "Dest Well": Destination well position (e.g., "B1", "P24")
 
 # POSITIONING COLUMNS (choose ONE for source, ONE for destination):
-# Source positioning - specify EITHER Source Height OR Source Top (not both):
-# - "Source Height": Offset from well bottom in mm (e.g., 2, 1.5, 0.5)
+# Source positioning - specify EITHER Source Bottom OR Source Top (not both):
+# - "Source Bottom": Offset from well bottom in mm (e.g., 2, 1.5, 0.5)
 #                   Positive = higher from bottom, 0 = at bottom
 # - "Source Top": Offset from well top in mm (e.g., -5, -2.0, -10)
 #                Negative = down from top, 0 = at top surface
 #
-# Destination positioning - specify EITHER Dest Height OR Dest Top (not both):
-# - "Dest Height": Offset from well bottom in mm (e.g., 1, 2.5)
+# Destination positioning - specify EITHER Dest Bottom OR Dest Top (not both):
+# - "Dest Bottom": Offset from well bottom in mm (e.g., 1, 2.5)
 # - "Dest Top": Offset from well top in mm (e.g., -3, -7.5)
 #
 # Mixing positioning (optional, only used if Mix Volume > 0):
@@ -318,10 +318,10 @@ position_rack = "9"  # Moved to slot 9 to avoid collision with multi_X1 pipette 
 
 # CSV EXAMPLES:
 # Basic CSV (minimal required columns):
-# Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+# Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Bottom,Dest Top,Tip Action
 # tube_rack_1,A1,50,plate_2,B1,2,-5,new
 #
 # Advanced CSV (all features):
-# Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Mix Volume,Flow Aspirate,Flow Dispense,Air Gap,Tip Action
+# Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Bottom,Dest Top,Mix Volume,Flow Aspirate,Flow Dispense,Air Gap,Tip Action
 # tube_rack_1,A1,100,plate_2,B1,2,-5,20,0.5,1.2,10,new
 # tube_rack_1,A2,50,plate_2,B2,2,-5,0,0.8,1.0,0,keep

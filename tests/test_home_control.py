@@ -128,7 +128,7 @@ class TestHomeControlValidation:
         labware_copy = _copy_file(repo_root / "labware_dict.toml", tmp_path / "labware_dict.toml")
 
         csv_content = """\
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Bottom,Dest Top,Tip Action
 tube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-5,new
 HOME,HOME,HOME,HOME,HOME,HOME,HOME,HOME
 tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,new
@@ -152,7 +152,7 @@ tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,new
         labware_copy = _copy_file(repo_root / "labware_dict.toml", tmp_path / "labware_dict.toml")
 
         csv_content = """\
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action,Source Top,Dest Height
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Bottom,Dest Top,Tip Action,Source Top,Dest Bottom
 tube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-5,new
 HOME,HOME,HOME,HOME,HOME,HOME,HOME,HOME
 tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,new
@@ -176,7 +176,7 @@ tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,new
         labware_copy = _copy_file(repo_root / "labware_dict.toml", tmp_path / "labware_dict.toml")
 
         csv_content = """\
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Bottom,Dest Top,Tip Action
 tube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-5,new
 HOME,HOME,HOME,HOME,HOME,HOME,HOME,HOME
 tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,keep
@@ -201,7 +201,7 @@ tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,keep
         labware_copy = _copy_file(repo_root / "labware_dict.toml", tmp_path / "labware_dict.toml")
 
         csv_content = """\
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Bottom,Dest Top,Tip Action
 tube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-5,new
 HOME,HOME,HOME,HOME,HOME,HOME,HOME,HOME
 tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,drop
@@ -226,7 +226,7 @@ tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,drop
         labware_copy = _copy_file(repo_root / "labware_dict.toml", tmp_path / "labware_dict.toml")
 
         csv_content = """\
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Bottom,Dest Top,Tip Action
 tube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-5,new
 HOME,HOME,HOME,HOME,HOME,HOME,HOME,HOME
 tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,
@@ -251,7 +251,7 @@ tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,
         labware_copy = _copy_file(repo_root / "labware_dict.toml", tmp_path / "labware_dict.toml")
 
         csv_content = """\
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Bottom,Dest Top,Tip Action
 tube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-5,new
 HOME,HOME,HOME,HOME,HOME,HOME,HOME,HOME
 HOME,HOME,HOME,HOME,HOME,HOME,HOME,HOME
@@ -276,7 +276,7 @@ tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,new
         labware_copy = _copy_file(repo_root / "labware_dict.toml", tmp_path / "labware_dict.toml")
 
         csv_content = """\
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Bottom,Dest Top,Tip Action
 tube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,A1,2,-5,new
 tube_rack_96_1500ul_4,A2,50,384_ppv_55ul_2,A2,2,-5,drop
 HOME,HOME,HOME,HOME,HOME,HOME,HOME,HOME

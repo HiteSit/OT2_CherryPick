@@ -60,16 +60,16 @@ export function ValidationPanel({ csvContent, deckLayout }: ValidationPanelProps
     }
 
     // Check for height column conflicts
-    const hasSourceHeight = headers.includes('Source Height')
+    const hasSourceHeight = headers.includes('Source Bottom')
     const hasSourceTop = headers.includes('Source Top')
-    const hasDestHeight = headers.includes('Dest Height')
+    const hasDestHeight = headers.includes('Dest Bottom')
     const hasDestTop = headers.includes('Dest Top')
 
     if (hasSourceHeight && hasSourceTop) {
-      newResults.push({ type: 'warning', message: 'Both "Source Height" and "Source Top" columns found. Use only one.' })
+      newResults.push({ type: 'warning', message: 'Both "Source Bottom" and "Source Top" columns found. Use only one.' })
     }
     if (hasDestHeight && hasDestTop) {
-      newResults.push({ type: 'warning', message: 'Both "Dest Height" and "Dest Top" columns found. Use only one.' })
+      newResults.push({ type: 'warning', message: 'Both "Dest Bottom" and "Dest Top" columns found. Use only one.' })
     }
 
     // Create labware reference map

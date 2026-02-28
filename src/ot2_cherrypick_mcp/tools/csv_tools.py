@@ -24,7 +24,7 @@ CSV_VOLUME_HEADERS = [
 
 CSV_HEADERS = CSV_BASE_HEADERS + [
     "Volume (ul)",
-    "Source Height",
+    "Source Bottom",
     "Dest Top",
     "Tip Action",
 ]
@@ -204,14 +204,14 @@ Validates that required columns are present: Source Labware, Source Well, Dest L
 Dest Well, Tip Action, and at least one volume column (Volume (ul) or Distribution Volume (ul)).
 
 REQUIRED COLUMNS: Source Labware, Source Well, Volume (ul), Dest Labware, Dest Well, Tip Action
-OPTIONAL COLUMNS: Source Height, Source Top, Dest Height, Dest Top, Mix Volume, Mix Height,
+OPTIONAL COLUMNS: Source Bottom, Source Top, Dest Bottom, Dest Top, Mix Volume, Mix Height,
 Flow Aspirate, Flow Dispense, Air Gap, Air Gap Rate
 
 After saving, use the file with ot2_generate_protocol(csv_path="CSVs/filename.csv").
 
 EXAMPLE:
 ot2_upload_csv_content(
-    csv_content="Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action\\ntube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,B1,2,-5,new",
+    csv_content="Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Bottom,Dest Top,Tip Action\\ntube_rack_96_1500ul_4,A1,50,384_ppv_55ul_2,B1,2,-5,new",
     filename="my_transfers.csv"
 )
 """,

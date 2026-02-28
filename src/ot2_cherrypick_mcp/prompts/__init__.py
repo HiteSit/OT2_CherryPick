@@ -161,7 +161,7 @@ I'll generate a CSV template with proper structure:
 - `Volume (ul)` - Transfer volume
 - `Dest Labware` - Reference to destination
 - `Dest Well` - Destination well
-- `Source Height` OR `Source Top` - Pipette height (choose one!)
+- `Source Bottom` OR `Source Top` - Pipette height (choose one!)
 - `Dest Top` - Destination height
 
 **Optional columns you can add:**
@@ -455,7 +455,7 @@ ot2_update_settings(path="settings.liquid_handling.pre_aspirate_contact.aspirate
 *Effect: Prime tip with liquid before transfer - first aspiration into dry tip is often inaccurate*
 
 **Action 2:** Ensure consistent height positioning
-*Effect: Use SAME "Source Height" value for all transfers from same labware type (geometry identical)*
+*Effect: Use SAME "Source Bottom" value for all transfers from same labware type (geometry identical)*
 
 **Action 3:** Add post-aspirate delay for very small volumes
 ```

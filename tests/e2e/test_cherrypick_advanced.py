@@ -45,7 +45,7 @@ class TestAdvancedCherryPick:
         # The CSV specifies tip_action=keep for all rows
 
     def test_varying_heights(self, e2e_workspace_factory):
-        """example_advanced.csv has varying Source Height and Dest Top values."""
+        """example_advanced.csv has varying Source Bottom and Dest Top values."""
         workspace = e2e_workspace_factory("single_X1")
         result = run_full_workflow(workspace, "example_advanced.csv")
 

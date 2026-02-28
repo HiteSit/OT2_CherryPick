@@ -1,4 +1,4 @@
-Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Height,Dest Top,Tip Action
+Source Labware,Source Well,Volume (ul),Dest Labware,Dest Well,Source Bottom,Dest Top,Tip Action
 reservoir_vertical_5,A1,50,384_ppv_55ul_2,A1,-5,-3,new
 reservoir_vertical_5,A1,50,384_ppv_55ul_2,A2,-5,-3,keep
 reservoir_vertical_5,A2,50,384_ppv_55ul_2,A3,-5,-3,keep

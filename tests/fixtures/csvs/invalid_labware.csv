@@ -1,2 +1,2 @@
-Source Labware,Source Well,Source Height,Volume (ul),Dest Labware,Dest Well,Dest Height
+Source Labware,Source Well,Source Bottom,Volume (ul),Dest Labware,Dest Well,Dest Bottom
 missing_labware_1_1,A1,1,5,missing_labware_2_2,B1,1
