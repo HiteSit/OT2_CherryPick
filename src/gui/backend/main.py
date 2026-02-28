@@ -7,6 +7,8 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from importlib.metadata import version as pkg_version
+
 from .dependencies import get_state_store
 from .routes import csvs, labware, settings, system, workflow
 
@@ -22,7 +24,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="OT-2 CherryPick GUI Backend",
         description="REST API for editing configuration state and running workflows.",
-        version="1.0.0",
+        version=pkg_version("OT2_CherryPick"),
     )
 
     # Basic CORS policy for local GUI prototyping; tighten for production deployments.
