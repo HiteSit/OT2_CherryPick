@@ -51,7 +51,6 @@ def _find_custom_labware_path() -> Path | None:
 
     # Check common Windows locations via WSL
     windows_locations = [
-        Path("/mnt/c/Users/ricca/AppData/Roaming/Opentrons/labware"),
         Path("/mnt/c/Users/*/AppData/Roaming/Opentrons/labware"),
     ]
 

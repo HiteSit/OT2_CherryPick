@@ -3,12 +3,12 @@
   "csv": "CSVs/example_home_control.csv",
   "settings_profile": "single_X1",
   "simulator_version": "opentrons_simulate 8.7.0",
-  "labware_path": "/mnt/c/Users/ricca/AppData/Roaming/Opentrons/labware",
-  "labware_path_win": "C:\\Users\\ricca\\AppData\\Roaming\\Opentrons\\labware",
+  "labware_path": "/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons/labware",
+  "labware_path_win": "C:\\Users\\YOUR_USERNAME\\AppData\\Roaming\\Opentrons\\labware",
   "command": [
     "bash",
     "simulate_protocol.sh",
-    "/mnt/d/Amadteus_Main/OpenTron/OT2_CherryPick/CSVs/example_home_control.csv"
+    "/path/to/OT2_CherryPick/CSVs/example_home_control.csv"
   ],
   "returncode": 0,
   "timestamp": "2026-01-26T09:02:01Z"
