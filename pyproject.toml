@@ -7,7 +7,7 @@ authors = [
 ]
 requires-python = ">=3.12,<3.13"
 readme = "README.md"
-license = { text = "Insert your license name here" }
+license = { text = "GPL-3.0-or-later" }
 dependencies = [
     "mcp-use>=1.3.7,<2",
     "langchain-mistralai>=0.2.12,<0.3",
