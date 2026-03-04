@@ -11,7 +11,7 @@ Existing tools for the OT-2 present researchers with a dichotomy: graphical inte
 
 The platform architecture also exposes all operations through the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/), enabling AI-assisted workflow automation -- to our knowledge, the first application of MCP in laboratory robotics.
 
-![Graphical Abstract](docs/graphical_abstract.png)
+![Graphical Abstract](docs/imgs/graphical_abstract.png)
 
 ## Features
 
