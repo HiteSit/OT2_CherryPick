@@ -2,7 +2,7 @@
 
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://ghcr.io/hitesit/ot2-cherrypick)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)](https://github.com/HiteSit/OT2_CherryPick)
 
 **A zero-install, data-driven cherry-picking platform for the Opentrons OT-2** that bridges the gap between Protocol Designer's accessibility and custom Python scripting's flexibility.
@@ -62,15 +62,7 @@ cd OT2_CherryPick
 uv sync
 ```
 
-Run the GUI backend and frontend separately, or use the CLI workflow:
-
-```bash
-# CLI: compile and simulate a protocol
-./simulate_protocol.sh CSVs/example_basic.csv
-
-# CLI: simulate and deploy to Opentrons App
-./simulate_protocol.sh CSVs/example_basic.csv --send-to-opentrons
-```
+Run the GUI backend and frontend separately, or use the MCP server for AI-assisted workflows.
 
 ## MCP Server Configuration
 
@@ -174,4 +166,4 @@ Contributions are welcome. Please open an issue or pull request on [GitHub](http
 
 ## License
 
-[MIT](LICENSE)
+[GPL-3.0-or-later](LICENSE)
