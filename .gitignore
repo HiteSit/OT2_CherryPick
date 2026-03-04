@@ -23,4 +23,5 @@ utils/
 DEV_GUIDE.md
 CLAUDE.md
 .mcp.json
+simulate_protocol.sh
 test_gui_state_*/
