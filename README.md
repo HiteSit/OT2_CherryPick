@@ -158,7 +158,6 @@ If you use OT2-CherryPick in your research, please cite:
 
 > OT2-CherryPick: a web-based platform for data-driven liquid handling automation with AI-native Model Context Protocol integration. *Manuscript in preparation.*
 
-<!-- TODO: Update with DOI once published on ChemRxiv / Digital Discovery -->
 
 ## Contributing
 
