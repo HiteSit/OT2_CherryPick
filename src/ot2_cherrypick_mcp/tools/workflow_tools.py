@@ -37,6 +37,7 @@ def run_full_workflow(
     labware_env_path: Optional[str | Path] = None,
     deploy: bool = False,
     deployment_target: Optional[str | Path] = None,
+    opentrons_dir: Optional[str | Path] = None,
     copy_to_clipboard: bool = False,
     clipboard_command: Optional[str] = None,
 ) -> Dict[str, object]:
@@ -99,9 +100,10 @@ def run_full_workflow(
         response["deployment"] = None
         return response
 
-    deployment_kwargs = {
+    deployment_kwargs: Dict[str, object] = {
         "protocol_path": protocol_path,
         "target_path": deployment_target,
+        "opentrons_dir": opentrons_dir,
         "copy_to_clipboard": copy_to_clipboard,
     }
     if clipboard_command is not None:
@@ -167,6 +169,7 @@ Response Format: json (default), markdown (pipeline view), concise (one-line sta
         labware_env_path: Optional[str] = None,
         deploy: bool = False,
         deployment_target: Optional[str] = None,
+        opentrons_dir: Optional[str] = None,
         copy_to_clipboard: bool = False,
         clipboard_command: Optional[str] = None,
         response_format: Literal["json", "markdown", "concise"] = "json",
@@ -181,6 +184,7 @@ Response Format: json (default), markdown (pipeline view), concise (one-line sta
             labware_env_path=labware_env_path,
             deploy=deploy,
             deployment_target=deployment_target,
+            opentrons_dir=opentrons_dir,
             copy_to_clipboard=copy_to_clipboard,
             clipboard_command=clipboard_command,
         )
