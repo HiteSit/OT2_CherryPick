@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import glob
 import logging
+import re
 import shutil
 import subprocess
 import time
@@ -172,6 +173,42 @@ def deploy_protocol(
     }
 
 
+
+def _extract_protocol_name(protocol_path: Path) -> str | None:
+    """Extract the protocolName value from a compiled protocol file."""
+    try:
+        text = protocol_path.read_text(encoding="utf-8")
+        match = re.search(r"'protocolName'\s*:\s*'([^']*)'", text)
+        return match.group(1) if match else None
+    except Exception:
+        return None
+
+
+def _find_existing_protocol_uuid(opentrons_dir: Path, protocol_name: str) -> str | None:
+    """Find UUID of an existing protocol slot matching *protocol_name*."""
+    try:
+        matches: list[tuple[str, float]] = []
+        for py_file in opentrons_dir.glob("protocols/*/src/*.py"):
+            name = _extract_protocol_name(py_file)
+            if name == protocol_name:
+                uuid_str = py_file.parent.parent.name
+                mtime = py_file.stat().st_mtime
+                matches.append((uuid_str, mtime))
+
+        if not matches:
+            return None
+        if len(matches) > 1:
+            logger.warning(
+                "Found %d protocol slots named '%s'; reusing the most recent one",
+                len(matches),
+                protocol_name,
+            )
+            matches.sort(key=lambda m: m[1], reverse=True)
+        return matches[0][0]
+    except Exception:
+        return None
+
+
 def deploy_to_opentrons_dir(
     protocol_path: str | Path,
     opentrons_dir: str | Path,
@@ -208,7 +245,24 @@ def deploy_to_opentrons_dir(
     if not ot_dir.is_dir():
         raise ConfigurationError(f"Opentrons directory not found: {ot_dir}")
 
-    protocol_uuid = str(uuid.uuid4())
+    # Check if a protocol with the same name already exists
+    new_protocol_name = _extract_protocol_name(protocol_file)
+    existing_uuid = None
+    reused = False
+
+    if new_protocol_name:
+        existing_uuid = _find_existing_protocol_uuid(ot_dir, new_protocol_name)
+
+    if existing_uuid:
+        protocol_uuid = existing_uuid
+        reused = True
+        logger.info("Reusing existing protocol slot '%s' (uuid: %s)", new_protocol_name, existing_uuid)
+    else:
+        protocol_uuid = str(uuid.uuid4())
+        reused = False
+        if new_protocol_name:
+            logger.info("Creating new protocol slot '%s' (uuid: %s)", new_protocol_name, protocol_uuid)
+
     src_dir = ot_dir / "protocols" / protocol_uuid / "src"
     analysis_dir = ot_dir / "protocols" / protocol_uuid / "analysis"
     src_dir.mkdir(parents=True, exist_ok=True)
@@ -242,6 +296,7 @@ def deploy_to_opentrons_dir(
     return {
         "protocol_file": str(protocol_file),
         "uuid": protocol_uuid,
+        "reused": reused,
         "deployed_path": str(destination),
         "copies": [str(destination)],
         "clipboard": clipboard_result,

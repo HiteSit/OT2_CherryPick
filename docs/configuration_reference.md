@@ -243,7 +243,7 @@ The single root directory for Opentrons App data. The system auto-derives subdir
 | Subdirectory | Purpose |
 |--------------|---------|
 | `{OPENTRONS_DIR}/labware/` | Custom labware JSON definitions (used by simulation and labware scanning) |
-| `{OPENTRONS_DIR}/protocols/` | Protocol deployment target (auto-UUID directories) |
+| `{OPENTRONS_DIR}/protocols/` | Protocol deployment target (auto-UUID directories with name-based reuse) |
 
 **Expected directory structure:**
 ```
@@ -251,7 +251,7 @@ The single root directory for Opentrons App data. The system auto-derives subdir
 ├── labware/              ← Custom labware JSON files
 │   ├── my_custom_plate.json
 │   └── ...
-└── protocols/            ← Protocol directories (one per import)
+└── protocols/            ← Protocol directories (one per protocol name, reused on redeploy)
     ├── {uuid-1}/
     │   ├── src/
     │   │   └── CherryPick_OT2.py

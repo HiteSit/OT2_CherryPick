@@ -67,14 +67,21 @@ with deploy=True (it deploys automatically).
 
 DEPLOYMENT MODES (in priority order):
 1. Explicit target_path: deploy_to_opentrons(target_path="/path/to/dir/") — manual override
-2. opentrons_dir: deploy_to_opentrons(opentrons_dir="/path/to/Opentrons") — auto-creates UUID protocol dir
+2. opentrons_dir: deploy_to_opentrons(opentrons_dir="/path/to/Opentrons") — auto-UUID deployment
 3. OPENTRONS_DIR env var: auto-detected, same auto-UUID behavior as #2
 4. Clipboard only: deploy_to_opentrons(copy_to_clipboard=True)
 
 AUTO-UUID DEPLOYMENT (opentrons_dir):
-When opentrons_dir is set (or read from OPENTRONS_DIR env var), the protocol is deployed to:
-  {opentrons_dir}/protocols/{new-uuid}/src/{protocol_file}
-This creates a fresh protocol entry in the Opentrons App automatically.
+When opentrons_dir is set (or read from OPENTRONS_DIR env var), the tool first
+extracts the protocolName from the compiled protocol's metadata and scans
+existing protocol slots under {opentrons_dir}/protocols/*/src/*.py for a match.
+
+- If a matching protocolName is found, the existing UUID directory is REUSED
+  (the protocol file is overwritten in place). When multiple matches exist,
+  the most recently modified slot is chosen.
+- If no match is found, a new UUID directory is created (fresh protocol entry).
+
+The return dict includes "reused": true/false to indicate which path was taken.
 
 CLIPBOARD COMMANDS by platform:
 - Windows/WSL: "clip.exe" (default)

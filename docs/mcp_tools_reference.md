@@ -137,15 +137,17 @@ Run pre-flight checks on TOML and CSV configuration before generating.
 
 #### `ot2_deploy_to_opentrons`
 
-Deploy the generated protocol to the Opentrons App and/or clipboard. When `OPENTRONS_DIR` is set and no `target_path` is provided, the tool performs **auto-UUID deployment**:
+Deploy the generated protocol to the Opentrons App and/or clipboard. When `OPENTRONS_DIR` is set and no `target_path` is provided, the tool performs **auto-UUID deployment** with protocol name matching:
 
-1. Generates a fresh UUID
-2. Creates `{OPENTRONS_DIR}/protocols/{uuid}/src/` and `analysis/` directories
-3. Copies the protocol to `src/`
-4. Runs `opentrons.cli analyze` to produce `analysis/{timestamp_ms}.json`
-5. The Opentrons App discovers the protocol automatically on next scan
+1. Extracts `protocolName` from the compiled protocol's embedded metadata
+2. Scans `{OPENTRONS_DIR}/protocols/*/src/*.py` for an existing protocol with the same name
+3. If a match is found, **reuses that UUID directory** (overwrites the protocol file in place). If multiple matches exist, the most recently modified slot is chosen.
+4. If no match is found, generates a fresh UUID and creates `{OPENTRONS_DIR}/protocols/{uuid}/src/` and `analysis/` directories
+5. Copies the protocol to `src/`
+6. Runs `opentrons.cli analyze` to produce `analysis/{timestamp_ms}.json`
+7. The Opentrons App discovers the protocol automatically on next scan
 
-This means users do not need to manually find or specify UUID protocol directories.
+The return dict includes `"reused": true/false` to indicate whether an existing slot was reused. This means users do not need to manually find or specify UUID protocol directories, and re-deploying a protocol with the same name updates it in place rather than creating duplicates.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
