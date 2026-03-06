@@ -87,5 +87,5 @@ def e2e_workspace_factory(tmp_path: Path):
 # Skip marker for tests requiring custom labware
 requires_custom_labware = pytest.mark.skipif(
     CUSTOM_LABWARE_PATH is None,
-    reason="Custom labware path not found. Set LABWARE_PATH environment variable."
+    reason="Custom labware path not found. Set OPENTRONS_DIR environment variable."
 )

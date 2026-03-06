@@ -40,7 +40,7 @@ def test_generate_protocol_after_settings_patch(client):
 
 
 def test_send_to_opentrons_without_target_path_uses_shell_settings(client):
-    # target_path is now optional - falls back to shell_settings.target_protocol_src_win
+    # target_path is now optional - falls back to shell_settings.opentrons_dir_win
     # The request should succeed (validation no longer requires target_path)
     response = client.post("/workflow/generate", json={"csv": "example_basic.csv", "send_to_opentrons": True})
     # Request is accepted (200), but deployment may fail if shell_settings path is invalid

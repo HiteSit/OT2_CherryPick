@@ -38,11 +38,19 @@ def _find_custom_labware_path() -> Path | None:
     Find custom labware definitions directory.
 
     Searches in order:
-    1. LABWARE_PATH environment variable
-    2. Windows Opentrons App location via WSL path
-    3. Linux default locations
+    1. OPENTRONS_DIR environment variable (appends /labware)
+    2. LABWARE_PATH environment variable (legacy fallback)
+    3. Windows Opentrons App location via WSL path
+    4. Linux default locations
     """
-    # Check environment variable first
+    # Check OPENTRONS_DIR first (new canonical env var)
+    opentrons_dir = os.environ.get("OPENTRONS_DIR")
+    if opentrons_dir:
+        path = Path(opentrons_dir) / "labware"
+        if path.exists():
+            return path
+
+    # Legacy fallback
     env_path = os.environ.get("LABWARE_PATH")
     if env_path:
         path = Path(env_path)

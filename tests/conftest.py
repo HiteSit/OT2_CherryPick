@@ -61,7 +61,7 @@ def build_mcp_config(project_root: Path) -> Callable[[Path], Dict[str, Any]]:
                         "ot2-mcp-server",
                     ],
                     "env": {
-                        "LABWARE_PATH": str(project_root),
+                        "OPENTRONS_DIR": str(project_root),
                         "OT2_PROJECT_DIR": str(project_dir),
                     },
                 }

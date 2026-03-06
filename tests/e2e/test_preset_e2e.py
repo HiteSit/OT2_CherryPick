@@ -25,7 +25,7 @@ pytestmark = [
     pytest.mark.e2e,
     pytest.mark.skipif(
         CUSTOM_LABWARE_PATH is None,
-        reason="Custom labware path not found. Set LABWARE_PATH environment variable.",
+        reason="Custom labware path not found. Set OPENTRONS_DIR environment variable.",
     ),
 ]
 
