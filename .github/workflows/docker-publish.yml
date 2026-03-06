@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/ot2-cherrypick
+  IMAGE_PREFIX: ghcr.io/hitesit/ot2-cherrypick
 
 permissions:
   contents: read
