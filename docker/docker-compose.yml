@@ -14,22 +14,17 @@ services:
       OT2_GUI_WORKSPACE: ${OT2_GUI_WORKSPACE}
       OT2_PROJECT_DIR: ${OT2_PROJECT_DIR}
       PYTHONUNBUFFERED: "1"
-      # Mount labware from host Windows directory (read-only)
-      # This allows opentrons_simulate to find custom labware
+      # Opentrons App data directory (contains labware/ and protocols/ subdirs)
       # REQUIRED: Must be set in .env file
-      LABWARE_PATH: ${LABWARE_PATH_MOUNT}
+      OPENTRONS_DIR: ${OPENTRONS_DIR_MOUNT}
     volumes:
       # Persist gui_state workspace across container restarts
       - gui_state:/app/gui_state
       # Mount logs for debugging
       - logs:/app/logs
-      # Mount custom labware directory from Windows host (read-only)
-      # REQUIRED: Set LABWARE_PATH_HOST and LABWARE_PATH_MOUNT in .env file
-      - ${LABWARE_PATH_HOST}:${LABWARE_PATH_MOUNT}
-      # Mount entire Opentrons protocols directory (read-write)
-      # REQUIRED: Set PROTOCOLS_DIR_HOST and PROTOCOLS_DIR_MOUNT in .env file
-      # This allows switching between different protocol UUIDs via the GUI without container restarts
-      - ${PROTOCOLS_DIR_HOST}:${PROTOCOLS_DIR_MOUNT}
+      # Mount Opentrons App data directory from host (labware + protocols)
+      # REQUIRED: Set OPENTRONS_DIR_HOST and OPENTRONS_DIR_MOUNT in .env file
+      - ${OPENTRONS_DIR_HOST}:${OPENTRONS_DIR_MOUNT}
     networks:
       - ot2-network
     healthcheck:
