@@ -97,8 +97,11 @@ def run_scan_available_labware(
     official_list_path: str | Path = "opentrons_labware_official.txt",
 ) -> Dict[str, object]:
     """Scan custom labware directory and official list, return merged catalog."""
-    # Fall back to LABWARE_PATH env var when no explicit path is provided
-    effective_custom_path = custom_labware_path or os.getenv("LABWARE_PATH")
+    # Fall back to OPENTRONS_DIR env var when no explicit path is provided
+    opentrons_dir = os.getenv("OPENTRONS_DIR")
+    effective_custom_path = custom_labware_path or (
+        os.path.join(opentrons_dir, "labware") if opentrons_dir else None
+    )
     resolved_official = resolve_project_path(official_list_path)
     results = scan_available_labware(
         custom_labware_path=effective_custom_path,

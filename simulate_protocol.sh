@@ -30,6 +30,12 @@ setup_environment() {
     esac
 
     # Allow runtime overrides via environment variables provided by the GUI/backend
+    # OPENTRONS_DIR_WIN_OVERRIDE supersedes individual path overrides
+    if [ -n "${OPENTRONS_DIR_WIN_OVERRIDE:-}" ]; then
+        LABWARE_PATH_WIN="${OPENTRONS_DIR_WIN_OVERRIDE}\\labware"
+        # For deployment, we create a new UUID-based directory under protocols/
+        OPENTRONS_DIR_WIN="$OPENTRONS_DIR_WIN_OVERRIDE"
+    fi
     if [ -n "${LABWARE_PATH_WIN_OVERRIDE:-}" ]; then
         LABWARE_PATH_WIN="$LABWARE_PATH_WIN_OVERRIDE"
     fi
@@ -99,38 +105,58 @@ if [ -z "$CSV_FILE" ]; then
   exit 1
 fi
 
-# Validate TARGET_PROTOCOL_SRC if --send-to-opentrons is used
+# Validate deployment configuration if --send-to-opentrons is used
 if [ "$SEND_TO_OPENTRONS" = true ]; then
-    if [ -z "$TARGET_PROTOCOL_SRC" ]; then
-        echo "Error: TARGET_PROTOCOL_SRC is not configured in setup_environment()"
-        echo "Please set TARGET_PROTOCOL_SRC to point to the desired protocol src directory"
+    if [ -n "${OPENTRONS_DIR_WIN:-}" ]; then
+        # Auto-UUID deployment mode: create new protocol directory
+        if command -v wslpath &> /dev/null; then
+            OPENTRONS_DIR_WSL=$(wslpath "$OPENTRONS_DIR_WIN")
+        else
+            OPENTRONS_DIR_WSL=$(echo "$OPENTRONS_DIR_WIN" | sed 's|^C:\\|/mnt/c/|' | sed 's|\\|/|g')
+        fi
+        if [ ! -d "$OPENTRONS_DIR_WSL" ]; then
+            echo "Error: Opentrons directory does not exist: $OPENTRONS_DIR_WSL"
+            exit 1
+        fi
+        PROTOCOL_UUID=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || python3 -c "import uuid; print(uuid.uuid4())")
+        TARGET_PROTOCOL_SRC="${OPENTRONS_DIR_WSL}/protocols/${PROTOCOL_UUID}/src"
+        TARGET_ANALYSIS_DIR="${OPENTRONS_DIR_WSL}/protocols/${PROTOCOL_UUID}/analysis"
+        mkdir -p "$TARGET_PROTOCOL_SRC" "$TARGET_ANALYSIS_DIR"
+        TARGET_PYTHON_FILE="${TARGET_PROTOCOL_SRC}/CherryPick_OT2.py"
+        DEPLOY_MODE="uuid"
+        echo "Auto-UUID deployment mode"
+        echo "  Opentrons dir: $OPENTRONS_DIR_WSL"
+        echo "  UUID: $PROTOCOL_UUID"
+        echo "  Target: $TARGET_PYTHON_FILE"
+    elif [ -n "${TARGET_PROTOCOL_SRC:-}" ]; then
+        # Legacy mode: overwrite existing protocol file
+        if [ ! -d "$TARGET_PROTOCOL_SRC" ]; then
+            echo "Error: TARGET_PROTOCOL_SRC directory does not exist: $TARGET_PROTOCOL_SRC"
+            echo "Please update TARGET_PROTOCOL_SRC in setup_environment() to point to a valid protocol src directory"
+            exit 1
+        fi
+        PYTHON_FILES=$(find "$TARGET_PROTOCOL_SRC" -maxdepth 1 -name "*.py" -type f)
+        PYTHON_FILE_COUNT=$(echo "$PYTHON_FILES" | grep -c .)
+        if [ $PYTHON_FILE_COUNT -eq 0 ]; then
+            echo "Error: No Python files found in TARGET_PROTOCOL_SRC: $TARGET_PROTOCOL_SRC"
+            exit 1
+        elif [ $PYTHON_FILE_COUNT -gt 1 ]; then
+            echo "Error: Multiple Python files found in TARGET_PROTOCOL_SRC: $TARGET_PROTOCOL_SRC"
+            echo "Found files:"
+            echo "$PYTHON_FILES"
+            exit 1
+        fi
+        TARGET_PYTHON_FILE="$PYTHON_FILES"
+        DEPLOY_MODE="legacy"
+        echo "Legacy deployment mode"
+        echo "  Windows path: $TARGET_PROTOCOL_SRC_WIN"
+        echo "  WSL path: $TARGET_PROTOCOL_SRC"
+        echo "  Target file: $TARGET_PYTHON_FILE"
+    else
+        echo "Error: No deployment target configured."
+        echo "Set OPENTRONS_DIR_WIN or TARGET_PROTOCOL_SRC_WIN in setup_environment()"
         exit 1
     fi
-
-    if [ ! -d "$TARGET_PROTOCOL_SRC" ]; then
-        echo "Error: TARGET_PROTOCOL_SRC directory does not exist: $TARGET_PROTOCOL_SRC"
-        echo "Please update TARGET_PROTOCOL_SRC in setup_environment() to point to a valid protocol src directory"
-        exit 1
-    fi
-
-    # Check if there's exactly one Python file in the target directory
-    PYTHON_FILES=$(find "$TARGET_PROTOCOL_SRC" -maxdepth 1 -name "*.py" -type f)
-    PYTHON_FILE_COUNT=$(echo "$PYTHON_FILES" | grep -c .)
-
-    if [ $PYTHON_FILE_COUNT -eq 0 ]; then
-        echo "Error: No Python files found in TARGET_PROTOCOL_SRC: $TARGET_PROTOCOL_SRC"
-        exit 1
-    elif [ $PYTHON_FILE_COUNT -gt 1 ]; then
-        echo "Error: Multiple Python files found in TARGET_PROTOCOL_SRC: $TARGET_PROTOCOL_SRC"
-        echo "Found files:"
-        echo "$PYTHON_FILES"
-        exit 1
-    fi
-
-    TARGET_PYTHON_FILE="$PYTHON_FILES"
-    echo "Windows path configured: $TARGET_PROTOCOL_SRC_WIN"
-    echo "WSL path converted: $TARGET_PROTOCOL_SRC"
-    echo "Target protocol file: $TARGET_PYTHON_FILE"
 fi
 
 echo "=== Using $MACHINE_CONFIG configuration ==="
@@ -154,23 +180,25 @@ if [ $SIM_EXIT_CODE -eq 0 ]; then
         echo "Protocol file: $(pwd)/CherryPick_OT2.py"
     fi
 
-    # If --send-to-opentrons flag is set, overwrite existing protocol
+    # If --send-to-opentrons flag is set, deploy the protocol
     if [ "$SEND_TO_OPENTRONS" = true ]; then
         echo ""
-        echo "=== Step 3: Overwriting existing protocol ==="
+        echo "=== Step 3: Deploying protocol ==="
 
-        # Get the filename from the target path for logging
-        TARGET_FILENAME=$(basename "$TARGET_PYTHON_FILE")
-
-        # Overwrite the target file with our protocol
         cp "CherryPick_OT2.py" "$TARGET_PYTHON_FILE"
 
-        echo "✓ Protocol overwritten successfully:"
-        echo "   Target: $TARGET_PYTHON_FILE"
-        echo "   Original filename: $TARGET_FILENAME (preserved)"
-        echo "   Configuration: TARGET_PROTOCOL_SRC=$TARGET_PROTOCOL_SRC"
+        if [ "$DEPLOY_MODE" = "uuid" ]; then
+            echo "✓ Protocol deployed successfully (new UUID):"
+            echo "   UUID: $PROTOCOL_UUID"
+            echo "   Target: $TARGET_PYTHON_FILE"
+        else
+            TARGET_FILENAME=$(basename "$TARGET_PYTHON_FILE")
+            echo "✓ Protocol overwritten successfully:"
+            echo "   Target: $TARGET_PYTHON_FILE"
+            echo "   Original filename: $TARGET_FILENAME (preserved)"
+        fi
         echo ""
-        echo "The protocol should now be updated in the Opentrons App!"
+        echo "The protocol should now be available in the Opentrons App!"
         echo "Note: You may need to refresh or reload the protocol in the app."
     fi
 else

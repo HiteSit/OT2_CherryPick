@@ -51,7 +51,7 @@ def register_simulation_tools(mcp: FastMCP) -> None:
 WHEN TO USE: After ot2_generate_protocol to verify the protocol is valid.
 NOT needed if using ot2_full_workflow (it simulates automatically).
 
-LABWARE PATH: Defaults to LABWARE_PATH env variable (directory with custom JSON labware files).
+LABWARE PATH: Defaults to OPENTRONS_DIR env variable (labware subdir is auto-derived).
 Only override if you have .json labware files in a non-standard location.
 This is NOT labware_dict.toml - it's the Opentrons custom labware directory.
 

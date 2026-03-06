@@ -68,7 +68,13 @@ def simulate_protocol(
 
     labware_dir: Path | None = None
     if labware_path is None:
-        raw_labware = os.getenv("LABWARE_PATH")
+        # Priority: OPENTRONS_DIR/labware > LABWARE_PATH
+        raw_labware: str | None = None
+        opentrons_dir = os.getenv("OPENTRONS_DIR")
+        if opentrons_dir:
+            raw_labware = str(Path(opentrons_dir) / "labware")
+        if not raw_labware:
+            raw_labware = os.getenv("LABWARE_PATH")
         if raw_labware:
             try:
                 candidate = resolve_project_path(raw_labware)
