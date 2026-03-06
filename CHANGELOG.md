@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-03-06
+
+### Added
+
+- Protocol name-based UUID reuse: deployment now scans existing protocol slots by `protocolName` metadata and overwrites in place instead of creating a new UUID directory every time. Multiple matches resolve to the most recently modified slot.
+
 ## [1.2.1] - 2026-03-06
 
 ### Changed
@@ -109,7 +115,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.0.0...v1.1.0
