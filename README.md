@@ -3,7 +3,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://ghcr.io/hitesit/ot2-cherrypick)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://python.org)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.2.0-blue.svg)](https://github.com/HiteSit/OT2_CherryPick)
+[![Version](https://img.shields.io/badge/Version-1.2.1-blue.svg)](https://github.com/HiteSit/OT2_CherryPick)
 
 **A zero-install, data-driven cherry-picking platform for the Opentrons OT-2** that bridges the gap between Protocol Designer's accessibility and custom Python scripting's flexibility.
 
@@ -24,6 +24,7 @@ The platform architecture also exposes all operations through the [Model Context
 - **Distribution mode** -- One source to multiple destinations with equal or geometric volume patterns
 - **Heater-shaker module support** -- Temperature and shaking control during protocols
 - **Simulation-first workflow** -- Validate every protocol with `opentrons_simulate` before touching real samples
+- **Auto-UUID deployment** -- Deploy protocols to the Opentrons App with automatic UUID directory creation and analysis generation; no manual protocol directory management required
 - **Calibration offset database** -- Per-labware, per-slot offset tracking for reproducible positioning
 
 ## Quick Start with Docker (Recommended)

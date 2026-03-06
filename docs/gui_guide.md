@@ -14,7 +14,6 @@ Configure the physical layout of your OT-2 deck.
 **Controls:**
 - **Protocol name** -- Identifier embedded in the generated protocol
 - **Mode selector** -- Choose pipette mode: `single_X1`, `multi_X1`, `multi`, or `dual`
-- **Custom labware path** -- Path to Opentrons custom labware JSON files (required for simulation)
 - **DeckGrid** -- Visual representation of the 11-slot OT-2 deck plus trash
 
 **Adding labware to slots:**
@@ -124,10 +123,11 @@ Review configuration and run the protocol pipeline.
 - **Send to Opentrons** -- Deploy protocol to the Opentrons App directory
 - **Copy to Clipboard** -- Copy the generated protocol to clipboard
 
-**Shell Runner Windows Folders** (required for simulation and deployment):
-- **Custom labware folder** -- Path to Opentrons custom labware JSON files (e.g., `C:\Users\you\AppData\Roaming\Opentrons\labware`)
-- **Opentrons protocol folder** -- Target protocol directory including `\src` (e.g., `C:\Users\you\AppData\Roaming\Opentrons\protocols\<UUID>\src`)
-- Click **Save as default** to persist paths to `shell_settings.json`
+**Opentrons App Directory** (required for simulation and deployment):
+- **Opentrons App directory** -- Single field pointing to the root Opentrons data directory (e.g., `C:\Users\you\AppData\Roaming\Opentrons`). The labware path (`/labware`) and protocol deployment path (`/protocols`) are auto-derived from this root.
+- Click **Save as default** to persist the path to `shell_settings.json`
+
+> **Migration note:** Older configurations with separate `labware_path_win` and `target_protocol_src_win` fields are automatically migrated to the single `opentrons_dir_win` field on first load.
 
 **Running the workflow:**
 1. Ensure the preflight checklist passes (all green)

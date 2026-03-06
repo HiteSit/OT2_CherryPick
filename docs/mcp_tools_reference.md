@@ -7,6 +7,13 @@ Complete reference for the OT2 CherryPick Model Context Protocol server.
 uv run ot2-mcp-server
 ```
 
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENTRONS_DIR` | yes | Root Opentrons App data directory. Labware (`{OPENTRONS_DIR}/labware`) and protocol (`{OPENTRONS_DIR}/protocols`) paths are auto-derived. See [Configuration Reference](configuration_reference.md#environment-variables) for details. |
+| `OT2_PROJECT_DIR` | no | Persistent workspace directory. Defaults to current working directory. |
+
 ## Tools
 
 ### Project Management
@@ -110,7 +117,7 @@ Compile TOML configuration and CSV transfer map into CherryPick_OT2.py.
 
 #### `ot2_simulate_protocol`
 
-Run `opentrons_simulate` to validate the generated protocol without hardware.
+Run `opentrons_simulate` to validate the generated protocol without hardware. The custom labware path is auto-derived from `OPENTRONS_DIR/labware`. Falls back to the `LABWARE_PATH` env var if `OPENTRONS_DIR` is not set.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -130,11 +137,19 @@ Run pre-flight checks on TOML and CSV configuration before generating.
 
 #### `ot2_deploy_to_opentrons`
 
-Copy the generated protocol to the Opentrons App directory and/or clipboard.
+Deploy the generated protocol to the Opentrons App and/or clipboard. When `OPENTRONS_DIR` is set and no `target_path` is provided, the tool performs **auto-UUID deployment**:
+
+1. Generates a fresh UUID
+2. Creates `{OPENTRONS_DIR}/protocols/{uuid}/src/` and `analysis/` directories
+3. Copies the protocol to `src/`
+4. Runs `opentrons.cli analyze` to produce `analysis/{timestamp_ms}.json`
+5. The Opentrons App discovers the protocol automatically on next scan
+
+This means users do not need to manually find or specify UUID protocol directories.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `target_path` | string | no | Opentrons App protocol directory |
+| `target_path` | string | no | Opentrons App protocol directory (overrides auto-UUID deployment) |
 | `copy_to_clipboard` | boolean | no | Copy protocol to clipboard |
 
 ### Labware Management
@@ -153,11 +168,11 @@ Add or update a calibration offset in offset_database.toml.
 
 #### `ot2_scan_available_labware`
 
-List labware available in the custom labware directory.
+List labware available in the custom labware directory. Defaults to `{OPENTRONS_DIR}/labware` when no path is provided.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `custom_labware_path` | string | no | Path to custom labware directory |
+| `custom_labware_path` | string | no | Path to custom labware directory (defaults to `OPENTRONS_DIR/labware`) |
 
 #### `ot2_get_labware_offset`
 

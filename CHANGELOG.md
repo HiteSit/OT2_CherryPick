@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-03-06
+
+### Changed
+
+- Documentation updated to describe the `OPENTRONS_DIR` environment variable, auto-derived subdirectories, and auto-UUID deployment across all guides (configuration reference, MCP tools reference, GUI guide, README).
+
 ## [1.2.0] - 2026-03-06
 
 ### Added
@@ -103,7 +109,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/HiteSit/OT2_CherryPick/releases/tag/v1.0.0

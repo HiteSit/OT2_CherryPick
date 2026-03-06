@@ -234,6 +234,48 @@ notes = "Calibrated after replacement"
 | `last_calibrated` | string | Date of last calibration (optional) |
 | `notes` | string | Free-text notes (optional) |
 
+## Environment Variables
+
+### `OPENTRONS_DIR`
+
+The single root directory for Opentrons App data. The system auto-derives subdirectories from it:
+
+| Subdirectory | Purpose |
+|--------------|---------|
+| `{OPENTRONS_DIR}/labware/` | Custom labware JSON definitions (used by simulation and labware scanning) |
+| `{OPENTRONS_DIR}/protocols/` | Protocol deployment target (auto-UUID directories) |
+
+**Expected directory structure:**
+```
+{OPENTRONS_DIR}/
+├── labware/              ← Custom labware JSON files
+│   ├── my_custom_plate.json
+│   └── ...
+└── protocols/            ← Protocol directories (one per import)
+    ├── {uuid-1}/
+    │   ├── src/
+    │   │   └── CherryPick_OT2.py
+    │   └── analysis/
+    │       └── {timestamp_ms}.json
+    └── {uuid-2}/
+        └── ...
+```
+
+**Configuration per workflow:**
+
+| Workflow | How to set |
+|----------|-----------|
+| Docker | `OPENTRONS_DIR_HOST` / `OPENTRONS_DIR_MOUNT` in `.env` |
+| MCP server | `OPENTRONS_DIR` env var in MCP config (`.mcp.json` or `claude_desktop_config.json`) |
+| GUI | Single `opentrons_dir_win` field in shell settings (Windows path, auto-converted to WSL) |
+| CLI script | Hardcoded paths in `simulate_protocol.sh` |
+
+**Legacy fallback:** If `OPENTRONS_DIR` is not set, the simulation tool falls back to the `LABWARE_PATH` environment variable for custom labware location.
+
+### `OT2_PROJECT_DIR`
+
+Optional. Sets the persistent workspace directory for the MCP server. When not set, the server uses the current working directory.
+
 ## CSV Transfer Format
 
 ### Required Columns
