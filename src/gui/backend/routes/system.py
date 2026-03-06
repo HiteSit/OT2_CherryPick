@@ -36,8 +36,7 @@ def update_shell_settings_endpoint(
 
     return ShellSettings(
         **store.update_shell_settings(
-            target_protocol_src_win=payload.target_protocol_src_win,
-            labware_path_win=payload.labware_path_win,
+            opentrons_dir_win=payload.opentrons_dir_win,
         )
     )
 

@@ -3,7 +3,6 @@ import type { PatchPayload } from './client'
 import {
   addPipetteEntry,
   addWorkingPlateEntry,
-  browseShellSettings,
   deleteCsv,
   deletePipetteEntry,
   deletePreset,
@@ -31,7 +30,6 @@ import type {
   LiquidHandlingPreset,
   OffsetEntry,
   PipetteEntry,
-  ShellSettingsBrowseRequest,
   ShellSettingsUpdate,
   WorkflowRequest,
 } from './types'
@@ -236,12 +234,3 @@ export const useUpdateShellSettings = () => {
   })
 }
 
-export const useBrowseShellSettings = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: ShellSettingsBrowseRequest) => browseShellSettings(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shell-settings'] })
-    },
-  })
-}

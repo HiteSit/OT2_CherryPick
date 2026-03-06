@@ -43,20 +43,26 @@ def generate_protocol_endpoint(
 
     # Deployment only happens in Python-native path (shell script handles its own deployment via cp)
     if payload.send_to_opentrons and not payload.use_shell_runner:
-        # Use shell_settings target_protocol_src_win if target_path not explicitly provided
-        target = payload.target_path
-        if not target:
-            shell_settings = store.get_shell_settings()
-            target = shell_settings.get("target_protocol_src_win")
+        # Derive opentrons_dir from shell settings for auto-UUID deployment
+        shell_settings = store.get_shell_settings()
+        opentrons_dir = shell_settings.get("opentrons_dir_win")
 
-        if target:
+        if opentrons_dir:
             deployment, dep_log = store.deploy_protocol(
                 payload.protocol_path,
-                target_path=target,
+                opentrons_dir=opentrons_dir,
+                copy_to_clipboard=payload.copy_to_clipboard,
+            )
+            logs.extend(dep_log)
+        elif payload.target_path:
+            # Legacy fallback: explicit target_path
+            deployment, dep_log = store.deploy_protocol(
+                payload.protocol_path,
+                target_path=payload.target_path,
                 copy_to_clipboard=payload.copy_to_clipboard,
             )
             logs.extend(dep_log)
         else:
-            logs.append("⚠ Deployment skipped: No target path configured in Shell Settings")
+            logs.append("\u26a0 Deployment skipped: No Opentrons directory configured in Shell Settings")
 
     return ProtocolGenerationResponse(generated=generated, simulation=simulation, deployment=deployment, logs=logs)

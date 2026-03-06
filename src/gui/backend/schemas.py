@@ -120,29 +120,24 @@ class PresetSavePayload(BaseModel):
 
 
 class ShellSettings(BaseModel):
-    target_protocol_src_win: Optional[str] = Field(
+    opentrons_dir_win: Optional[str] = Field(
         None,
-        description="Absolute Windows path for simulate_protocol.sh deployment",
-    )
-    labware_path_win: Optional[str] = Field(
-        None,
-        description="Absolute Windows path to the custom labware directory",
+        description="Absolute Windows path to the root Opentrons App data directory",
     )
 
 
 class ShellSettingsUpdate(BaseModel):
-    target_protocol_src_win: Optional[str] = Field(None, description="Absolute Windows folder path for deployment")
-    labware_path_win: Optional[str] = Field(None, description="Absolute Windows folder path for labware")
+    opentrons_dir_win: Optional[str] = Field(None, description="Absolute Windows path to the Opentrons directory")
 
     @model_validator(mode="after")
     def _ensure_field_present(cls, values: "ShellSettingsUpdate") -> "ShellSettingsUpdate":  # noqa: D417
-        if values.target_protocol_src_win is None and values.labware_path_win is None:
-            raise ValueError("At least one field must be provided for shell settings update.")
+        if values.opentrons_dir_win is None:
+            raise ValueError("opentrons_dir_win must be provided for shell settings update.")
         return values
 
 
 class ShellSettingsBrowseRequest(BaseModel):
-    field: Literal["target_protocol_src_win", "labware_path_win"]
+    field: Literal["opentrons_dir_win"]
 
 
 __all__ = [

@@ -15,7 +15,8 @@ from typing import Any, Iterable, List
 import tomlkit
 from fastapi import HTTPException, status
 
-from ot2_cherrypick_mcp.core.deployment import deploy_protocol
+from ot2_cherrypick_mcp.core.deployment import deploy_protocol as deploy_protocol_fn
+from ot2_cherrypick_mcp.core.deployment import deploy_to_opentrons_dir
 from ot2_cherrypick_mcp.core.labware_scanner import scan_available_labware
 from ot2_cherrypick_mcp.core.protocol_generator import generate_protocol
 from ot2_cherrypick_mcp.core.simulation import DEFAULT_LOG_FILE, simulate_protocol
@@ -200,24 +201,19 @@ class FileStateStore:
     def update_shell_settings(
         self,
         *,
-        target_protocol_src_win: str | None = None,
-        labware_path_win: str | None = None,
+        opentrons_dir_win: str | None = None,
     ) -> dict[str, Any]:
         data = self._load_shell_settings()
-        if target_protocol_src_win is not None:
-            data["target_protocol_src_win"] = target_protocol_src_win.strip()
-        if labware_path_win is not None:
-            data["labware_path_win"] = labware_path_win.strip()
+        if opentrons_dir_win is not None:
+            data["opentrons_dir_win"] = opentrons_dir_win.strip()
         self._write_shell_settings(data)
         return data
 
     def browse_and_update_shell_settings(self, field: str) -> dict[str, Any]:
-        if field not in {"target_protocol_src_win", "labware_path_win"}:
+        if field != "opentrons_dir_win":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid shell setting field.")
-        title = "Select Opentrons protocol folder" if field == "target_protocol_src_win" else "Select custom labware folder"
-        selection = self._prompt_for_directory(title)
-        kwargs: dict[str, Any] = {field: selection}
-        return self.update_shell_settings(**kwargs)
+        selection = self._prompt_for_directory("Select Opentrons App data directory")
+        return self.update_shell_settings(opentrons_dir_win=selection)
 
     # ------------------------------------------------------------------ #
     # CSV helpers
@@ -349,32 +345,54 @@ class FileStateStore:
         *,
         target_path: Path | str | None = None,
         copy_to_clipboard: bool = False,
+        opentrons_dir: str | None = None,
     ) -> tuple[dict[str, Any], list[str]]:
         protocol_file = Path(protocol_path) if protocol_path else self.protocol_output
         log_lines = [
             "=== Step 3: Deployment ===",
             f"Source protocol: {protocol_file}",
         ]
-        
-        # Auto-convert Windows paths to WSL format for deployment
+
+        # Auto-UUID deployment via opentrons_dir
+        if opentrons_dir is not None:
+            resolved_ot_dir = opentrons_dir
+            import re
+            if re.match(r'^[A-Za-z]:', resolved_ot_dir):
+                resolved_ot_dir = self._windows_to_wsl(resolved_ot_dir)
+                log_lines.append(f"Converted Opentrons dir: {opentrons_dir} -> {resolved_ot_dir}")
+            try:
+                result = deploy_to_opentrons_dir(
+                    str(protocol_file),
+                    resolved_ot_dir,
+                    copy_to_clipboard=copy_to_clipboard,
+                )
+            except Exception as exc:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+            log_lines.append(f"Deployed with UUID: {result.get('uuid')}")
+            log_lines.append(f"Deployed to: {result.get('deployed_path')}")
+            if copy_to_clipboard and result.get("clipboard"):
+                log_lines.append("Clipboard updated.")
+            log_lines.append("\u2713 Deployment complete")
+            return result, log_lines
+
+        # Legacy: explicit target_path deployment
         resolved_target: str | None = None
         if target_path is not None:
             target_str = str(target_path)
-            # Check if Windows path (C:\... or D:\... etc.)
             import re
             if re.match(r'^[A-Za-z]:', target_str):
                 resolved_target = self._windows_to_wsl(target_str)
                 log_lines.append(f"Converted Windows path: {target_str} -> {resolved_target}")
             else:
                 resolved_target = target_str
-        
+
         try:
-            result = deploy_protocol(
+            result = deploy_protocol_fn(
                 str(protocol_file),
                 target_path=resolved_target,
                 copy_to_clipboard=copy_to_clipboard,
             )
-        except Exception as exc:  # pragma: no cover - bubbled up to API
+        except Exception as exc:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
         if result.get("copies"):
             log_lines.append(f"Copied to: {', '.join(result['copies'])}")
@@ -383,7 +401,7 @@ class FileStateStore:
                 log_lines.append("Clipboard updated.")
             else:
                 log_lines.append("Clipboard update requested but returned no result.")
-        log_lines.append("✓ Deployment complete")
+        log_lines.append("\u2713 Deployment complete")
         return result, log_lines
 
     def run_shell_script(self, csv_path: Path, send_to_opentrons: bool) -> tuple[dict[str, Any], list[str]]:
@@ -394,12 +412,9 @@ class FileStateStore:
         backups = self._sync_repo_configs()
         env = os.environ.copy()
         shell_settings = self._load_shell_settings()
-        target_override = shell_settings.get("target_protocol_src_win")
-        if target_override:
-            env["TARGET_PROTOCOL_SRC_WIN_OVERRIDE"] = target_override
-        labware_override = shell_settings.get("labware_path_win")
-        if labware_override:
-            env["LABWARE_PATH_WIN_OVERRIDE"] = labware_override
+        opentrons_dir_override = shell_settings.get("opentrons_dir_win")
+        if opentrons_dir_override:
+            env["OPENTRONS_DIR_WIN_OVERRIDE"] = opentrons_dir_override
         log_lines = ["=== simulate_protocol.sh ===", f"Command: {' '.join(command)}"]
         try:
             completed = subprocess.run(
@@ -456,7 +471,7 @@ class FileStateStore:
         if self.shell_settings_path.exists():
             return
         self.shell_settings_path.write_text(
-            json.dumps({"target_protocol_src_win": "", "labware_path_win": ""}, indent=2),
+            json.dumps({"opentrons_dir_win": ""}, indent=2),
             encoding="utf-8",
         )
 
@@ -467,10 +482,33 @@ class FileStateStore:
             data = json.loads(raw) if raw.strip() else {}
         except json.JSONDecodeError:
             data = {}
-        if "target_protocol_src_win" not in data:
-            data["target_protocol_src_win"] = ""
-        if "labware_path_win" not in data:
-            data["labware_path_win"] = ""
+
+        # Migrate old two-field format to single opentrons_dir_win
+        if "labware_path_win" in data or "target_protocol_src_win" in data:
+            opentrons_dir = ""
+            labware_win = (data.pop("labware_path_win", "") or "").strip()
+            target_win = (data.pop("target_protocol_src_win", "") or "").strip()
+            # Derive from labware path: strip trailing \labware
+            if labware_win:
+                stripped = labware_win.rstrip("\\").rstrip("/")
+                if stripped.lower().endswith("\\labware") or stripped.lower().endswith("/labware"):
+                    opentrons_dir = stripped.rsplit("\\", 1)[0] if "\\" in stripped else stripped.rsplit("/", 1)[0]
+                else:
+                    opentrons_dir = stripped
+            # If not derived from labware, try from target protocol path
+            if not opentrons_dir and target_win:
+                # e.g. C:\Users\...\Opentrons\protocols\{uuid}\src -> strip \protocols\...\src
+                lower = target_win.lower()
+                idx = lower.find("\\protocols\\")
+                if idx == -1:
+                    idx = lower.find("/protocols/")
+                if idx > 0:
+                    opentrons_dir = target_win[:idx]
+            data["opentrons_dir_win"] = opentrons_dir
+            self._write_shell_settings(data)
+
+        if "opentrons_dir_win" not in data:
+            data["opentrons_dir_win"] = ""
         return data
 
     def _write_shell_settings(self, payload: dict[str, Any]) -> None:
@@ -497,17 +535,25 @@ class FileStateStore:
         return selected
 
     def _resolve_labware_path(self) -> str | None:
-        # First, check environment variable (Docker volume mount)
+        # Priority 1: OPENTRONS_DIR env var (append /labware)
+        opentrons_dir_env = os.getenv("OPENTRONS_DIR")
+        if opentrons_dir_env:
+            labware = str(Path(opentrons_dir_env.strip()) / "labware")
+            return labware
+
+        # Priority 2: Legacy LABWARE_PATH env var (Docker volume mount)
         env_path = os.getenv("LABWARE_PATH")
         if env_path:
             return env_path.strip()
 
-        # Fallback to shell_settings.json
+        # Priority 3: opentrons_dir_win from shell_settings.json (Windows path -> WSL, append \labware)
         data = self._load_shell_settings()
-        raw = (data.get("labware_path_win") or "").strip()
+        raw = (data.get("opentrons_dir_win") or "").strip()
         if not raw:
             return None
-        return self._windows_to_wsl(raw)
+        # Append \labware before converting to WSL path
+        win_labware = raw.rstrip("\\").rstrip("/") + "\\labware"
+        return self._windows_to_wsl(win_labware)
 
     def _windows_to_wsl(self, path: str) -> str:
         if not path or path.startswith("/"):

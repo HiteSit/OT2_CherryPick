@@ -127,7 +127,6 @@ export interface WorkflowRequest {
   run_simulation?: boolean
   use_shell_runner?: boolean
   send_to_opentrons?: boolean
-  target_path?: string
   copy_to_clipboard?: boolean
 }
 
@@ -156,16 +155,14 @@ export interface WorkflowResponse {
 }
 
 export interface ShellSettings {
-  target_protocol_src_win?: string | null
-  labware_path_win?: string | null
+  opentrons_dir_win?: string | null
 }
 
 export interface ShellSettingsUpdate {
-  target_protocol_src_win?: string
-  labware_path_win?: string
+  opentrons_dir_win?: string
 }
 
-export type ShellSettingsField = 'target_protocol_src_win' | 'labware_path_win'
+export type ShellSettingsField = 'opentrons_dir_win'
 
 export interface ShellSettingsBrowseRequest {
   field: ShellSettingsField

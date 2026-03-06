@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Stack, Alert, Text, Select, Group, Tooltip, ActionIcon, Paper, Title, TextInput, Button } from '@mantine/core'
-import { IconAlertCircle, IconHelp, IconFolder, IconDeviceFloppy } from '@tabler/icons-react'
+import { IconAlertCircle, IconHelp, IconDeviceFloppy } from '@tabler/icons-react'
 import { DeckGrid } from '../deck/DeckGrid'
 import { LabwareEditor } from '../deck/LabwareEditor'
 import { useWizard } from '../WizardContext'
-import { useSettingsQuery, usePatchSetting, useShellSettingsQuery, useUpdateShellSettings, useBrowseShellSettings } from '../../../api/hooks'
+import { useSettingsQuery, usePatchSetting, useShellSettingsQuery, useUpdateShellSettings } from '../../../api/hooks'
 import { notifications } from '@mantine/notifications'
 import { HELP_TEXT } from '../../../constants/helpText'
 
@@ -14,12 +14,10 @@ export function DeckSetupStep() {
   const patchMutation = usePatchSetting()
   const shellSettingsQuery = useShellSettingsQuery()
   const shellSettingsUpdate = useUpdateShellSettings()
-  const shellSettingsBrowse = useBrowseShellSettings()
 
   const [localProtocolName, setLocalProtocolName] = useState('')
-  const [labwarePathWin, setLabwarePathWin] = useState('')
-  const [isBrowsingLabware, setIsBrowsingLabware] = useState(false)
-  const [isSavingLabware, setIsSavingLabware] = useState(false)
+  const [opentronsDirWin, setOpentronsDirWin] = useState('')
+  const [isSavingOpentrons, setIsSavingOpentrons] = useState(false)
 
   useEffect(() => {
     setLocalProtocolName(settings?.settings?.general?.protocol_name || '')
@@ -27,44 +25,33 @@ export function DeckSetupStep() {
 
   useEffect(() => {
     if (shellSettingsQuery.data) {
-      setLabwarePathWin(shellSettingsQuery.data.labware_path_win ?? '')
+      setOpentronsDirWin(shellSettingsQuery.data.opentrons_dir_win ?? '')
     }
   }, [shellSettingsQuery.data])
 
-  const handleBrowseLabwarePath = () => {
-    setIsBrowsingLabware(true)
-    shellSettingsBrowse.mutate(
-      { field: 'labware_path_win' },
-      {
-        onSuccess: (data) => {
-          setLabwarePathWin(data.labware_path_win ?? '')
-          notifications.show({ color: 'teal', title: 'Folder selected', message: 'Custom labware folder updated.' })
-        },
-        onError: (error) =>
-          notifications.show({
-            color: 'red',
-            title: 'Browse failed',
-            message: error instanceof Error ? error.message : 'Unable to open folder picker.',
-          }),
-        onSettled: () => setIsBrowsingLabware(false),
-      }
-    )
-  }
-
-  const handleSaveLabwarePath = () => {
-    if (!labwarePathWin) {
-      notifications.show({ color: 'red', title: 'Folder required', message: 'Enter a custom labware folder path before saving.' })
+  const handleSaveOpentronsDirPath = () => {
+    if (!opentronsDirWin) {
+      notifications.show({ color: 'red', title: 'Folder required', message: 'Enter the Opentrons App folder path before saving.' })
       return
     }
-    setIsSavingLabware(true)
+    const trimmed = opentronsDirWin.replace(/[\\/]+$/, '')
+    const looksValid = /[/\\]Opentrons$/i.test(trimmed)
+    if (!looksValid) {
+      notifications.show({
+        color: 'yellow',
+        title: 'Path may be incorrect',
+        message: 'Expected path ending with "Opentrons" (e.g. C:\\Users\\...\\AppData\\Roaming\\Opentrons). Saving anyway.',
+      })
+    }
+    setIsSavingOpentrons(true)
     shellSettingsUpdate.mutate(
-      { labware_path_win: labwarePathWin },
+      { opentrons_dir_win: opentronsDirWin },
       {
         onSuccess: () =>
-          notifications.show({ color: 'teal', title: 'Labware path saved', message: 'Will be used for simulation and scanning.' }),
+          notifications.show({ color: 'teal', title: 'Opentrons folder saved', message: 'Will be used for simulation and deployment.' }),
         onError: (error) =>
           notifications.show({ color: 'red', title: 'Save failed', message: error instanceof Error ? error.message : 'Unable to save.' }),
-        onSettled: () => setIsSavingLabware(false),
+        onSettled: () => setIsSavingOpentrons(false),
       }
     )
   }
@@ -228,35 +215,25 @@ export function DeckSetupStep() {
 
       <Paper p="md" withBorder>
         <Stack gap="sm">
-          <Title order={5}>Custom Labware Folder</Title>
+          <Title order={5}>Opentrons Folder</Title>
           <Text size="sm" c="dimmed">
-            Point to your Opentrons custom labware JSON folder. Custom labware will appear first in the labware selector when adding deck slots.
+            Root folder of your Opentrons App installation (contains labware/ and protocols/ subdirectories).
           </Text>
           <TextInput
-            label="Custom labware folder (Windows path)"
-            description="Example: C:\\Users\\you\\AppData\\Roaming\\Opentrons\\labware"
-            value={labwarePathWin}
-            onChange={(e) => setLabwarePathWin(e.currentTarget.value)}
-            placeholder="C:\\Users\\..."
+            label="Opentrons App folder (Windows path)"
+            description="Used for custom labware scanning, simulation, and deployment"
+            value={opentronsDirWin}
+            onChange={(e) => setOpentronsDirWin(e.currentTarget.value)}
+            placeholder="C:\Users\...\AppData\Roaming\Opentrons"
           />
-          <Group gap="xs">
-            <Button
-              variant="default"
-              leftSection={<IconFolder size={16} />}
-              loading={isBrowsingLabware}
-              onClick={handleBrowseLabwarePath}
-            >
-              Browse…
-            </Button>
-            <Button
-              variant="light"
-              leftSection={<IconDeviceFloppy size={16} />}
-              loading={isSavingLabware}
-              onClick={handleSaveLabwarePath}
-            >
-              Save as default
-            </Button>
-          </Group>
+          <Button
+            variant="light"
+            leftSection={<IconDeviceFloppy size={16} />}
+            loading={isSavingOpentrons}
+            onClick={handleSaveOpentronsDirPath}
+          >
+            Save as default
+          </Button>
         </Stack>
       </Paper>
 
