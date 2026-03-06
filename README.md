@@ -155,7 +155,16 @@ The generated protocol embeds all configuration as JSON, requiring no external f
 
 If you use OT2-CherryPick in your research, please cite:
 
-> OT2-CherryPick: a web-based platform for data-driven liquid handling automation with AI-native Model Context Protocol integration. *Manuscript in preparation.*
+```bibtex
+@article{OT2CherryPick2021,
+  title   = {OT2-CherryPick: A Zero-Install Web Platform for Orchestrating
+             Complex Liquid Handling on the Opentrons OT-2},
+  year    = {2021},
+  journal = {ChemRxiv},
+  doi     = {10.26434/chemrxiv.15000637},
+  url     = {https://chemrxiv.org/doi/full/10.26434/chemrxiv.15000637/v1}
+}
+```
 
 
 ## Contributing
