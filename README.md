@@ -3,7 +3,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://ghcr.io/hitesit/ot2-cherrypick)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://python.org)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)](https://github.com/HiteSit/OT2_CherryPick)
+[![Version](https://img.shields.io/badge/Version-1.2.0-blue.svg)](https://github.com/HiteSit/OT2_CherryPick)
 
 **A zero-install, data-driven cherry-picking platform for the Opentrons OT-2** that bridges the gap between Protocol Designer's accessibility and custom Python scripting's flexibility.
 
@@ -36,13 +36,11 @@ cp .env.example .env
 Edit `.env` with your Opentrons paths:
 
 ```env
-LABWARE_PATH_HOST=/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons/labware
-LABWARE_PATH_MOUNT=/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons/labware
-PROTOCOLS_DIR_HOST=/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons/protocols
-PROTOCOLS_DIR_MOUNT=/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons/protocols
+OPENTRONS_DIR_HOST=/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons
+OPENTRONS_DIR_MOUNT=/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons
 ```
 
-> **Why `_HOST` and `_MOUNT`?** Each pair maps a Docker volume: `HOST` is the path on your machine, `MOUNT` is the path inside the container. On WSL they are typically identical, but separating them allows different host OS configurations (e.g., native Linux) while the container always sees the expected path.
+> **Why `_HOST` and `_MOUNT`?** The pair maps a single Docker volume for the entire Opentrons App data directory: `HOST` is the path on your machine, `MOUNT` is the path inside the container. Labware and protocol subdirectories are auto-derived from this root. On WSL they are typically identical, but separating them allows different host OS configurations (e.g., native Linux) while the container always sees the expected path.
 
 Start the application:
 
@@ -79,7 +77,7 @@ The MCP server exposes the full protocol workflow through AI-native tools.
       "command": "uv",
       "args": ["--directory", "/path/to/OT2_CherryPick", "run", "--no-sync", "ot2-mcp-server"],
       "env": {
-        "LABWARE_PATH": "/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons/labware"
+        "OPENTRONS_DIR": "/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons"
       }
     }
   }
@@ -98,7 +96,7 @@ The MCP server exposes the full protocol workflow through AI-native tools.
       "command": "uv",
       "args": ["--directory", "/path/to/OT2_CherryPick", "run", "ot2-mcp-server"],
       "env": {
-        "LABWARE_PATH": "/path/to/opentrons/labware",
+        "OPENTRONS_DIR": "/path/to/Opentrons",
         "OT2_PROJECT_DIR": "/path/to/your/project"
       }
     }
@@ -109,7 +107,7 @@ The MCP server exposes the full protocol workflow through AI-native tools.
 </details>
 
 **Environment variables:**
-- `LABWARE_PATH` (required) -- Path to custom labware JSON files for simulation
+- `OPENTRONS_DIR` (required) -- Root Opentrons App data directory; labware and protocol subdirectories are auto-derived
 - `OT2_PROJECT_DIR` (optional) -- Persistent workspace directory
 
 ## How It Works
@@ -150,7 +148,7 @@ The generated protocol embeds all configuration as JSON, requiring no external f
 | No tips available | Add tip racks or check `connection` field |
 | Multi mode incompatible | Multi mode requires 96 or 384-well plates |
 | Volume warnings | Check pipette `volume_range` in labware_dict.toml |
-| Both height columns set | Use EITHER `Height` OR `Top` per source/dest, not both |
+| Both height columns set | Use EITHER `Bottom` OR `Top` per source/dest, not both |
 
 ## Citation
 
