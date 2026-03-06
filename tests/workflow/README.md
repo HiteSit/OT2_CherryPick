@@ -220,13 +220,13 @@ Available marks for organization:
 ## Troubleshooting
 
 ### Tests hanging or taking too long
-- Check LABWARE_PATH is correctly configured
+- Check OPENTRONS_DIR is correctly configured
 - Run with shorter timeout: `pytest --timeout=60`
 - Check for network issues if simulating remotely
 
 ### "Labware not found" errors
-- Ensure LABWARE_PATH points to Opentrons labware definitions
-- Verify custom labware files exist: `ls $LABWARE_PATH/*.json`
+- Ensure OPENTRONS_DIR points to the Opentrons App directory (labware subdir is auto-derived)
+- Verify custom labware files exist: `ls $OPENTRONS_DIR/labware/*.json`
 - Check simulate_protocol.sh for LABWARE_PATH_WIN configuration
 
 ### Baseline tests failing
