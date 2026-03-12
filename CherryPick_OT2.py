@@ -853,11 +853,6 @@ def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liqu
     # ========== Tip management =====
     tip_action = determine_tip_action(transfer, row_index)
 
-    # Auto-convert 'keep' to 'drop' for multi_X1 mode (partial tip config doesn't support return_tip)
-    if mode == 'multi_X1' and tip_action == 'keep':
-        protocol.comment(f"Warning row {row_index+1}: Tip Action 'keep' not supported in multi_X1 mode. Auto-converting to 'drop'.")
-        tip_action = 'drop'
-
     # Ensure we have a tip for distribution
     if not pipette.has_tip:
         pipette.pick_up_tip()
@@ -1394,11 +1389,6 @@ def run(protocol: protocol_api.ProtocolContext):
 
         # Tip action - REQUIRED column in CSV
         tip_action = determine_tip_action(transfer, i)
-
-        # Auto-convert 'keep' to 'drop' for multi_X1 mode (partial tip config doesn't support return_tip)
-        if mode == 'multi_X1' and tip_action == 'keep':
-            protocol.comment(f"Warning row {i+1}: Tip Action 'keep' not supported in multi_X1 mode. Auto-converting to 'drop'.")
-            tip_action = 'drop'
 
         # Get pipette volume range for splitting algorithm
         min_vol, max_vol = pipette_config['volume_range']
