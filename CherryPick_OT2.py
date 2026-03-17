@@ -852,10 +852,8 @@ def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liqu
 
     # ========== Tip management =====
     tip_action = determine_tip_action(transfer, row_index)
-
-    # Ensure we have a tip for distribution
-    if not pipette.has_tip:
-        pipette.pick_up_tip()
+    action_taken, new_tip_picked = execute_tip_action(tip_action, pipette, protocol, f"Distribution {row_index+1}")
+    if new_tip_picked:
         tip_contacted = False
 
     # ========== Liquid contact (optional) =====
@@ -883,6 +881,9 @@ def perform_distribution(transfer, pipette, loaded_labware, pipette_config, liqu
         new_tip='never',  # We manage tips manually via tip_action
         carryover=True  # Enable multi-trip if volumes exceed capacity
     )
+
+    # distribute() aspirates/dispenses — tip has contacted liquid
+    tip_contacted = True
 
     # ========== Post-distribution tip management =====
     if tip_action == 'drop' and pipette.has_tip:
