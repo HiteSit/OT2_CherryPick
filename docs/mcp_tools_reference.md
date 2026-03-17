@@ -67,7 +67,7 @@ Update a single setting in settings.toml via dotted path or shorthand alias.
 
 **Examples:**
 ```
-ot2_update_settings(path="tip_reuse", value="never")
+ot2_update_settings(path="mode", value="multi_X1")
 ot2_update_settings(path="speed", value=200)
 ot2_update_settings(path="settings.liquid_handling.delays.post_aspirate", value=2)
 ```
@@ -226,7 +226,6 @@ These aliases can be used as the `path` parameter in `ot2_update_settings` inste
 
 | Alias | Full Path |
 |-------|-----------|
-| `tip_reuse` | `settings.general.tip_reuse` |
 | `mode` | `settings.general.mode` |
 | `speed` | `settings.general.head_speed.speed` |
 | `head_speed` | `settings.general.head_speed.speed` |

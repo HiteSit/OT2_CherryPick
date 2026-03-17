@@ -27,7 +27,6 @@ DEFAULT_SETTINGS_PATH = Path("settings.toml")
 # ---------------------------------------------------------------------------
 PATH_ALIASES: Dict[str, str] = {
     # General settings
-    "tip_reuse": "settings.general.tip_reuse",
     "mode": "settings.general.mode",
     "pipette_mode": "settings.general.mode",
     "speed": "settings.general.head_speed.speed",
@@ -66,7 +65,6 @@ PATH_ALIASES: Dict[str, str] = {
 
 # Valid values for common settings (used in error messages)
 VALID_VALUES: Dict[str, List[str]] = {
-    "settings.general.tip_reuse": ["always", "never", "per_source"],
     "settings.general.mode": ["single_X1", "multi_X1", "multi", "dual"],
     "settings.liquid_handling.mixing.location": ["destination", "source", "none"],
     "settings.liquid_handling.mixing.source_remixing": ["once", "always"],
@@ -289,9 +287,9 @@ def update_settings_value(
 ) -> Dict[str, object]:
     """Update a value within settings.toml using dotted-path access.
 
-    Supports shorthand aliases (e.g. ``"tip_reuse"`` resolves to
-    ``"settings.general.tip_reuse"``).  When an aliased path's leaf key
-    is missing from the TOML file the key is auto-created.
+    Supports shorthand aliases (e.g. ``"mode"`` resolves to
+    ``"settings.general.mode"``).  When an aliased path's leaf key is
+    missing from the TOML file the key is auto-created.
     """
 
     original_path = path
@@ -383,11 +381,10 @@ def register_config_tools(mcp: FastMCP) -> None:
         name="ot2_update_settings",
         description="""Update a single setting in settings.toml.
 
-WHEN TO USE: For individual parameter changes (tip reuse, speed, delay, etc.).
+WHEN TO USE: For individual parameter changes (mode, speed, delay, etc.).
 For bulk liquid-handling changes, prefer ot2_apply_liquid_preset instead.
 
 SHORTHAND ALIASES (use these instead of full dotted paths):
-- "tip_reuse" → settings.general.tip_reuse  (values: "always", "never", "per_source")
 - "mode" → settings.general.mode  (values: "single_X1", "multi_X1", "multi", "dual")
   "single_X1" = single-channel pipette
   "multi_X1" = 8-channel pipette picking up only ONE tip (single-tip precision)

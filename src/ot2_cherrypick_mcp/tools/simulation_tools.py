@@ -58,7 +58,7 @@ This is NOT labware_dict.toml - it's the Opentrons custom labware directory.
 COMMON ERRORS AND FIXES:
 - "Labware not found" → Check labware_id in labware_dict.toml matches Opentrons library names
 - "Slot conflict" → Ensure unique position_rack values in settings.toml working_plate array
-- "No tips available" → Add tip racks to deck or change tip_reuse to "always"
+- "No tips available" → Add tip racks to the deck layout in settings.toml
 - "Invalid well" → CSV references a well that doesn't exist on that labware type
 
 Check logs://last-simulation for detailed output after running.

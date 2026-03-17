@@ -415,7 +415,7 @@ ot2_update_settings(path="settings.liquid_handling.delays.post_aspirate", value=
 
 **Root Causes:**
 - External tip droplets not removed (no wicking)
-- Tip reuse strategy inappropriate for sample types
+- CSV Tip Action column not used to enforce tip changes at sample boundaries
 - Residual liquid from previous transfer
 
 **Solutions:**
@@ -426,13 +426,7 @@ ot2_update_settings(path="settings.liquid_handling.post_aspirate_wick.enabled", 
 ```
 *Effect: Removes external droplets that cause contamination*
 
-**Action 2:** Change tip reuse strategy
-```
-ot2_update_settings(path="settings.general.tip_reuse", value="never")
-```
-*Options: "always" (one tip entire protocol), "never" (new tip each transfer), "per_source" (new tip when source changes)*
-
-**Action 3:** Use CSV Tip Action column for boundaries
+**Action 2:** Use CSV Tip Action column for boundaries
 *Effect: Add "Tip Action" column - specify "new" at critical sample boundaries*
 
 ---

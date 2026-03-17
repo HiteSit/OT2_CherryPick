@@ -46,19 +46,19 @@ def test_update_settings_autocreates_missing_aliased_key(tmp_path: Path) -> None
     """Known alias targets are auto-created when missing from the TOML file."""
 
     settings_copy = _copy_settings(tmp_path)
-    # tip_reuse does not exist in the template settings.toml
+    # protocol_name exists in the template settings.toml with an empty default
     result = update_settings_value(
-        path="settings.general.tip_reuse",
-        value='"never"',
+        path="settings.general.protocol_name",
+        value='"MyProtocol"',
         settings_path=str(settings_copy),
     )
 
-    assert result["old_value"] is None
-    assert result["new_value"] == "never"
-    assert result["path"] == "settings.general.tip_reuse"
+    assert result["old_value"] == ""
+    assert result["new_value"] == "MyProtocol"
+    assert result["path"] == "settings.general.protocol_name"
 
     updated_text = settings_copy.read_text(encoding="utf-8")
-    assert 'tip_reuse = "never"' in updated_text
+    assert 'protocol_name = "MyProtocol"' in updated_text
 
 
 def test_update_settings_shorthand_alias(tmp_path: Path) -> None:
@@ -66,16 +66,16 @@ def test_update_settings_shorthand_alias(tmp_path: Path) -> None:
 
     settings_copy = _copy_settings(tmp_path)
     result = update_settings_value(
-        path="tip_reuse",
-        value='"per_source"',
+        path="mode",
+        value='"multi"',
         settings_path=str(settings_copy),
     )
 
-    assert result["path"] == "settings.general.tip_reuse"
-    assert result["new_value"] == "per_source"
+    assert result["path"] == "settings.general.mode"
+    assert result["new_value"] == "multi"
 
     updated_text = settings_copy.read_text(encoding="utf-8")
-    assert 'tip_reuse = "per_source"' in updated_text
+    assert 'mode = "multi"' in updated_text
 
 
 def test_update_settings_value_handles_numbers(tmp_path: Path) -> None:

@@ -74,12 +74,6 @@ DISTRIBUTION_VALIDATION_SCENARIOS: List[Tuple[str, str, str | None, str]] = [
 
 UPDATE_SETTINGS_SCENARIOS: List[Tuple[str, str, str, str]] = [
     (
-        "settings.general.tip_reuse",
-        "never",
-        'tip_reuse = "never"',
-        "Use the update_settings tool to set path 'settings.general.tip_reuse' to 'never'",
-    ),
-    (
         "settings.general.mode",
         "single_X1",
         'mode = "single_X1"',

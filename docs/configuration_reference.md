@@ -318,7 +318,7 @@ Choose **one** per source and **one** per destination. Using both Height and Top
 |--------|---------|-------------|
 | `Tip Action` | auto | Per-row override: `new` (pick up), `keep` (reuse), `drop` (return) |
 
-When omitted, tip behavior follows the global `tip_reuse` setting.
+When omitted, each row uses a new tip. Use the `Tip Action` column to override per-row behavior (e.g. `keep` to reuse a tip across consecutive rows).
 
 ### Distribution Columns
 

@@ -5,7 +5,6 @@
 #   - 384_pp_standard_100ul_2 (destination)
 
 [settings.general]
-tip_reuse = "never"
 mode = "multi_X1"
 starting_tip_well = "H1"
 

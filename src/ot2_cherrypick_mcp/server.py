@@ -32,7 +32,7 @@ TOOL SELECTION GUIDE - match user intent to the right tool:
 - "Set up for viscous/DMSO/glycerol" → ot2_apply_liquid_preset(preset_name="viscous")
 - "Set up for volatile/chloroform/hexane" → ot2_apply_liquid_preset(preset_name="slippery")
 - "Set up for water/PBS/buffers" → ot2_apply_liquid_preset(preset_name="standard")
-- "Change tip reuse/mode/speed/delay" → ot2_update_settings(path="tip_reuse", value="never")
+- "Change mode/speed/delay" → ot2_update_settings(path="mode", value="multi_X1")
 - "Run everything / generate and simulate" → ot2_full_workflow(csv_path="CSVs/file.csv")
 - "Just validate my config" → ot2_validate_configuration(csv_path="CSVs/file.csv")
 - "What settings exist?" → ot2_list_settings()
@@ -51,7 +51,7 @@ TOOL SELECTION GUIDE - match user intent to the right tool:
 - "Show official labware list" → ot2_manage_official_labware(action="list")
 
 SHORTHAND ALIASES for ot2_update_settings (use instead of full dotted paths):
-tip_reuse, mode, speed, head_speed, starting_tip, protocol_name,
+mode, speed, head_speed, starting_tip, protocol_name,
 pre_aspirate, pre_aspirate_volume, wick, wicking, delay, post_aspirate_delay,
 push_out, push_out_volume, mixing, mixing_location, mixing_reps, source_remixing
 
@@ -80,7 +80,7 @@ LIQUID PRESETS:
 TROUBLESHOOTING:
 - "Labware not found" → labware_id in labware_dict.toml must match Opentrons library
 - "Slot conflict" → unique position_rack values in working_plate array
-- "No tips" → add tip racks or set tip_reuse to "always"
+- "No tips" → add tip racks to the deck layout in settings.toml
 - "Multi mode incompatible" → multi mode requires 96/384-well plates only
 """
 
