@@ -76,6 +76,39 @@ class TestDistributionMode:
         result.assert_success()
 
 
+class TestDistributionTipActionNew:
+    """Regression test for Bug 1: Tip Action 'new' after 'keep' in distribution."""
+
+    def test_new_tip_after_keep_in_distribution_group(self, e2e_workspace_factory):
+        """
+        Bug 1 regression: distribution rows from the same source where the
+        second row requests Tip Action 'new' must not crash the simulation.
+
+        CSV layout (same source, different dest wells):
+        - Row 1: A1 → A1|A2|A3|A4  keep  (distribution, equal 50µL)
+        - Row 2: A1 → B1|B2|B3|B4  new   (same source, forces tip change)
+        """
+        workspace: E2EWorkspace = e2e_workspace_factory("multi")
+
+        csv_content = (
+            "Source Labware,Source Well,Distribution Volume (ul),"
+            "Dest Labware,Dest Well,Source Bottom,Dest Top,Distribution,Tip Action\n"
+            "tube_rack_96_1500ul_4,A1,50,"
+            "384_ppv_55ul_2,A1|A2|A3|A4,2,-5,equal,keep\n"
+            "tube_rack_96_1500ul_4,A1,50,"
+            "384_ppv_55ul_2,B1|B2|B3|B4,2,-5,equal,new"
+        )
+
+        csv_path = workspace.get_csv_path("regression_bug1_dist_new_tip.csv")
+        csv_path.write_text(csv_content, encoding="utf-8")
+
+        result = run_full_workflow(workspace, "regression_bug1_dist_new_tip.csv")
+
+        result.assert_success(
+            "Distribution with Tip Action 'new' after 'keep' from same source failed"
+        )
+
+
 class TestMixedModes:
     """Test mixed cherry-pick and distribution in same CSV."""
 
