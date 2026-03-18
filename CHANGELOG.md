@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-03-18
+
+### Fixed
+
+- Unified MCP setup instructions in README — Claude Code and Claude Desktop sections now show consistent env vars and path placeholders.
+
 ## [1.4.0] - 2026-03-18
 
 ### Added
@@ -156,7 +162,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.4...v1.4.0
 [1.3.4]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.3...v1.3.4
 [1.3.3]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.2...v1.3.3
