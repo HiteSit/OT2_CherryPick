@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-03-18
+
+### Changed
+
+- Updated Claude Code MCP setup instructions from `.mcp.json` config to `claude mcp add` CLI command with global `--scope user` install.
+
 ## [1.3.2] - 2026-03-17
 
 ### Fixed
@@ -137,7 +143,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.2...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.3...HEAD
+[1.3.3]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.2.1...v1.3.0
