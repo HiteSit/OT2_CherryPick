@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-03-18
+
+### Added
+
+- `ot2_batch_update_settings` MCP tool — apply multiple settings.toml changes in a single atomic write with one backup. Supports all shorthand aliases.
+- `ot2_insert_home_rows` MCP tool — insert HOME control rows into a CSV every N transfers to correct precision drift during long protocols. Automatically forces `Tip Action: new` after each HOME row (firmware requirement).
+
 ## [1.3.4] - 2026-03-18
 
 ### Fixed
@@ -149,7 +156,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.4...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.4...v1.4.0
 [1.3.4]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.3...v1.3.4
 [1.3.3]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.3.1...v1.3.2
