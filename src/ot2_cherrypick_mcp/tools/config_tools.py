@@ -329,6 +329,83 @@ def update_settings_value(
     }
 
 
+def batch_update_settings(
+    *,
+    updates: Sequence[Dict[str, str]],
+    settings_path: str | Path = DEFAULT_SETTINGS_PATH,
+) -> Dict[str, object]:
+    """Apply multiple setting changes in a single atomic write.
+
+    Each entry in *updates* must have ``"path"`` and ``"value"`` keys.
+    Shorthand aliases are resolved the same way as :func:`update_settings_value`.
+    """
+
+    handler = TomlHandler(settings_path)
+    document = handler.read_document()
+    results: List[Dict[str, object]] = []
+
+    for entry in updates:
+        raw_path = entry["path"]
+        raw_value = entry["value"]
+
+        original_path = raw_path
+        is_known = _is_known_path(raw_path)
+        resolved = _resolve_path_alias(raw_path)
+
+        if _is_working_plate_position(resolved):
+            sanitized = raw_value.strip()
+            if len(sanitized) >= 2 and sanitized[0] == sanitized[-1] and sanitized[0] in {'"', "'"}:
+                sanitized = sanitized[1:-1]
+            parsed_value: object = tomlkit.string(sanitized)
+        else:
+            parsed_value = _parse_value(raw_value)
+
+        tokens = handler._parse_path(resolved)
+        try:
+            old_item, new_item = handler._set_value(document, tokens, parsed_value)
+            old_value = old_item.unwrap() if hasattr(old_item, "unwrap") else old_item
+            new_value = new_item.unwrap() if hasattr(new_item, "unwrap") else new_item
+        except ConfigurationError:
+            if is_known:
+                # Auto-create missing leaf key (same logic as single update)
+                if len(tokens) < 2:
+                    raise ConfigurationError(f"Cannot auto-create root-level key '{resolved}'")
+                parent = handler._resolve_tokens(document, tokens[:-1])
+                leaf = tokens[-1]
+                new_item = parsed_value if isinstance(parsed_value, tomlkit.items.Item) else tomlkit.item(parsed_value)
+                try:
+                    parent[leaf] = new_item  # type: ignore[index]
+                except (TypeError, AttributeError) as exc:
+                    raise ConfigurationError(
+                        f"Cannot create key '{leaf}' in parent (not a table/dict)"
+                    ) from exc
+                old_value = None
+                new_value = parsed_value if not hasattr(parsed_value, "unwrap") else parsed_value.unwrap()
+            else:
+                raise ConfigurationError(
+                    _build_settings_error(
+                        f"Path '{original_path}' not found in settings.",
+                        original_path,
+                        settings_path,
+                    )
+                )
+
+        results.append({
+            "path": resolved,
+            "old_value": old_value,
+            "new_value": new_value,
+        })
+
+    handler.write_document(document)
+
+    return {
+        "settings_file": str(handler.path),
+        "updates": results,
+        "count": len(results),
+        "backup_file": str(handler.path.with_suffix(handler.path.suffix + ".backup")),
+    }
+
+
 def apply_liquid_preset(
     *,
     preset_name: str,
@@ -381,7 +458,8 @@ def register_config_tools(mcp: FastMCP) -> None:
         name="ot2_update_settings",
         description="""Update a single setting in settings.toml.
 
-WHEN TO USE: For individual parameter changes (mode, speed, delay, etc.).
+WHEN TO USE: For a SINGLE parameter change (mode, speed, delay, etc.).
+For MULTIPLE parameter changes in one request, use ot2_batch_update_settings instead.
 For bulk liquid-handling changes, prefer ot2_apply_liquid_preset instead.
 
 SHORTHAND ALIASES (use these instead of full dotted paths):
@@ -424,6 +502,60 @@ IF UNSURE about valid paths, call ot2_list_settings first.
         settings_path: str = str(DEFAULT_SETTINGS_PATH),
     ) -> Dict[str, object]:
         return update_settings_value(path=path, value=value, settings_path=settings_path)
+
+    @mcp.tool(
+        name="ot2_batch_update_settings",
+        description="""Update MULTIPLE settings in settings.toml in a single atomic operation.
+
+WHEN TO USE: When the user asks to change TWO OR MORE settings at once.
+For a single setting change, use ot2_update_settings instead.
+For liquid-type presets (viscous, slippery, standard), use ot2_apply_liquid_preset instead.
+
+INPUT FORMAT: Pass a JSON array of {"path": "...", "value": "..."} objects.
+All shorthand aliases from ot2_update_settings work here too.
+
+SHORTHAND ALIASES (same as ot2_update_settings):
+- "mode" → settings.general.mode  ("single_X1", "multi_X1", "multi", "dual")
+- "speed" / "head_speed" → settings.general.head_speed.speed  (100-600)
+- "starting_tip" → settings.general.starting_tip_well
+- "protocol_name" → settings.general.protocol_name
+- "pre_aspirate" → settings.liquid_handling.pre_aspirate_contact.enabled
+- "pre_aspirate_volume" → settings.liquid_handling.pre_aspirate_contact.aspirate_volume
+- "wick" / "wicking" → settings.liquid_handling.post_aspirate_wick.enabled
+- "delay" / "post_aspirate_delay" → settings.liquid_handling.delays.post_aspirate
+- "push_out" → settings.liquid_handling.push_out.enabled
+- "push_out_volume" → settings.liquid_handling.push_out.volume_ul
+- "mixing" → settings.liquid_handling.mixing.enabled
+- "mixing_location" → settings.liquid_handling.mixing.location
+- "mixing_reps" → settings.liquid_handling.mixing.repetitions
+- "source_remixing" → settings.liquid_handling.mixing.source_remixing
+
+EXAMPLE:
+ot2_batch_update_settings(updates=[
+  {"path": "mode", "value": "multi_X1"},
+  {"path": "speed", "value": "200"},
+  {"path": "push_out", "value": "true"},
+  {"path": "push_out_volume", "value": "5"}
+])
+
+VALUE FORMAT: Same as ot2_update_settings — booleans as "true"/"false",
+numbers as bare digits, strings as plain text.
+
+ATOMICITY: All changes are applied to a single TOML read/write cycle.
+If any path fails, no changes are written.
+""",
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False
+        }
+    )
+    def batch_update_settings_tool(
+        updates: List[Dict[str, str]],
+        settings_path: str = str(DEFAULT_SETTINGS_PATH),
+    ) -> Dict[str, object]:
+        return batch_update_settings(updates=updates, settings_path=settings_path)
 
     @mcp.tool(
         name="ot2_apply_liquid_preset",
