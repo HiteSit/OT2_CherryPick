@@ -68,7 +68,7 @@ Run the GUI backend and frontend separately, or use the MCP server for AI-assist
 The MCP server exposes the full protocol workflow through AI-native tools.
 
 <details>
-<summary><strong>Claude Code (global install)</strong></summary>
+<summary><strong>Claude Code</strong></summary>
 
 ```bash
 claude mcp add ot2-cherrypick \
@@ -78,12 +78,15 @@ claude mcp add ot2-cherrypick \
   -- uv --directory /path/to/OT2_CherryPick run ot2-mcp-server
 ```
 
-This registers the server globally (`--scope user`) so it is available in every project directory. To restrict it to a single project, use `--scope project` instead (writes to `.mcp.json`).
+`--scope user` registers the server globally (available in every project directory).
+Use `--scope project` instead to write to `.mcp.json` (shared via version control).
 
 </details>
 
 <details>
-<summary><strong>Claude Desktop (claude_desktop_config.json)</strong></summary>
+<summary><strong>Claude Desktop</strong></summary>
+
+Add to `claude_desktop_config.json`:
 
 ```json
 {
@@ -92,8 +95,7 @@ This registers the server globally (`--scope user`) so it is available in every 
       "command": "uv",
       "args": ["--directory", "/path/to/OT2_CherryPick", "run", "ot2-mcp-server"],
       "env": {
-        "OPENTRONS_DIR": "/path/to/Opentrons",
-        "OT2_PROJECT_DIR": "/path/to/your/project"
+        "OPENTRONS_DIR": "/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons"
       }
     }
   }
