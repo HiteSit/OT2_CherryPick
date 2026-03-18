@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
@@ -34,6 +36,7 @@ DEFAULT_CSV_DIR = Path("CSVs")
 __all__ = [
     "register_csv_tools",
     "generate_csv_template",
+    "insert_home_rows",
     "list_csv_files",
     "save_csv_content",
 ]
@@ -137,6 +140,84 @@ def save_csv_content(
     target_path.write_text(content + ("\n" if not content.endswith("\n") else ""), encoding="utf-8")
 
     return {"csv_file": str(target_path)}
+
+
+def insert_home_rows(
+    *,
+    csv_path: str | Path,
+    every_n_transfers: int,
+) -> Dict[str, object]:
+    """Insert HOME control rows into an existing CSV every *every_n_transfers* transfers.
+
+    HOME rows trigger ``protocol.home()`` on the OT-2 to correct precision
+    drift during long runs.  The firmware requires a fresh tip after homing,
+    so any transfer row immediately following an inserted HOME row has its
+    ``Tip Action`` forced to ``new``.
+
+    Existing HOME rows in the CSV are counted but **not** duplicated.
+    """
+
+    if every_n_transfers <= 0:
+        raise ConfigurationError("every_n_transfers must be a positive integer")
+
+    resolved = resolve_project_path(csv_path)
+    if not resolved.exists():
+        raise ConfigurationError(f"CSV file not found: {resolved}")
+
+    text = resolved.read_text(encoding="utf-8")
+    reader = csv.DictReader(io.StringIO(text))
+    if reader.fieldnames is None:
+        raise ConfigurationError("CSV file has no header row")
+
+    headers = list(reader.fieldnames)
+    rows: list[dict[str, str]] = list(reader)
+
+    def _is_home(row: dict[str, str]) -> bool:
+        values = [v.strip().upper() for v in row.values() if v and v.strip()]
+        return bool(values) and all(v == "HOME" for v in values)
+
+    home_row = {col: "HOME" for col in headers}
+
+    output: list[dict[str, str]] = []
+    transfer_count = 0
+    homes_inserted = 0
+    tip_actions_forced: list[int] = []
+
+    for row in rows:
+        if _is_home(row):
+            # Keep existing HOME rows; reset counter
+            output.append(row)
+            transfer_count = 0
+            continue
+
+        transfer_count += 1
+
+        if transfer_count > every_n_transfers:
+            output.append(home_row.copy())
+            homes_inserted += 1
+            transfer_count = 1  # current row is the first after HOME
+
+            # Force Tip Action: new on this row
+            if "Tip Action" in row and row.get("Tip Action", "").strip().lower() != "new":
+                tip_actions_forced.append(len(output) + 1)  # 1-based CSV row number (header=1)
+                row = {**row, "Tip Action": "new"}
+
+        output.append(row)
+
+    # Write back
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=headers, lineterminator="\n")
+    writer.writeheader()
+    writer.writerows(output)
+    resolved.write_text(buf.getvalue(), encoding="utf-8")
+
+    return {
+        "csv_file": str(resolved),
+        "original_transfer_rows": len(rows),
+        "home_rows_inserted": homes_inserted,
+        "tip_actions_forced_to_new": tip_actions_forced,
+        "total_rows_now": len(output),
+    }
 
 
 def register_csv_tools(mcp: FastMCP) -> None:
@@ -255,6 +336,49 @@ Returns a list of file paths that can be passed to csv_path parameters.
             "count": len(files),
             "message": f"Found {len(files)} CSV file(s)." if files else "No CSV files found. Use ot2_generate_csv_template or ot2_upload_csv_content to create one.",
         }
+
+    @mcp.tool(
+        name="ot2_insert_home_rows",
+        description="""Insert HOME control rows into a CSV to re-home the robot periodically.
+
+WHEN TO USE: When the user wants to correct precision drift during long protocols
+by re-homing the robot every N transfers. Common phrases:
+- "home every 20 transfers"
+- "add homing rows to my CSV"
+- "re-home the robot periodically"
+
+WHAT IT DOES:
+1. Reads an existing CSV file
+2. Inserts a HOME row (all columns = "HOME") every N transfer rows
+3. Forces Tip Action: new on rows immediately after each HOME (firmware requirement)
+4. Preserves existing HOME rows without duplication
+5. Writes the modified CSV back to disk
+
+EXAMPLE:
+ot2_insert_home_rows(csv_path="CSVs/cherry_pick.csv", every_n_transfers=20)
+
+CONSTRAINTS:
+- The row after HOME MUST pick up a new tip (firmware requirement).
+  This tool automatically sets Tip Action: new on those rows.
+- Existing HOME rows in the CSV reset the counter but are not duplicated.
+
+AFTER USING: Run ot2_validate_configuration or ot2_full_workflow to verify the CSV.
+""",
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False
+        }
+    )
+    def insert_home_rows_tool(
+        csv_path: str,
+        every_n_transfers: int,
+    ) -> Dict[str, object]:
+        return insert_home_rows(
+            csv_path=csv_path,
+            every_n_transfers=every_n_transfers,
+        )
 
 
 def _build_rows(
