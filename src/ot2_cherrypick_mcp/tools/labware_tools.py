@@ -340,9 +340,8 @@ Custom labware takes priority over official labware when IDs collide.
 
 PARAMETERS:
 - custom_labware_path: Path to directory with custom labware JSON files.
-  Typically the Windows path converted to WSL format:
-  /mnt/c/Users/you/AppData/Roaming/Opentrons/labware
-  If omitted, only the official list is returned.
+  If omitted, auto-derived from OPENTRONS_DIR env var ({OPENTRONS_DIR}/labware).
+  Only pass this if you need to override the default.
 - official_list_path: Path to opentrons_labware_official.txt (auto-resolved from project dir).
 
 RETURNS: List of labware items with fields:
