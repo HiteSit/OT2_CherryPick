@@ -107,7 +107,17 @@ class TomlHandler:
 
         tokens = self._parse_path(dotted_path)
         document = self.read_document()
-        array = self._resolve_tokens(document, tokens)
+
+        try:
+            array = self._resolve_tokens(document, tokens)
+        except ConfigurationError:
+            # Array was removed (e.g., after clear_array emptied it).
+            # Recreate the key as an array-of-tables in the parent.
+            parent_tokens, final_key = tokens[:-1], tokens[-1]
+            parent = self._resolve_tokens(document, parent_tokens) if parent_tokens else document
+            aot = tomlkit.aot()
+            parent[final_key] = aot  # type: ignore[index]
+            array = aot
 
         if not isinstance(array, list):
             raise ConfigurationError(f"Target path '{dotted_path}' is not an array")
@@ -117,6 +127,50 @@ class TomlHandler:
 
         self.write_document(document)
         return _unwrap(item)
+
+    def remove_array_item(self, dotted_path: str, index: int) -> object:
+        """Remove an item from a TOML array of tables by index.
+
+        Returns the removed item (unwrapped to a plain dict).
+        """
+        tokens = self._parse_path(dotted_path)
+        document = self.read_document()
+        array = self._resolve_tokens(document, tokens)
+
+        if not isinstance(array, list):
+            raise ConfigurationError(f"Target path '{dotted_path}' is not an array")
+
+        if index < 0 or index >= len(array):
+            raise ConfigurationError(
+                f"Index {index} out of range for '{dotted_path}' (length {len(array)})"
+            )
+
+        removed = array.pop(index)
+        self.write_document(document)
+        return _unwrap(removed)
+
+    def clear_array(self, dotted_path: str) -> int:
+        """Remove ALL items from a TOML array of tables.
+
+        Returns the number of items removed.
+        """
+        tokens = self._parse_path(dotted_path)
+        document = self.read_document()
+
+        try:
+            array = self._resolve_tokens(document, tokens)
+        except ConfigurationError:
+            # Array key doesn't exist (already cleared) — nothing to do
+            return 0
+
+        if not isinstance(array, list):
+            raise ConfigurationError(f"Target path '{dotted_path}' is not an array")
+
+        count = len(array)
+        if count > 0:
+            del array[:]
+            self.write_document(document)
+        return count
 
     def _set_value(self, document: TOMLDocument, tokens: Sequence[_Token], value: object) -> Tuple[Item, Item]:
         parent, final_token = self._resolve_parent(document, tokens)
