@@ -1696,7 +1696,7 @@ wheels = [
 
 [[package]]
 name = "ot2-cherrypick"
-version = "1.3.4"
+version = "1.4.1"
 source = { editable = "." }
 dependencies = [
     { name = "datamol" },
