@@ -26,11 +26,13 @@ SYNCABLE_FILES: tuple[str, ...] = (
     "settings.toml",
     "labware_dict.toml",
     "CherryPick_OT2.py",
-    "offset_database.toml",
     "shell_settings.json",
     "opentrons_labware_official.txt",
     "CSVs",
 )
+# NOTE: offset_database.toml is intentionally EXCLUDED from sync.
+# It contains per-slot calibration offsets that may differ between
+# MCP workspace and GUI, and should never be overwritten.
 
 _WINDOWS_ABS_PATH = re.compile(r"^[A-Za-z]:\\")
 
@@ -268,8 +270,9 @@ def register_gui_sync_tools(mcp: FastMCP) -> None:
             "BEHAVIOR: One-way push (MCP → GUI). GUI-only files are preserved.\n"
             "FILES SYNCED (by default all that exist):\n"
             "- settings.toml, labware_dict.toml, CherryPick_OT2.py\n"
-            "- offset_database.toml, shell_settings.json, opentrons_labware_official.txt\n"
-            "- CSVs/ directory (additive — GUI-only CSVs are preserved)\n\n"
+            "- shell_settings.json, opentrons_labware_official.txt\n"
+            "- CSVs/ directory (additive — GUI-only CSVs are preserved)\n"
+            "NOT SYNCED: offset_database.toml (calibration data — never overwritten).\n\n"
             'OPTIONAL: Pass files=["settings.toml", "CSVs"] to sync only specific items.'
         ),
         annotations={
