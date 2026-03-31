@@ -332,20 +332,22 @@ Determine offsets via "Labware Position Check" in Opentrons App.
 
     @mcp.tool(
         name="ot2_scan_available_labware",
-        description="""List all labware available for use in settings.toml.
+        description="""List all labware available for use in deck layout setup.
 
-WHEN TO USE: Before configuring deck layout to discover valid labware_id values.
+WHEN TO USE: At the start of a new experiment to show the user what labware they can add.
+Present CUSTOM labware as a table (labware_id, display_name, category, well_count).
+Do NOT display the full official list unless the user explicitly asks — it is very large.
+
 Returns merged list of custom labware (from JSON files) and official Opentrons labware.
 Custom labware takes priority over official labware when IDs collide.
 
 PARAMETERS:
 - custom_labware_path: Path to directory with custom labware JSON files.
   If omitted, auto-derived from OPENTRONS_DIR env var ({OPENTRONS_DIR}/labware).
-  Only pass this if you need to override the default.
 - official_list_path: Path to opentrons_labware_official.txt (auto-resolved from project dir).
 
 RETURNS: List of labware items with fields:
-  - labware_id: Use this value in settings.toml working_plate[].labware_id
+  - labware_id: Use this value in ot2_add_deck_entry(labware_id=...)
   - display_name: Human-readable name
   - display_category: plate, tubeRack, reservoir, etc.
   - well_count: Number of wells (null for official list entries)

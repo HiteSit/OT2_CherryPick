@@ -362,7 +362,9 @@ def register_project_tools(mcp: FastMCP) -> None:
             "Provide an absolute path. The directory is created if it does not "
             "exist. By default, template files are copied into the new directory. "
             "The previous project is saved to the recent-projects history. "
-            "Use ot2_list_projects() to see history and discover projects."
+            "Use ot2_list_projects() to see history and discover projects. "
+            "After switching, proactively show available custom labware "
+            "(ot2_scan_available_labware) so the user can set up the deck."
         ),
         annotations={
             "readOnlyHint": False,

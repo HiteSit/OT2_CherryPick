@@ -33,7 +33,7 @@ TOOL SELECTION GUIDE - match user intent to the right tool:
 - "Set up for volatile/chloroform/hexane" → ot2_apply_liquid_preset(preset_name="slippery")
 - "Set up for water/PBS/buffers" → ot2_apply_liquid_preset(preset_name="standard")
 - "Change mode/speed/delay" → ot2_update_settings(path="mode", value="multi_X1")
-- "Change mode AND speed AND delay" → ot2_batch_update_settings(updates=[{"path":"mode","value":"multi_X1"},{"path":"speed","value":"200"}])
+- "Change mode AND speed AND delay" → ot2_batch_update_settings(updates=[...])
 - "Run everything / generate and simulate" → ot2_full_workflow(csv_path="CSVs/file.csv")
 - "Just validate my config" → ot2_validate_configuration(csv_path="CSVs/file.csv")
 - "What settings exist?" → ot2_list_settings()
@@ -41,30 +41,51 @@ TOOL SELECTION GUIDE - match user intent to the right tool:
 - "Create a CSV template" → ot2_generate_csv_template(...)
 - "I have CSV data as text" → ot2_upload_csv_content(csv_content="...", filename="...")
 - "Home every N transfers" → ot2_insert_home_rows(csv_path="CSVs/file.csv", every_n_transfers=20)
-- "Use 8-channel with single tip" → ot2_update_settings(path="mode", value="multi_X1")
-- "Configure for cell suspensions" → ot2_update_settings(path="mixing_location", value="source")
-- "Make robot move slower" → ot2_update_settings(path="speed", value="200")
+- "What labware is available?" → ot2_scan_available_labware() (show custom labware as table)
+- "Add labware to deck" → ot2_add_deck_entry(entry_type="reservoir", labware_id="...", position_rack="...")
+- "Remove slot from deck" → ot2_remove_deck_entry(position_rack="4")
+- "Clear the whole deck" → ot2_clear_deck()
+- "What offsets are set?" → ot2_list_labware_offsets()
+- "Set Opentrons App path" → ot2_create_shell_settings(opentrons_dir_win="C:\\Users\\...\\Opentrons")
+- "Push config to GUI / sync to GUI" → ot2_sync_to_gui()
 - "Switch to a different project" → ot2_set_project_directory(path="/abs/path")
 - "What projects have I used?" → ot2_list_projects()
-- "What offsets are set?" → ot2_list_labware_offsets()
-- "Get offset for labware X in slot Y" → ot2_get_labware_offset(labware_id="...", position_rack="...")
-- "Delete offset for labware X slot Y" → ot2_delete_labware_offset(labware_id="...", position_rack="...")
-- "Add labware to official list" → ot2_manage_official_labware(action="add", labware_id="...")
-- "Show official labware list" → ot2_manage_official_labware(action="list")
 
 SHORTHAND ALIASES for ot2_update_settings (use instead of full dotted paths):
 mode, speed, head_speed, starting_tip, protocol_name,
 pre_aspirate, pre_aspirate_volume, wick, wicking, delay, post_aspirate_delay,
 push_out, push_out_volume, mixing, mixing_location, mixing_reps, source_remixing
 
-STANDARD WORKFLOW:
-1. Configure: ot2_apply_liquid_preset or ot2_update_settings
-2. Create CSV: ot2_generate_csv_template or ot2_upload_csv_content
-3. Run pipeline: ot2_full_workflow(csv_path="CSVs/file.csv")
+NEW EXPERIMENT SETUP (follow this order):
+1. Set project directory (ot2_set_project_directory or use default)
+2. Show available custom labware as a table:
+   Call ot2_scan_available_labware → present ONLY custom-source entries to user.
+   Do NOT show the full official Opentrons list (too large). Mention it exists if asked.
+3. User picks labware → call ot2_add_deck_entry for each item:
+   - First add auto-clears the template default deck. This is automatic.
+   - Always include a tip rack matching the selected mode (connection + mode fields).
+   - Validate: at least one source/destination + one tip rack before proceeding.
+4. Configure settings: mode, liquid handling preset, speed, etc.
+   (ot2_update_settings / ot2_batch_update_settings / ot2_apply_liquid_preset)
+5. Create CSV referencing deck labware:
+   (ot2_upload_csv_content or ot2_generate_csv_template)
+   CSV labware names = labware_id + "_" + position_rack (e.g. "tube_rack_96_1500ul_4")
+6. User chooses what to do next — NEVER auto-chain, always wait for explicit request:
+   a. "Deploy to Opentrons" → ot2_full_workflow(csv_path="CSVs/file.csv", deploy=True)
+   b. "Send to GUI" → ot2_sync_to_gui
+      (If shell_settings.json is missing, ask user for Opentrons path first
+       via ot2_create_shell_settings, then retry sync)
+   c. Both → only if user explicitly says so
 
 WORKSPACE: Templates auto-copy on first access. initialize_project() is OPTIONAL.
 With OT2_PROJECT_DIR: persistent. Without: temporary (use export_project_archive before session ends).
 Use ot2_set_project_directory to switch between projects at runtime.
+
+GUI BRIDGE (Docker) — only when user explicitly requests:
+- ot2_create_shell_settings: Save Opentrons App Windows path to shell_settings.json
+- ot2_sync_to_gui: Push project files into the running Docker GUI container
+- These are independent actions. Do NOT chain them automatically with other tools.
+- Requires ot2-cherrypick-backend container running. Will NOT auto-start Docker.
 
 KEY RESOURCES:
 - config://settings - TOML configuration
@@ -79,10 +100,19 @@ LIQUID PRESETS:
 - "viscous" → DMSO, glycerol, oils, PEG (delays + push-out + wick)
 - "slippery" → chloroform, hexane, acetone, ethanol (pre-wet + slow speed)
 
+MULTI MODE CSV WELL RULES (critical for correct CSV generation):
+- Each CSV row = 8 simultaneous transfers (entire column). Only 96/384-well plates allowed.
+- 96-well plates: Use A-row wells only (A1, A2, A3...). A1 = full column 1 (A1-H1).
+- 384-well plates: Use A-row OR B-row wells only.
+  A1 = odd rows of column 1 (A1,C1,E1,G1,I1,K1,M1,O1)
+  B1 = even rows of column 1 (B1,D1,F1,H1,J1,L1,N1,P1)
+- Reservoirs (1/2/8/12 wells): Use A-row wells (A1, A2...).
+- NEVER use other row letters (C1, D1, etc.) in multi mode CSVs.
+
 TROUBLESHOOTING:
 - "Labware not found" → labware_id in labware_dict.toml must match Opentrons library
 - "Slot conflict" → unique position_rack values in working_plate array
-- "No tips" → add tip racks to the deck layout in settings.toml
+- "No tips" → add tip racks to the deck layout via ot2_add_deck_entry
 - "Multi mode incompatible" → multi mode requires 96/384-well plates only
 """
 

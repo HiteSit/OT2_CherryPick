@@ -239,6 +239,15 @@ HEIGHT COLUMNS: Use EITHER Height (mm from bottom) OR Top (mm from rim) - never 
   - source_height: mm from well bottom (e.g., 2.0)
   - dest_top: mm from well rim, negative goes down (e.g., -3.0)
 
+MULTI MODE WELL RULES (when settings.general.mode = "multi"):
+- Each row = 8 simultaneous transfers (full column). Only 96/384-well plates allowed.
+- 96-well: Use A-row wells only (A1, A2...). A1 = column 1 (A1-H1).
+- 384-well: Use A-row or B-row only.
+  A1 = odd rows (A1,C1,E1,G1,I1,K1,M1,O1)
+  B1 = even rows (B1,D1,F1,H1,J1,L1,N1,P1)
+- Reservoirs: Use A-row wells (A1, A2...).
+- NEVER use C/D/E/etc. row letters in multi mode.
+
 EXAMPLE:
 ot2_generate_csv_template(
     filename="cherry_pick.csv", transfers=96,
@@ -289,6 +298,15 @@ OPTIONAL COLUMNS: Source Bottom, Source Top, Dest Bottom, Dest Top, Mix Volume, 
 Flow Aspirate, Flow Dispense, Air Gap, Air Gap Rate
 
 After saving, use the file with ot2_generate_protocol(csv_path="CSVs/filename.csv").
+
+MULTI MODE WELL RULES (when settings.general.mode = "multi"):
+- Each row = 8 simultaneous transfers (full column). Only 96/384-well plates allowed.
+- 96-well: Use A-row wells only (A1, A2...). A1 = column 1 (A1-H1).
+- 384-well: Use A-row or B-row only.
+  A1 = odd rows (A1,C1,E1,G1,I1,K1,M1,O1)
+  B1 = even rows (B1,D1,F1,H1,J1,L1,N1,P1)
+- Reservoirs: Use A-row wells (A1, A2...).
+- NEVER use C/D/E/etc. row letters in multi mode.
 
 EXAMPLE:
 ot2_upload_csv_content(
