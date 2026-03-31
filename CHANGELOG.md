@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-03-31
+
+### Fixed
+
+- Excluded `offset_database.toml` from `ot2_sync_to_gui` — calibration offsets should never be overwritten during MCP-to-GUI sync.
+
 ## [1.5.0] - 2026-03-31
 
 ### Added
