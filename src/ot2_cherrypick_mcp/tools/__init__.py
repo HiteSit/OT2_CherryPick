@@ -5,6 +5,7 @@ from fastmcp import FastMCP
 from .config_tools import register_config_tools
 from .csv_tools import register_csv_tools
 from .deployment_tools import register_deployment_tools
+from .gui_sync_tools import register_gui_sync_tools
 from .labware_tools import register_labware_tools
 from .project_tools import register_project_tools
 from .protocol_tools import register_protocol_tools
@@ -20,6 +21,7 @@ __all__ = [
     "register_labware_tools",
     "register_csv_tools",
     "register_deployment_tools",
+    "register_gui_sync_tools",
     "register_simulation_tools",
     "register_validation_tools",
     "register_workflow_tools",
@@ -38,3 +40,4 @@ def register_tools(mcp: FastMCP) -> None:
     register_simulation_tools(mcp)
     register_validation_tools(mcp)
     register_workflow_tools(mcp)
+    register_gui_sync_tools(mcp)

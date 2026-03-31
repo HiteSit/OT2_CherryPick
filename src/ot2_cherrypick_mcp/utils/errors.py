@@ -23,3 +23,7 @@ class SimulationError(MCPServerError):
 
 class DeploymentError(MCPServerError):
     """Raised when protocol deployment fails."""
+
+
+class SyncError(MCPServerError):
+    """Raised when GUI sync or Docker interaction fails."""
