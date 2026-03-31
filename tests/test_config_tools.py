@@ -6,10 +6,19 @@ from pathlib import Path
 
 import pytest
 
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib  # type: ignore[no-redef]
+
 from ot2_cherrypick_mcp.tools.config_tools import (
+    _is_default_deck,
+    add_deck_entry,
     apply_liquid_preset,
     batch_update_settings,
+    clear_deck,
     list_settings_values,
+    remove_deck_entry,
     update_settings_value,
 )
 from ot2_cherrypick_mcp.utils.errors import ConfigurationError
@@ -249,3 +258,146 @@ def test_apply_liquid_preset_missing_name_errors(tmp_path: Path) -> None:
             preset_name="does_not_exist",
             settings_path=str(settings_copy),
         )
+
+
+# ── Deck manipulation tests ─────────────────────────────────────────────
+
+
+def test_add_deck_entry_basic(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    result = add_deck_entry(
+        entry_type="reservoir",
+        labware_id="my_plate_96",
+        position_rack="6",
+        settings_path=str(settings),
+    )
+    assert result["status"] == "success"
+    assert result["added"]["labware_id"] == "my_plate_96"
+    with open(settings, "rb") as f:
+        doc = tomllib.load(f)
+    slots = [p["position_rack"] for p in doc["settings"]["working_plate"]]
+    assert "6" in slots
+
+
+def test_add_deck_entry_auto_clears_default(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    with open(settings, "rb") as f:
+        before = tomllib.load(f)
+    assert len(before["settings"]["working_plate"]) == 7
+
+    result = add_deck_entry(
+        entry_type="reservoir",
+        labware_id="my_plate_96",
+        position_rack="2",
+        settings_path=str(settings),
+    )
+    assert result["auto_cleared_default"] is True
+
+    with open(settings, "rb") as f:
+        after = tomllib.load(f)
+    assert len(after["settings"]["working_plate"]) == 1
+    assert after["settings"]["working_plate"][0]["labware_id"] == "my_plate_96"
+
+
+def test_add_deck_entry_no_auto_clear_after_first_edit(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    add_deck_entry(
+        entry_type="reservoir", labware_id="plate_a", position_rack="2",
+        settings_path=str(settings),
+    )
+    result = add_deck_entry(
+        entry_type="tip", labware_id="tiprack_300", position_rack="1",
+        connection="Pipette_8", mode="multi_X1",
+        settings_path=str(settings),
+    )
+    assert result["auto_cleared_default"] is False
+    with open(settings, "rb") as f:
+        doc = tomllib.load(f)
+    assert len(doc["settings"]["working_plate"]) == 2
+
+
+def test_add_deck_entry_rejects_occupied_slot(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    add_deck_entry(
+        entry_type="reservoir", labware_id="plate_a", position_rack="2",
+        settings_path=str(settings),
+    )
+    with pytest.raises(ConfigurationError, match="already occupied"):
+        add_deck_entry(
+            entry_type="reservoir", labware_id="plate_b", position_rack="2",
+            settings_path=str(settings),
+        )
+
+
+def test_add_deck_entry_tip_fields(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    add_deck_entry(
+        entry_type="tip", labware_id="tiprack_300", position_rack="1",
+        connection="Pipette_8", mode="multi",
+        settings_path=str(settings),
+    )
+    with open(settings, "rb") as f:
+        doc = tomllib.load(f)
+    tip_entry = doc["settings"]["working_plate"][-1]
+    assert tip_entry["connection"] == "Pipette_8"
+    assert tip_entry["mode"] == "multi"
+
+
+def test_add_deck_entry_offset_fields(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    add_deck_entry(
+        entry_type="reservoir", labware_id="plate_a", position_rack="2",
+        offset_x=-0.5, offset_y=0.8, offset_z=-0.3,
+        settings_path=str(settings),
+    )
+    with open(settings, "rb") as f:
+        doc = tomllib.load(f)
+    entry = doc["settings"]["working_plate"][-1]
+    assert entry["offset_x"] == -0.5
+    assert entry["offset_y"] == 0.8
+    assert entry["offset_z"] == -0.3
+
+
+def test_remove_deck_entry_by_slot(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    result = remove_deck_entry(position_rack="2", settings_path=str(settings))
+    assert result["status"] == "success"
+    assert result["removed"]["labware_id"] == "384_ppv_55ul"
+    with open(settings, "rb") as f:
+        doc = tomllib.load(f)
+    slots = [p["position_rack"] for p in doc["settings"]["working_plate"]]
+    assert "2" not in slots
+
+
+def test_remove_deck_entry_missing_slot(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    with pytest.raises(ConfigurationError, match="No working_plate entry"):
+        remove_deck_entry(position_rack="99", settings_path=str(settings))
+
+
+def test_clear_deck(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    result = clear_deck(settings_path=str(settings))
+    assert result["entries_removed"] == 7
+    with open(settings, "rb") as f:
+        doc = tomllib.load(f)
+    # tomlkit removes the key entirely when array is emptied
+    assert doc["settings"].get("working_plate", []) == []
+
+
+def test_clear_deck_already_empty(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    clear_deck(settings_path=str(settings))
+    result = clear_deck(settings_path=str(settings))
+    assert result["entries_removed"] == 0
+
+
+def test_is_default_deck_true_on_template(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    assert _is_default_deck(settings) is True
+
+
+def test_is_default_deck_false_after_edit(tmp_path: Path) -> None:
+    settings = _copy_settings(tmp_path)
+    remove_deck_entry(position_rack="2", settings_path=str(settings))
+    assert _is_default_deck(settings) is False

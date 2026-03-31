@@ -16,7 +16,7 @@ except ModuleNotFoundError:  # pragma: no cover - Python <3.11 fallback
     import tomli as tomllib  # type: ignore[no-redef]
 
 from ..utils.errors import ConfigurationError
-from ..utils.paths import resolve_project_path
+from ..utils.paths import get_repo_root, resolve_project_path
 from ..utils.toml import TomlHandler
 
 DEFAULT_SETTINGS_PATH = Path("settings.toml")
@@ -75,6 +75,9 @@ __all__ = [
     "update_settings_value",
     "apply_liquid_preset",
     "list_settings_values",
+    "add_deck_entry",
+    "remove_deck_entry",
+    "clear_deck",
     "PATH_ALIASES",
     "VALID_VALUES",
 ]
@@ -451,6 +454,165 @@ def apply_liquid_preset(
     }
 
 
+# ---------------------------------------------------------------------------
+# Default deck detection
+# ---------------------------------------------------------------------------
+
+
+def _is_default_deck(settings_path: Path) -> bool:
+    """Return True if the current deck layout matches the repo-root template."""
+    repo_root_settings = get_repo_root() / "settings.toml"
+
+    if settings_path.resolve() == repo_root_settings.resolve():
+        return True
+
+    try:
+        with open(repo_root_settings, "rb") as f:
+            template_doc = tomllib.load(f)
+        with open(settings_path, "rb") as f:
+            current_doc = tomllib.load(f)
+    except (FileNotFoundError, tomllib.TOMLDecodeError):
+        return False
+
+    template_plates = template_doc.get("settings", {}).get("working_plate", [])
+    current_plates = current_doc.get("settings", {}).get("working_plate", [])
+
+    def _fingerprint(plates: list[dict[str, Any]]) -> frozenset[tuple[str, str, str]]:
+        return frozenset(
+            (p.get("type", ""), p.get("labware_id", ""), p.get("position_rack", ""))
+            for p in plates
+        )
+
+    return _fingerprint(current_plates) == _fingerprint(template_plates)
+
+
+# ---------------------------------------------------------------------------
+# Deck manipulation functions
+# ---------------------------------------------------------------------------
+
+
+def add_deck_entry(
+    *,
+    entry_type: str,
+    labware_id: str,
+    position_rack: str,
+    connection: str = "",
+    mode: str = "",
+    module_type: str = "",
+    adapter_id: str = "",
+    target_temperature: int = 0,
+    target_shake_speed: int = 0,
+    persist_after_protocol: bool = True,
+    offset_x: float | None = None,
+    offset_y: float | None = None,
+    offset_z: float | None = None,
+    settings_path: str | Path = DEFAULT_SETTINGS_PATH,
+) -> dict[str, object]:
+    """Add a working_plate entry to settings.toml.
+
+    If the current deck matches the repo-root template default,
+    ALL existing entries are cleared first (auto-clear on first edit).
+    """
+    resolved = resolve_project_path(settings_path)
+    handler = TomlHandler(resolved)
+
+    auto_cleared = False
+    if _is_default_deck(resolved):
+        handler.clear_array("settings.working_plate")
+        auto_cleared = True
+
+    doc = handler.read_document()
+    plates = doc.get("settings", {}).get("working_plate", [])
+    for existing in plates:
+        if str(existing.get("position_rack", "")) == str(position_rack):
+            raise ConfigurationError(
+                f"Slot {position_rack} is already occupied by "
+                f"'{existing.get('labware_id', '')}'. "
+                f"Remove it first with ot2_remove_deck_entry."
+            )
+
+    entry: dict[str, object] = {
+        "type": entry_type,
+        "labware_id": labware_id,
+        "position_rack": position_rack,
+    }
+
+    if entry_type == "tip":
+        if connection:
+            entry["connection"] = connection
+        if mode:
+            entry["mode"] = mode
+    elif entry_type == "module":
+        if module_type:
+            entry["module_type"] = module_type
+        if adapter_id:
+            entry["adapter_id"] = adapter_id
+        entry["target_temperature"] = target_temperature
+        entry["target_shake_speed"] = target_shake_speed
+        entry["persist_after_protocol"] = persist_after_protocol
+
+    if offset_x is not None:
+        entry["offset_x"] = offset_x
+    if offset_y is not None:
+        entry["offset_y"] = offset_y
+    if offset_z is not None:
+        entry["offset_z"] = offset_z
+
+    handler.append_array_item("settings.working_plate", entry)
+
+    result: dict[str, object] = {
+        "status": "success",
+        "added": entry,
+        "auto_cleared_default": auto_cleared,
+    }
+    if auto_cleared:
+        result["note"] = (
+            "Default template deck was automatically cleared before adding. "
+            "This happens once on the first deck edit for a new project."
+        )
+    return result
+
+
+def remove_deck_entry(
+    *,
+    position_rack: str,
+    settings_path: str | Path = DEFAULT_SETTINGS_PATH,
+) -> dict[str, object]:
+    """Remove a working_plate entry by its deck slot number."""
+    resolved = resolve_project_path(settings_path)
+    handler = TomlHandler(resolved)
+    doc = handler.read_document()
+    plates = doc.get("settings", {}).get("working_plate", [])
+
+    for idx, entry in enumerate(plates):
+        if str(entry.get("position_rack", "")) == str(position_rack):
+            removed = handler.remove_array_item("settings.working_plate", idx)
+            return {
+                "status": "success",
+                "removed": removed,
+                "slot": position_rack,
+            }
+
+    raise ConfigurationError(
+        f"No working_plate entry found in slot {position_rack}. "
+        f"Use ot2_list_settings to see current deck layout."
+    )
+
+
+def clear_deck(
+    *,
+    settings_path: str | Path = DEFAULT_SETTINGS_PATH,
+) -> dict[str, object]:
+    """Remove ALL working_plate entries from settings.toml."""
+    resolved = resolve_project_path(settings_path)
+    handler = TomlHandler(resolved)
+    count = handler.clear_array("settings.working_plate")
+    return {
+        "status": "success",
+        "entries_removed": count,
+    }
+
+
 def register_config_tools(mcp: FastMCP) -> None:
     """Register configuration-oriented MCP tools."""
 
@@ -467,6 +629,7 @@ SHORTHAND ALIASES (use these instead of full dotted paths):
   "single_X1" = single-channel pipette
   "multi_X1" = 8-channel pipette picking up only ONE tip (single-tip precision)
   "multi" = 8-channel pipette using all 8 tips (full column transfers)
+    CSV wells: 96-well → A-row only (A1=col1). 384-well → A-row (odd rows) or B-row (even rows).
   "dual" = multi-pipette mode (requires Mode column in CSV)
 - "speed" or "head_speed" → settings.general.head_speed.speed  (100-600 mm/min)
 - "starting_tip" → settings.general.starting_tip_well  (e.g. "H1")
@@ -620,3 +783,118 @@ These paths can be passed directly to ot2_update_settings(path=...).
         settings_path: str = str(DEFAULT_SETTINGS_PATH),
     ) -> Dict[str, object]:
         return list_settings_values(settings_path=settings_path)
+
+    # -- Deck manipulation tools ------------------------------------------
+
+    @mcp.tool(
+        name="ot2_add_deck_entry",
+        description=(
+            "Add a labware or module to the OT-2 deck layout in settings.toml.\n\n"
+            "WHEN TO USE: When setting up the deck for a new experiment. Call once per labware item.\n"
+            "Always include tip rack(s) matching the selected mode.\n\n"
+            "AUTO-CLEAR BEHAVIOR: If the current deck is still the project template default\n"
+            "(heaterShaker + reservoirs + tip racks), ALL entries are cleared automatically\n"
+            "before the first add. This happens once — subsequent adds just append.\n\n"
+            "PARAMETERS:\n"
+            '- entry_type: "reservoir" (source/dest plates/racks), "tip" (tip racks), "module" (heaterShaker)\n'
+            "- labware_id: Must match a labware_id from ot2_scan_available_labware\n"
+            '- position_rack: Deck slot number as string ("1"-"11")\n'
+            '- connection: (tip racks only) "Pipette_8" or "Pipette_1"\n'
+            '- mode: (tip racks only) "multi", "multi_X1", or "single_X1"\n'
+            '- module_type: (modules only) "heaterShaker"\n'
+            "- adapter_id: (modules only) adapter labware id\n"
+            "- offset_x/y/z: Optional per-slot calibration offsets in mm\n\n"
+            "EXAMPLE:\n"
+            '  ot2_add_deck_entry(entry_type="reservoir", labware_id="tube_rack_96_1500ul", position_rack="4")\n'
+            '  ot2_add_deck_entry(entry_type="tip", labware_id="opentrons_96_tiprack_300ul",\n'
+            '    position_rack="1", connection="Pipette_8", mode="multi_X1")'
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+    )
+    def add_deck_entry_tool(
+        entry_type: str,
+        labware_id: str,
+        position_rack: str,
+        connection: str = "",
+        mode: str = "",
+        module_type: str = "",
+        adapter_id: str = "",
+        target_temperature: int = 0,
+        target_shake_speed: int = 0,
+        persist_after_protocol: bool = True,
+        offset_x: float | None = None,
+        offset_y: float | None = None,
+        offset_z: float | None = None,
+        settings_path: str = str(DEFAULT_SETTINGS_PATH),
+    ) -> dict[str, object]:
+        """Add a labware or module to the deck layout."""
+        return add_deck_entry(
+            entry_type=entry_type,
+            labware_id=labware_id,
+            position_rack=position_rack,
+            connection=connection,
+            mode=mode,
+            module_type=module_type,
+            adapter_id=adapter_id,
+            target_temperature=target_temperature,
+            target_shake_speed=target_shake_speed,
+            persist_after_protocol=persist_after_protocol,
+            offset_x=offset_x,
+            offset_y=offset_y,
+            offset_z=offset_z,
+            settings_path=settings_path,
+        )
+
+    @mcp.tool(
+        name="ot2_remove_deck_entry",
+        description=(
+            "Remove a labware or module from the OT-2 deck by slot number.\n\n"
+            "WHEN TO USE: To remove a specific item from the deck layout.\n"
+            "Identifies the entry by its position_rack (slot number).\n\n"
+            "PARAMETERS:\n"
+            '- position_rack: Deck slot number as string (e.g. "4", "10")\n\n'
+            "RETURNS: The removed entry details. Raises error if slot is empty."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+    )
+    def remove_deck_entry_tool(
+        position_rack: str,
+        settings_path: str = str(DEFAULT_SETTINGS_PATH),
+    ) -> dict[str, object]:
+        """Remove a deck entry by slot number."""
+        return remove_deck_entry(
+            position_rack=position_rack,
+            settings_path=settings_path,
+        )
+
+    @mcp.tool(
+        name="ot2_clear_deck",
+        description=(
+            "Remove ALL labware and modules from the OT-2 deck layout.\n\n"
+            "WHEN TO USE: To start with a completely empty deck.\n"
+            "This is the explicit version of the auto-clear in ot2_add_deck_entry.\n\n"
+            "NOTE: After clearing, add at least one labware and one tip rack\n"
+            "before running a workflow, otherwise validation will fail."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+    )
+    def clear_deck_tool(
+        settings_path: str = str(DEFAULT_SETTINGS_PATH),
+    ) -> dict[str, object]:
+        """Remove all deck entries."""
+        return clear_deck(settings_path=settings_path)
