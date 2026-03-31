@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-03-31
+
+### Added
+
+- `ot2_sync_to_gui` MCP tool — push project files into the running Docker GUI container via `docker cp`. Checks Docker/container status before syncing and warns if `shell_settings.json` is missing.
+- `ot2_create_shell_settings` MCP tool — create `shell_settings.json` with Opentrons App Windows path for GUI simulation and deployment.
+- `ot2_add_deck_entry` MCP tool — add labware/modules to deck layout. Auto-clears the template default deck on first use per project.
+- `ot2_remove_deck_entry` MCP tool — remove a deck entry by slot number.
+- `ot2_clear_deck` MCP tool — remove all entries from the deck layout.
+- `TomlHandler.remove_array_item()` and `TomlHandler.clear_array()` methods for TOML array manipulation.
+- `SyncError` exception class for Docker/sync failures.
+
+### Changed
+
+- Rewrote `APP_INSTRUCTIONS` with 6-step `NEW EXPERIMENT SETUP` workflow replacing the old 3-step standard workflow.
+- Added multi mode CSV well rules to all relevant tool descriptions and CLAUDE.md (96-well: A-row only; 384-well: A/B-row for odd/even interleaving).
+- Updated `ot2_scan_available_labware` description to present custom labware as table and reference `ot2_add_deck_entry`.
+- Updated `ot2_set_project_directory` description to proactively show custom labware after switching.
+
 ## [1.4.1] - 2026-03-18
 
 ### Fixed
