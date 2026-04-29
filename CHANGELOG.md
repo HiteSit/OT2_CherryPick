@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.4] - 2026-04-29
+
+### Removed
+
+- Untracked `docker/.env.example` from version control (added to `.gitignore`); kept locally as reference.
+
 ## [1.5.3] - 2026-04-14
 
 ### Changed
@@ -203,7 +209,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.3...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.4...HEAD
+[1.5.4]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.0...v1.5.1
