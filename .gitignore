@@ -15,6 +15,7 @@ guide/*.html
 .playwright-mcp
 docker/distribution/
 docker/.env
+docker/.env.example
 gui_state
 manuscript/
 notebooks/
