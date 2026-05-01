@@ -46,6 +46,9 @@ RUN uv pip install --system --no-cache -e .
 # Copy the remaining source tree
 COPY . .
 
+RUN test -s /app/unlock.key || \
+    (echo "Missing unlock.key. This checkout is locked." && exit 1)
+
 # Install opentrons_simulate globally via pipx
 # This matches the development workflow where it's installed separately
 RUN pipx install opentrons

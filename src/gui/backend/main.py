@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from importlib.metadata import version as pkg_version
 
+from ot2_cherrypick_mcp.utils.paths import require_unlock_key
+
 from .dependencies import get_state_store
 from .routes import csvs, labware, settings, system, workflow
 
@@ -20,6 +22,7 @@ def create_app() -> FastAPI:
     The app exposes configuration-state management endpoints along with
     workflow helpers that wrap the existing protocol generation utilities.
     """
+    require_unlock_key()
 
     app = FastAPI(
         title="OT-2 CherryPick GUI Backend",

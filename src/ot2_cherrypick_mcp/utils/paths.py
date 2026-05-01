@@ -20,6 +20,18 @@ def get_repo_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
+def require_unlock_key() -> Path:
+    """Refuse startup unless the repository root contains a non-empty key."""
+    unlock_key = get_repo_root() / "unlock.key"
+
+    if unlock_key.exists() and unlock_key.read_text(encoding="utf-8").strip():
+        return unlock_key
+
+    raise RuntimeError(
+        "This OT2-CherryPick checkout is locked. Missing unlock.key."
+    )
+
+
 def _ensure_templates_exist(project_dir: Path) -> None:
     """Auto-copy template files if they don't exist in project directory.
 
@@ -133,6 +145,7 @@ def reset_auto_project_dir() -> None:
 
 __all__ = [
     "get_repo_root",
+    "require_unlock_key",
     "get_project_root",
     "resolve_repo_path",
     "resolve_project_path",

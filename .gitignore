@@ -17,6 +17,7 @@ docker/distribution/
 docker/.env
 docker/.env.example
 gui_state
+/unlock.key
 manuscript/
 notebooks/
 agent_docs/

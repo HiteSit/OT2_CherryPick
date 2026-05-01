@@ -22,6 +22,7 @@ from .resources import (
 )
 from .tools import register_tools
 from .utils.logging_config import configure_logging
+from .utils.paths import require_unlock_key
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +155,7 @@ async def app_lifespan(app: FastMCP) -> AsyncIterator[ProjectContext]:
 
 def create_mcp_app() -> FastMCP:
     """Instantiate the FastMCP application with registered tools."""
+    require_unlock_key()
     app = FastMCP(name=APP_NAME, instructions=APP_INSTRUCTIONS, lifespan=app_lifespan)
     register_tools(app)
     register_config_resources(app)
