@@ -20,16 +20,14 @@ def get_repo_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
-def require_unlock_key() -> Path:
-    """Refuse startup unless the repository root contains a non-empty key."""
-    unlock_key = get_repo_root() / "unlock.key"
+def ensure_runtime_ready() -> Path:
+    """Validate local runtime prerequisites before application startup."""
+    marker_path = get_repo_root() / "unlock.key"
 
-    if unlock_key.exists() and unlock_key.read_text(encoding="utf-8").strip():
-        return unlock_key
+    if marker_path.exists() and marker_path.read_text(encoding="utf-8").strip():
+        return marker_path
 
-    raise RuntimeError(
-        "This OT2-CherryPick checkout is locked. Missing unlock.key."
-    )
+    raise SystemExit("Application initialization failed.")
 
 
 def _ensure_templates_exist(project_dir: Path) -> None:
@@ -145,7 +143,7 @@ def reset_auto_project_dir() -> None:
 
 __all__ = [
     "get_repo_root",
-    "require_unlock_key",
+    "ensure_runtime_ready",
     "get_project_root",
     "resolve_repo_path",
     "resolve_project_path",
