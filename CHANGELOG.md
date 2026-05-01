@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.5] - 2026-05-01
+
+### Added
+
+- Local unlock gate (`unlock.key` marker) enforced at runtime startup; backend, MCP server, and Docker entrypoint validate via `ensure_runtime_ready()`.
+
+### Changed
+
+- Refined runtime initialization across backend, MCP server, and Docker image to centralize gate enforcement in `utils/paths.py`.
+- Documented the runtime gate as an intentional distribution-control boundary.
+
 ## [1.5.4] - 2026-04-29
 
 ### Removed
@@ -209,7 +220,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.4...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.5...HEAD
+[1.5.5]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.4...v1.5.5
 [1.5.4]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.1...v1.5.2
