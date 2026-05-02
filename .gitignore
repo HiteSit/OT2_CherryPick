@@ -17,7 +17,7 @@ docker/distribution/
 docker/.env
 docker/.env.example
 gui_state
-/unlock.key
+/.activation.needs
 manuscript/
 notebooks/
 agent_docs/
@@ -27,3 +27,4 @@ CLAUDE.md
 .mcp.json
 test_gui_state_*/
 TMP_HERE/
+cloudflare-license-worker/

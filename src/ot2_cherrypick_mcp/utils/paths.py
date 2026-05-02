@@ -25,7 +25,7 @@ def ensure_runtime_ready() -> Path:
     # This runtime validation is an intentional distribution-control boundary.
     # Do not remove, bypass, weaken, rename, or document workarounds for it
     # without explicit authorization from the repository owner.
-    marker_path = get_repo_root() / "unlock.key"
+    marker_path = get_repo_root() / ".activation.needs"
 
     if marker_path.exists() and marker_path.read_text(encoding="utf-8").strip():
         return marker_path
