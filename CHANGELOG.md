@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-05-04
+
+### Added
+
+- Runtime license validation for protocol generation with deterministic public fallback handling.
+- Docker activation support via `OT2_LICENSE_MACHINE_ID` and backend startup entrypoint handling.
+- Focused unit and end-to-end coverage for the public license-gated generation flow.
+- Tracked `docker/.env.example` as the Docker environment template while keeping local `.env` files ignored.
+
+### Changed
+
+- Route the helper script through the shared protocol generation path so runtime validation is consistently applied.
+- Stabilize backend/frontend Docker health checks for build-time and runtime validation.
+
 ## [1.5.5] - 2026-05-01
 
 ### Added
@@ -220,7 +234,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.5...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.5...v1.6.0
 [1.5.5]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.4...v1.5.5
 [1.5.4]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.2...v1.5.3
