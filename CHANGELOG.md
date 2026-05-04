@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-05-04
+
+### Fixed
+
+- Pinned shell scripts to LF line endings so the Docker backend entrypoint starts correctly in Linux containers.
+- Added parser coverage for malformed denied license decisions that still carry a mode.
+
 ## [1.6.0] - 2026-05-04
 
 ### Added
@@ -234,7 +241,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.1...HEAD
+[1.6.1]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.5...v1.6.0
 [1.5.5]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.4...v1.5.5
 [1.5.4]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.3...v1.5.4
