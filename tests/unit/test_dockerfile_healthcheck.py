@@ -65,10 +65,12 @@ class TestBackendDockerLicenseWiring:
         content = (DOCKER_DIR / "docker-compose.yml").read_text()
         assert "OT2_LICENSE_MACHINE_ID: ${OT2_LICENSE_MACHINE_ID}" in content
 
-    def test_env_files_define_machine_identity(self) -> None:
-        env = (DOCKER_DIR / ".env").read_text()
+    def test_env_example_defines_machine_identity_and_env_stays_local(self) -> None:
         example = (DOCKER_DIR / ".env.example").read_text()
-        assert "OT2_LICENSE_MACHINE_ID=Ric-WorkStation" in env
+        gitignore = (DOCKER_DIR.parent / ".gitignore").read_text()
+
+        assert "docker/.env\n" in gitignore
+        assert "docker/.env.example" not in gitignore
         assert "OT2_LICENSE_MACHINE_ID=YOUR_MACHINE_NAME" in example
 
     def test_entrypoint_writes_activation_marker_from_environment(self) -> None:
