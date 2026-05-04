@@ -242,6 +242,14 @@ def test_parse_decision_rejects_malformed_combinations(payload: dict[str, object
         license_gate._parse_decision(payload, "Ric-WorkStation")
 
 
+def test_parse_decision_rejects_stale_denial_with_mode() -> None:
+    with pytest.raises(LicenseGateError, match="denied mode"):
+        license_gate._parse_decision(
+            {"allowed": False, "mode": "clown-mode", "reason": "global_switch_off"},
+            "Ric-WorkStation",
+        )
+
+
 @pytest.mark.parametrize(
     ("payload", "expected_mode"),
     [
