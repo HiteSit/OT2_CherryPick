@@ -14,6 +14,23 @@ from .helpers import AgentRunner, ProjectSetup
 from .test_data import CSV_BASIC
 
 
+class _AllowedLicenseDecision:
+    mode = "normal-mode"
+
+
+@pytest.fixture(autouse=True)
+def allow_protocol_generation_license(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep ordinary tests off the live license Worker."""
+
+    from ot2_cherrypick_mcp.core import protocol_generator
+
+    monkeypatch.setattr(
+        protocol_generator,
+        "check_generation_license",
+        lambda: _AllowedLicenseDecision(),
+    )
+
+
 @pytest.fixture(scope="session")
 def project_root() -> Path:
     """Return the repository root used as a template for test projects."""

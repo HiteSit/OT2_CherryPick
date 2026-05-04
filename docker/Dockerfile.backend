@@ -46,7 +46,10 @@ RUN uv pip install --system --no-cache -e .
 # Copy the remaining source tree
 COPY . .
 
-RUN python -c "import src.gui.backend.main"
+RUN rm -f .activation.needs \
+    && chmod +x docker/backend-entrypoint.sh
+
+RUN python -c "import ot2_cherrypick_mcp.core.protocol_generator; import ot2_cherrypick_mcp.core.license_gate"
 
 # Install opentrons_simulate globally via pipx
 # This matches the development workflow where it's installed separately
@@ -61,6 +64,8 @@ EXPOSE 8000
 # Health check – mirrors the compose-level check for standalone usage
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/settings')" || exit 1
+
+ENTRYPOINT ["/app/docker/backend-entrypoint.sh"]
 
 # Run with --proxy-headers and --root-path for reverse proxy compatibility
 CMD ["uvicorn", "src.gui.backend.main:app", \

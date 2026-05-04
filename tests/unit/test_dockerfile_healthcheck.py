@@ -1,10 +1,14 @@
 """Tests verifying HEALTHCHECK directives exist in project Dockerfiles."""
 
+import os
+import re
+import subprocess
 from pathlib import Path
 
 import pytest
 
 DOCKER_DIR = Path(__file__).resolve().parents[2] / "docker"
+ENTRYPOINT_SCRIPT = DOCKER_DIR / "backend-entrypoint.sh"
 
 
 def _read_dockerfile(name: str) -> str:
@@ -32,6 +36,14 @@ class TestBackendDockerfileHealthcheck:
         cmd_pos = self.content.index("\nCMD ")
         assert hc_pos < cmd_pos, "HEALTHCHECK must appear before CMD"
 
+    def test_backend_entrypoint_configured(self) -> None:
+        assert 'ENTRYPOINT ["/app/docker/backend-entrypoint.sh"]' in self.content
+        assert "chmod +x docker/backend-entrypoint.sh" in self.content
+
+    def test_activation_marker_not_required_at_build_time(self) -> None:
+        assert not re.search(r"(?m)^COPY\s+\.activation\.needs\b", self.content)
+        assert not re.search(r"(?m)^ADD\s+\.activation\.needs\b", self.content)
+
 
 class TestFrontendDockerfileHealthcheck:
     """Sanity-check that the frontend Dockerfile also has a HEALTHCHECK."""
@@ -39,3 +51,70 @@ class TestFrontendDockerfileHealthcheck:
     def test_healthcheck_directive_exists(self) -> None:
         content = _read_dockerfile("Dockerfile.frontend")
         assert "HEALTHCHECK" in content
+
+    def test_healthcheck_uses_ipv4_loopback(self) -> None:
+        content = _read_dockerfile("Dockerfile.frontend")
+        assert "http://127.0.0.1/health" in content
+        assert "http://localhost/health" not in content
+
+
+class TestBackendDockerLicenseWiring:
+    """Verify Docker passes and materializes the backend license identity."""
+
+    def test_compose_passes_machine_identity_to_backend(self) -> None:
+        content = (DOCKER_DIR / "docker-compose.yml").read_text()
+        assert "OT2_LICENSE_MACHINE_ID: ${OT2_LICENSE_MACHINE_ID}" in content
+
+    def test_env_files_define_machine_identity(self) -> None:
+        env = (DOCKER_DIR / ".env").read_text()
+        example = (DOCKER_DIR / ".env.example").read_text()
+        assert "OT2_LICENSE_MACHINE_ID=Ric-WorkStation" in env
+        assert "OT2_LICENSE_MACHINE_ID=YOUR_MACHINE_NAME" in example
+
+    def test_entrypoint_writes_activation_marker_from_environment(self) -> None:
+        content = ENTRYPOINT_SCRIPT.read_text()
+        assert (
+            'activation_file="${OT2_LICENSE_ACTIVATION_FILE:-/app/.activation.needs}"'
+            in content
+        )
+        assert 'printf \'%s\\n\' "$OT2_LICENSE_MACHINE_ID" > "$activation_file"' in content
+        assert 'exec "$@"' in content
+
+    def test_entrypoint_smoke_writes_marker_from_environment(
+        self, tmp_path: Path
+    ) -> None:
+        marker = tmp_path / ".activation.needs"
+        env = os.environ.copy()
+        env["OT2_LICENSE_MACHINE_ID"] = "Test-Machine"
+        env["OT2_LICENSE_ACTIVATION_FILE"] = str(marker)
+
+        result = subprocess.run(
+            ["sh", str(ENTRYPOINT_SCRIPT), "true"],
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert marker.read_text() == "Test-Machine\n"
+
+    def test_entrypoint_smoke_removes_marker_when_identity_missing(
+        self, tmp_path: Path
+    ) -> None:
+        marker = tmp_path / ".activation.needs"
+        marker.write_text("stale\n")
+        env = os.environ.copy()
+        env.pop("OT2_LICENSE_MACHINE_ID", None)
+        env["OT2_LICENSE_ACTIVATION_FILE"] = str(marker)
+
+        result = subprocess.run(
+            ["sh", str(ENTRYPOINT_SCRIPT), "true"],
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert not marker.exists()

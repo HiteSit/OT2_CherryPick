@@ -71,17 +71,15 @@ Examples:
         print()
 
     try:
-        # Create the JSON configuration
-        json_config = create_json_config(args.labware_toml, args.settings_toml, args.csv_file, verbose=True)
+        result = generate_protocol(
+            args.labware_toml,
+            args.settings_toml,
+            args.csv_file,
+            args.protocol_file,
+            verbose=True,
+        )
 
-        print(f"Generated JSON config ({len(json_config)} characters)")
-
-        if args.verbose:
-            print(f"JSON preview: {json_config[:100]}...")
-            print()
-
-        # Update the protocol file
-        update_protocol_file(args.protocol_file, json_config, verbose=True)
+        print(f"Generated JSON config ({result['json_size']} characters)")
 
         print("\n✅ Successfully converted to JSON-based configuration!")
         print("The protocol no longer requires the 'toml' package.")

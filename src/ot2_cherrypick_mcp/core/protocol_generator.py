@@ -14,6 +14,9 @@ import re
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+from .clown_mode import apply_clown_mode_csv_transform
+from .license_gate import check_generation_license
+
 try:
     import toml
 except ImportError:
@@ -72,6 +75,22 @@ def read_csv_file(filepath: str) -> str:
         raise Exception(f"Error reading CSV file {filepath}: {e}")
 
 
+def read_csv_file_raw(filepath: str) -> str:
+    """Read a CSV file as raw text for in-memory preprocessing."""
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"CSV file not found: {filepath}")
+    except Exception as e:
+        raise Exception(f"Error reading CSV file {filepath}: {e}")
+
+
+def escape_csv_for_json_embedding(content: str) -> str:
+    """Escape CSV newlines in the same format expected by CherryPick_OT2.py."""
+    return content.strip().replace('\n', '\\n')
+
+
 def _load_offset_database(offset_db_path: Optional[str]) -> Dict[str, Dict[str, float]]:
     """Load offset_database.toml and return a lookup keyed by 'labware_id:position_rack'."""
     if not offset_db_path:
@@ -125,6 +144,7 @@ def create_json_config(
     csv_file: str,
     verbose: bool = True,
     offset_db_path: Optional[str] = None,
+    license_mode: Optional[str] = None,
 ) -> str:
     """Create the JSON configuration from TOML and CSV files.
 
@@ -134,6 +154,7 @@ def create_json_config(
         csv_file: Path to CSV transfer file
         verbose: Print progress messages (default True for CLI compatibility)
         offset_db_path: Optional path to offset_database.toml for merging calibration offsets
+        license_mode: Optional remote license mode to apply during CSV embedding
 
     Returns:
         str: Compact JSON configuration string
@@ -153,7 +174,10 @@ def create_json_config(
     sample_settings = read_toml_file(settings_toml)
 
     # Read the CSV file
-    csv_data = read_csv_file(csv_file)
+    raw_csv_data = read_csv_file_raw(csv_file)
+    if license_mode == "clown-mode":
+        raw_csv_data = apply_clown_mode_csv_transform(raw_csv_data, sample_settings)
+    csv_data = escape_csv_for_json_embedding(raw_csv_data)
 
     if verbose:
         print("✓ Successfully read all configuration files")
@@ -297,6 +321,10 @@ def generate_protocol(
         >>> print(result['message'])
         Protocol generated successfully
     """
+    # Runtime license validation is intentional. Do not bypass it when changing
+    # protocol generation behavior; update the private licensing policy if needed.
+    license_decision = check_generation_license()
+
     # Create JSON configuration from TOML + CSV
     json_config = create_json_config(
         labware_toml_path,
@@ -304,6 +332,7 @@ def generate_protocol(
         csv_path,
         verbose=verbose,
         offset_db_path=offset_db_path,
+        license_mode=license_decision.mode,
     )
 
     # Embed JSON in protocol file

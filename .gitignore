@@ -1,5 +1,6 @@
 # IDE
 .claude/
+.agents/
 .serena/
 .idea/
 .vscode/
@@ -15,7 +16,6 @@ guide/*.html
 .playwright-mcp
 docker/distribution/
 docker/.env
-docker/.env.example
 gui_state
 /.activation.needs
 manuscript/
@@ -24,6 +24,7 @@ agent_docs/
 utils/
 DEV_GUIDE.md
 CLAUDE.md
+AGENTS.md
 .mcp.json
 test_gui_state_*/
 TMP_HERE/

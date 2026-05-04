@@ -14,6 +14,8 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from ot2_cherrypick_mcp.core.protocol_generator import generate_protocol as generate_protocol_core
+
 
 # ============ Path Constants ============
 
@@ -171,33 +173,23 @@ def generate_protocol(
     verbose: bool = False,
 ) -> tuple[bool, str]:
     """
-    Run helper_cherry_pick.py to generate protocol from CSV.
+    Generate protocol from CSV using the same core path as the app.
 
     Returns:
         tuple: (success, output)
     """
-    cmd = [
-        "uv", "run", "python", str(PROJECT_ROOT / "helper_cherry_pick.py"),
-        "-l", str(workspace.labware_dict_path),
-        "-s", str(workspace.settings_path),
-        "-c", str(csv_path),
-        "-p", str(workspace.protocol_path),
-    ]
+    try:
+        result = generate_protocol_core(
+            str(workspace.labware_dict_path),
+            str(workspace.settings_path),
+            str(csv_path),
+            str(workspace.protocol_path),
+            verbose=verbose,
+        )
+    except Exception as exc:
+        return False, str(exc)
 
-    if verbose:
-        cmd.append("-v")
-
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        cwd=PROJECT_ROOT,
-        timeout=60,
-    )
-
-    success = result.returncode == 0
-    output = result.stdout + result.stderr
-    return success, output
+    return True, str(result)
 
 
 def simulate_protocol(
