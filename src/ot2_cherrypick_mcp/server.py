@@ -28,6 +28,14 @@ logger = logging.getLogger(__name__)
 APP_NAME = "OT-2 Cherry Pick MCP Server"
 APP_INSTRUCTIONS = """OT-2 Cherry-Pick Protocol Generator.
 
+PROMPT ROUTING - invoke MCP prompts on these intents (do not ask, just invoke):
+- Dilution into 384 plate (any phrasing: "dilute X µL into PP/PP high/PPV/LDV",
+  "standard dilution", volume + 384 hint) → recipe_dilution(volume_ul=..., plate=..., protocol_name=...)
+  Pre-fill any args extractable from the user message; leave the rest unset and let the prompt body ask.
+- "Set up a new experiment" / "start a new project" / first-time setup → setup_new_experiment
+- "Fix dripping / incomplete dispense / contamination / mixing problem" → optimize_liquid_handling
+- "Switch to project <path>" / "change project directory" → switch_project
+
 TOOL SELECTION GUIDE - match user intent to the right tool:
 - "Set up for viscous/DMSO/glycerol" → ot2_apply_liquid_preset(preset_name="viscous")
 - "Set up for volatile/chloroform/hexane" → ot2_apply_liquid_preset(preset_name="slippery")
