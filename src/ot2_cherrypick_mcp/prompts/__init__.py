@@ -627,10 +627,33 @@ I'll diagnose the root cause and guide you through targeted parameter adjustment
 
     @mcp.prompt(
         name="recipe_dilution",
-        description="Standard reservoir-to-384 dilution recipe with fixed deck (tip 300 slot 4, vertical reservoir slot 5, 384 plate slot 6) and multi-channel filling pattern"
+        description=(
+            "Standard reservoir-to-384 dilution recipe with fixed deck "
+            "(tip 300 slot 4, vertical reservoir slot 5, 384 plate slot 6) and multi-channel filling pattern. "
+            "USE WHEN user mentions diluting a volume into a 384-well plate. "
+            "Triggers: 'dilute X µL into PP/PP high/PPV/LDV', 'standard dilution', "
+            "any phrasing combining dilution + volume + 384 plate hint."
+        )
     )
-    def recipe_dilution_prompt() -> str:
-        return """I'll set up a **standard dilution protocol** that follows your common lab pattern: aspirate from a vertical reservoir in slot 5 and dispense across all wells of a 384-well plate in slot 6, using the 300 µL tip rack in slot 4 with the 8-channel pipette in multi mode.
+    def recipe_dilution_prompt(
+        volume_ul: float | None = None,
+        plate: str | None = None,
+        protocol_name: str | None = None,
+    ) -> str:
+        provided = []
+        if volume_ul is not None:
+            provided.append(f"- **Volume:** {volume_ul} µL")
+        if plate:
+            provided.append(f"- **Destination plate alias:** `{plate}` (resolve against the 384 catalog)")
+        if protocol_name:
+            provided.append(f"- **Protocol name:** `{protocol_name}`")
+        prefilled_block = (
+            "\n\n## ✅ Inputs Already Captured\n\n"
+            + "\n".join(provided)
+            + "\n\nSkip the parsing/asking steps for fields above. Only ask for what's still missing.\n"
+        ) if provided else ""
+
+        body = """I'll set up a **standard dilution protocol** that follows your common lab pattern: aspirate from a vertical reservoir in slot 5 and dispense across all wells of a 384-well plate in slot 6, using the 300 µL tip rack in slot 4 with the 8-channel pipette in multi mode.
 
 This recipe is **opinionated and fixed** — it captures the exact configuration you run repeatedly so you don't have to re-specify it each time. You only tell me three things: the volume, the destination plate type, and the protocol name.
 
@@ -827,6 +850,7 @@ Tell me:
 
 …and I'll lay everything down and run the simulation in one shot.
 """
+        return body + prefilled_block
 
     @mcp.prompt(
         name="switch_project",
