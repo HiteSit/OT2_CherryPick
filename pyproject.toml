@@ -98,3 +98,9 @@ addopts = [
 
 [tool.uv]
 managed = true
+
+[dependency-groups]
+dev = [
+    "mkdocs-material>=9.7.6",
+    "mkdocs-with-pdf>=0.9.3",
+]

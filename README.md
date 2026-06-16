@@ -109,6 +109,20 @@ The generated protocol embeds all configuration as JSON, requiring no external f
 | [Liquid Handling Guide](docs/liquid_handling_guide.md) | Presets, parameters, and scientific rationale |
 | [MCP Tools Reference](docs/mcp_tools_reference.md) | Full MCP tool, resource, and prompt catalog |
 
+Build the structured documentation site from the repository root:
+
+```bash
+uv run mkdocs build
+```
+
+Build the PDF manual:
+
+```bash
+ENABLE_PDF_EXPORT=1 uv run mkdocs build
+```
+
+The generated PDF is written to `site/pdf/OT2-CherryPick-Manual.pdf`.
+
 ## Citation
 
 If you use OT2-CherryPick in your research, please cite:
