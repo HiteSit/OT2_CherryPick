@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.2] - 2026-06-16
+
+### Changed
+
+- Updated Docker Compose installation notes in the root and Docker READMEs.
+- Restored `docker/.env.example` as the tracked environment template for the current single `OPENTRONS_DIR` mount contract.
+
 ## [1.5.4] - 2026-04-29
 
 ### Removed
@@ -209,7 +216,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.4...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.2...HEAD
+[1.6.2]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.1...v1.6.2
 [1.5.4]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.1...v1.5.2
