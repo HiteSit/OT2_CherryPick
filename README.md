@@ -23,9 +23,39 @@ Existing tools for the OT-2 present researchers with a dichotomy: graphical inte
 
 ## Quick Start with Docker (Recommended)
 
-Copy the example env file in `docker/` and add the main path to your Opentrons directory. Then bring up the stack with `docker compose`.
+Run the GUI with Docker Compose from the `docker/` directory. The only required
+host-specific setting is the Opentrons App data directory, mounted into the
+backend so custom labware and generated protocol folders are available.
 
-Open the GUI in a browser once the stack is running.
+```bash
+cd docker
+cp .env.example .env  # or create .env from the example below
+docker compose up -d --build
+```
+
+Example `docker/.env`:
+
+```dotenv
+COMPOSE_PROJECT_NAME=ot2cherrypick
+HOST_PORT=80
+
+OT2_GUI_WORKSPACE=gui_state
+OT2_PROJECT_DIR=/app/gui_state
+
+# Opentrons App data root. Do not point this at labware/ or protocols/.
+# Windows via WSL/Docker Desktop:
+OPENTRONS_DIR_HOST=/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons
+OPENTRONS_DIR_MOUNT=/mnt/c/Users/YOUR_USERNAME/AppData/Roaming/Opentrons
+
+# Linux example:
+# OPENTRONS_DIR_HOST=/home/YOUR_USERNAME/.config/Opentrons
+# OPENTRONS_DIR_MOUNT=/home/YOUR_USERNAME/.config/Opentrons
+```
+
+Open `http://localhost` when `HOST_PORT=80`, or
+`http://localhost:8080` if you set `HOST_PORT=8080`. See
+[`docker/README.md`](docker/README.md) for logs, shutdown, volume backup, and
+path details.
 
 ## MCP Server Integration
 
