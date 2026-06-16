@@ -1,8 +1,9 @@
 # MCP Tools Reference
 
-Complete reference for the OT2 CherryPick Model Context Protocol server.
+Reference for the OT2 CherryPick Model Context Protocol server.
 
-**Run the server:**
+Run the server from the repository root:
+
 ```bash
 uv run ot2-mcp-server
 ```
@@ -11,260 +12,356 @@ uv run ot2-mcp-server
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENTRONS_DIR` | yes | Root Opentrons App data directory. Labware (`{OPENTRONS_DIR}/labware`) and protocol (`{OPENTRONS_DIR}/protocols`) paths are auto-derived. See [Configuration Reference](configuration_reference.md#environment-variables) for details. |
-| `OT2_PROJECT_DIR` | no | Persistent workspace directory. Defaults to current working directory. |
+| `OPENTRONS_DIR` | recommended | Root Opentrons App data directory. Labware and protocol paths are derived from `{OPENTRONS_DIR}/labware` and `{OPENTRONS_DIR}/protocols`. |
+| `OT2_PROJECT_DIR` | no | Persistent workspace directory. Defaults to the process working directory or an auto-created workspace depending on launch context. |
 
-## Tools
+## Project Tools
 
-### Project Management
+### `ot2_initialize_project`
 
-#### `ot2_initialize_project`
-
-Copy template files (settings.toml, labware_dict.toml, CherryPick_OT2.py, example CSVs) to the workspace directory.
+Copy template files into the active project workspace: `settings.toml`, `labware_dict.toml`, `CherryPick_OT2.py`, and example CSVs.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| -- | -- | -- | No parameters |
+| none | - | - | No parameters. |
 
-#### `ot2_get_project_directory`
+### `ot2_get_project_directory`
 
-Return the active project directory path.
+Return the active project directory and whether it was auto-created.
 
-#### `ot2_set_project_directory`
+### `ot2_set_project_directory`
 
-Switch the active project directory at runtime.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `path` | string | yes | Absolute path to the new project directory |
-
-#### `ot2_list_projects`
-
-List active, recent, and discovered projects.
+Switch the active project directory at runtime. The directory is created if it does not exist.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `scan_parent_directory` | boolean | no | Scan parent directory for additional projects |
+| `path` | string | yes | Absolute path to the project directory. |
+| `initialize_templates` | boolean | no | Copy templates into the new directory. Defaults to `true`. |
 
-#### `ot2_export_project_archive`
+### `ot2_list_projects`
 
-Export the workspace as a ZIP archive.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| -- | -- | -- | Optionally returns base64-encoded content |
-
-### Configuration
-
-#### `ot2_update_settings`
-
-Update a single setting in settings.toml via dotted path or shorthand alias.
+List the active project, recent project history, and optionally scan a parent directory for project folders.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `path` | string | yes | Dotted path or alias (see [Shorthand Aliases](#shorthand-aliases)) |
-| `value` | any | yes | New value for the setting |
+| `scan_parent_directory` | string | no | Parent directory to scan for subdirectories containing `settings.toml`. |
 
-**Examples:**
-```
+### `ot2_export_project_archive`
+
+Create a ZIP archive of the current project workspace.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `as_base64` | boolean | no | Include archive contents inline as base64. Defaults to `false`. |
+
+## Configuration Tools
+
+### `ot2_update_settings`
+
+Update one value in `settings.toml` by dotted path or shorthand alias.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `path` | string | yes | Dotted path or alias. |
+| `value` | string | yes | New value. Booleans and numbers can be passed as text and are parsed. |
+| `settings_path` | string | no | Settings file path. Defaults to `settings.toml`. |
+
+Examples:
+
+```text
 ot2_update_settings(path="mode", value="multi_X1")
-ot2_update_settings(path="speed", value=200)
-ot2_update_settings(path="settings.liquid_handling.delays.post_aspirate", value=2)
+ot2_update_settings(path="speed", value="200")
+ot2_update_settings(path="settings.liquid_handling.delays.post_aspirate", value="2")
 ```
 
-#### `ot2_apply_liquid_preset`
+### `ot2_batch_update_settings`
 
-Apply a predefined liquid handling configuration.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `preset_name` | string | yes | Preset name: `standard`, `viscous`, or `slippery` |
-
-#### `ot2_list_settings`
-
-List all settings paths and their current values.
-
-### CSV Management
-
-#### `ot2_generate_csv_template`
-
-Create a CSV skeleton with proper column structure.
+Update multiple `settings.toml` values in one atomic operation.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| *(various)* | -- | -- | Template parameters for source/dest labware and wells |
+| `updates` | array | yes | List of `{ "path": "...", "value": "..." }` objects. |
+| `settings_path` | string | no | Settings file path. Defaults to `settings.toml`. |
 
-#### `ot2_upload_csv_content`
+### `ot2_apply_liquid_preset`
 
-Save CSV text content to a file in the CSVs/ directory.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `csv_content` | string | yes | CSV text content |
-| `filename` | string | yes | Output filename (saved to CSVs/) |
-
-### Protocol Generation
-
-#### `ot2_generate_protocol`
-
-Compile TOML configuration and CSV transfer map into CherryPick_OT2.py.
+Apply a preset defined in `settings.toml` by copying preset values into the active liquid-handling sections and setting `active_preset`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `csv_path` | string | yes | Path to CSV file (e.g., `CSVs/transfers.csv`) |
+| `preset_name` | string | yes | Built-in default template presets are `standard` and `viscous`. Custom presets may exist in a project. |
+| `settings_path` | string | no | Settings file path. Defaults to `settings.toml`. |
 
-### Simulation
+Volatile/slippery handling is manual tuning in the default template, not a built-in preset.
 
-#### `ot2_simulate_protocol`
+### `ot2_list_settings`
 
-Run `opentrons_simulate` to validate the generated protocol without hardware. The custom labware path is auto-derived from `OPENTRONS_DIR/labware`. Falls back to the `LABWARE_PATH` env var if `OPENTRONS_DIR` is not set.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `protocol_path` | string | no | Path to protocol file (defaults to CherryPick_OT2.py) |
-
-### Validation
-
-#### `ot2_validate_configuration`
-
-Run pre-flight checks on TOML and CSV configuration before generating.
+List all setting paths and current values from `settings.toml`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `csv_path` | string | yes | Path to CSV file to validate against |
+| `settings_path` | string | no | Settings file path. Defaults to `settings.toml`. |
 
-### Deployment
+### `ot2_add_deck_entry`
 
-#### `ot2_deploy_to_opentrons`
-
-Deploy the generated protocol to the Opentrons App and/or clipboard. When `OPENTRONS_DIR` is set and no `target_path` is provided, the tool performs **auto-UUID deployment** with protocol name matching:
-
-1. Extracts `protocolName` from the compiled protocol's embedded metadata
-2. Scans `{OPENTRONS_DIR}/protocols/*/src/*.py` for an existing protocol with the same name
-3. If a match is found, **reuses that UUID directory** (overwrites the protocol file in place). If multiple matches exist, the most recently modified slot is chosen.
-4. If no match is found, generates a fresh UUID and creates `{OPENTRONS_DIR}/protocols/{uuid}/src/` and `analysis/` directories
-5. Copies the protocol to `src/`
-6. Runs `opentrons.cli analyze` to produce `analysis/{timestamp_ms}.json`
-7. The Opentrons App discovers the protocol automatically on next scan
-
-The return dict includes `"reused": true/false` to indicate whether an existing slot was reused. This means users do not need to manually find or specify UUID protocol directories, and re-deploying a protocol with the same name updates it in place rather than creating duplicates.
+Append labware, tip rack, or module entries to `settings.working_plate`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `target_path` | string | no | Opentrons App protocol directory (overrides auto-UUID deployment) |
-| `copy_to_clipboard` | boolean | no | Copy protocol to clipboard |
+| `entry_type` | string | yes | `"reservoir"`, `"tip"`, or `"module"`. |
+| `labware_id` | string | yes | Labware ID or load name. |
+| `position_rack` | string | yes | OT-2 deck slot. |
+| `connection` | string | tip only | Pipette name such as `Pipette_8` or `Pipette_1`. |
+| `mode` | string | tip in dual mode | `multi`, `multi_X1`, or `single_X1`. |
+| `module_type` | string | module only | Currently `heaterShaker`. |
+| `adapter_id` | string | module only | Adapter loaded on the module. |
+| `target_temperature` | integer | no | `0` disables heating. |
+| `target_shake_speed` | integer | no | `0` disables shaking. |
+| `persist_after_protocol` | boolean | no | Keep module state active after protocol end. |
+| `offset_x`, `offset_y`, `offset_z` | number | no | Per-slot offsets in mm. |
 
-### Labware Management
+If the current deck is still the project template default, the first add may auto-clear the template entries before appending the requested entry.
 
-#### `ot2_add_labware_definition`
+### `ot2_remove_deck_entry`
 
-Add or update a calibration offset in offset_database.toml.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `labware_id` | string | yes | Labware identifier |
-| `position_rack` | string | yes | Deck slot number |
-| `offset_x` | number | no | X offset in mm |
-| `offset_y` | number | no | Y offset in mm |
-| `offset_z` | number | no | Z offset in mm |
-
-#### `ot2_scan_available_labware`
-
-List labware available in the custom labware directory. Defaults to `{OPENTRONS_DIR}/labware` when no path is provided.
+Remove a deck entry by `position_rack`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `custom_labware_path` | string | no | Path to custom labware directory (defaults to `OPENTRONS_DIR/labware`) |
+| `position_rack` | string | yes | Slot number to remove. |
 
-#### `ot2_get_labware_offset`
+### `ot2_clear_deck`
 
-Retrieve a single calibration offset.
+Remove all deck entries from `settings.working_plate`.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `labware_id` | string | yes | Labware identifier |
-| `position_rack` | string | yes | Deck slot number |
+## CSV Tools
 
-#### `ot2_list_labware_offsets`
+### `ot2_generate_csv_template`
 
-List all stored calibration offsets.
-
-#### `ot2_delete_labware_offset`
-
-Delete a calibration offset entry.
+Create a CSV skeleton under `CSVs/`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `labware_id` | string | yes | Labware identifier |
-| `position_rack` | string | yes | Deck slot number |
+| `filename` | string | yes | Output CSV filename. |
+| `transfers` | integer | yes | Number of placeholder transfer rows. |
+| `source_labware` | string | yes | Source reference such as `tube_rack_96_1500ul_4`. |
+| `dest_labware` | string | yes | Destination reference such as `384_ppv_55ul_2`. |
+| `default_volume` | number | no | Default `Volume (ul)`. |
+| `source_height` | number | no | Default `Source Bottom`. |
+| `dest_top` | number | no | Default `Dest Top`. |
 
-#### `ot2_manage_official_labware`
+### `ot2_upload_csv_content`
+
+Save CSV text into the project `CSVs/` directory.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `csv_content` | string | yes | Raw CSV content. |
+| `filename` | string | yes | Output filename. |
+| `output_dir` | string | no | Output directory. Defaults to `CSVs`. |
+
+Required columns are `Source Labware`, `Source Well`, `Dest Labware`, `Dest Well`, `Tip Action`, and at least one of `Volume (ul)` or `Distribution Volume (ul)`.
+
+### `ot2_list_csv_files`
+
+List CSV files available in the active project.
+
+### `ot2_insert_home_rows`
+
+Insert HOME control rows into an existing CSV every N transfer rows.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `csv_path` | string | yes | CSV file to modify. |
+| `every_n_transfers` | integer | yes | Insert HOME after this many transfer rows. |
+
+Rows immediately after inserted HOME rows are forced to `Tip Action: new`.
+
+## Protocol, Simulation, and Validation
+
+### `ot2_generate_protocol`
+
+Compile TOML configuration and a CSV transfer map into `CherryPick_OT2.py`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `csv_path` | string | yes | CSV file path, for example `CSVs/transfers.csv`. |
+| `settings_path` | string | no | Settings TOML path. |
+| `labware_path` | string | no | Labware TOML path. |
+| `protocol_path` | string | no | Protocol file to update. |
+| `offset_db_path` | string | no | Offset database path. |
+| `response_format` | string | no | Tool response format. |
+
+### `ot2_validate_configuration`
+
+Run pre-flight checks before generation.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `csv_path` | string | yes | CSV file to validate. |
+| `settings_path` | string | no | Settings TOML path. |
+| `labware_path` | string | no | Labware TOML path. |
+
+### `ot2_simulate_protocol`
+
+Run `opentrons_simulate` against a compiled protocol.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `protocol_path` | string | no | Defaults to `CherryPick_OT2.py`. |
+| `labware_env_path` | string | no | Custom labware path override. |
+| `response_format` | string | no | Tool response format. |
+
+Simulation uses `{OPENTRONS_DIR}/labware` when available and can fall back to `LABWARE_PATH`.
+
+## Deployment and Workflow
+
+### `ot2_deploy_to_opentrons`
+
+Deploy the compiled protocol to the Opentrons App protocol directory and/or clipboard.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `protocol_path` | string | no | Defaults to `CherryPick_OT2.py`. |
+| `target_path` | string | no | Explicit deployment target. |
+| `opentrons_dir` | string | no | Root Opentrons App directory for auto-UUID deployment. |
+| `copy_to_clipboard` | boolean | no | Copy protocol text to clipboard. |
+| `clipboard_command` | string | no | Clipboard command override. |
+
+When `opentrons_dir` or `OPENTRONS_DIR` is available, deployment scans existing protocol UUID folders by `protocolName` and reuses the matching slot if one exists.
+
+### `ot2_full_workflow`
+
+Run the complete pipeline: validate, generate, simulate, and optionally deploy.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `csv_path` | string | yes | CSV file path. |
+| `settings_path` | string | no | Settings TOML path. |
+| `labware_path` | string | no | Labware TOML path. |
+| `protocol_path` | string | no | Protocol path. |
+| `offset_db_path` | string | no | Offset database path. |
+| `simulate` | boolean | no | Run simulation. Defaults to `true`. |
+| `labware_env_path` | string | no | Custom labware path override. |
+| `deploy` | boolean | no | Deploy after simulation. Defaults to `false`. |
+| `deployment_target` | string | no | Explicit deployment target. |
+| `opentrons_dir` | string | no | Root Opentrons App directory. |
+| `copy_to_clipboard` | boolean | no | Copy generated protocol to clipboard. |
+| `clipboard_command` | string | no | Clipboard command override. |
+| `response_format` | string | no | `json`, `markdown`, or `concise`. |
+
+## Labware and Offsets
+
+### `ot2_add_labware_definition`
+
+Add or update an offset entry in `offset_database.toml`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `labware_id` | string | yes | Labware identifier. |
+| `position_rack` | string | yes | Deck slot number. |
+| `offset_x`, `offset_y`, `offset_z` | number | no | Offset values in mm. |
+
+### `ot2_scan_available_labware`
+
+List custom and official labware available for deck setup.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `custom_labware_path` | string | no | Custom labware directory. Defaults to `{OPENTRONS_DIR}/labware` when possible. |
+
+### `ot2_get_labware_offset`
+
+Retrieve one offset entry.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `labware_id` | string | yes | Labware identifier. |
+| `position_rack` | string | yes | Deck slot number. |
+
+### `ot2_list_labware_offsets`
+
+List all offsets stored in `offset_database.toml`.
+
+### `ot2_delete_labware_offset`
+
+Delete one offset entry.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `labware_id` | string | yes | Labware identifier. |
+| `position_rack` | string | yes | Deck slot number. |
+
+### `ot2_manage_official_labware`
 
 Manage the official labware allowlist.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `action` | string | yes | `"add"`, `"remove"`, or `"list"` |
-| `labware_id` | string | no | Labware identifier (required for add/remove) |
+| `action` | string | yes | `add`, `remove`, or `list`. |
+| `labware_id` | string | for add/remove | Official labware load name. |
 
-### Workflow
+## GUI Sync Tools
 
-#### `ot2_full_workflow`
+### `ot2_create_shell_settings`
 
-End-to-end pipeline: validation, protocol generation, simulation, and optional deployment.
+Create `shell_settings.json` with the Windows Opentrons App root path used by the GUI.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `csv_path` | string | yes | Path to CSV file |
-| `simulate` | boolean | no | Run simulation (default: true) |
-| `deploy` | boolean | no | Deploy to Opentrons App |
-| `response_format` | string | no | Output format |
+| `opentrons_dir_win` | string | yes | Windows path such as `C:\Users\<name>\AppData\Roaming\Opentrons`. |
+
+### `ot2_sync_to_gui`
+
+Push selected project files into the running Docker GUI workspace.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `files` | array | no | Optional list such as `["settings.toml", "CSVs"]`. Defaults to all supported sync files. |
+
+This is a one-way sync from the MCP project to the GUI workspace. It preserves GUI-only CSVs and does not overwrite `offset_database.toml`.
 
 ## Shorthand Aliases
 
-These aliases can be used as the `path` parameter in `ot2_update_settings` instead of full dotted paths:
+Aliases accepted by `ot2_update_settings` and `ot2_batch_update_settings`:
 
-| Alias | Full Path |
+| Alias | Full path |
 |-------|-----------|
-| `mode` | `settings.general.mode` |
-| `speed` | `settings.general.head_speed.speed` |
-| `head_speed` | `settings.general.head_speed.speed` |
-| `starting_tip` | `settings.general.starting_tip_well` |
+| `mode`, `pipette_mode` | `settings.general.mode` |
+| `speed`, `head_speed` | `settings.general.head_speed.speed` |
+| `starting_tip`, `starting_tip_well` | `settings.general.starting_tip_well` |
 | `protocol_name` | `settings.general.protocol_name` |
-| `pre_aspirate` | `settings.liquid_handling.pre_aspirate_contact.enabled` |
-| `pre_aspirate_volume` | `settings.liquid_handling.pre_aspirate_contact.aspirate_volume` |
-| `wick` | `settings.liquid_handling.post_aspirate_wick.enabled` |
-| `wicking` | `settings.liquid_handling.post_aspirate_wick.enabled` |
-| `delay` | `settings.liquid_handling.delays.post_aspirate` |
-| `post_aspirate_delay` | `settings.liquid_handling.delays.post_aspirate` |
-| `push_out` | `settings.liquid_handling.push_out.enabled` |
-| `push_out_volume` | `settings.liquid_handling.push_out.volume_ul` |
-| `mixing` | `settings.liquid_handling.mixing.enabled` |
+| `pre_aspirate`, `pre_aspirate_contact` | `settings.liquid_handling.pre_aspirate_contact.enabled` |
+| `pre_aspirate_volume`, `pre_wet_volume` | `settings.liquid_handling.pre_aspirate_contact.aspirate_volume` |
+| `wick`, `wicking`, `tip_wicking` | `settings.liquid_handling.post_aspirate_wick.enabled` |
+| `delay`, `post_aspirate_delay`, `aspirate_delay` | `settings.liquid_handling.delays.post_aspirate` |
+| `push_out`, `pushout` | `settings.liquid_handling.push_out.enabled` |
+| `push_out_volume`, `pushout_volume` | `settings.liquid_handling.push_out.volume_ul` |
+| `mixing`, `mixing_enabled` | `settings.liquid_handling.mixing.enabled` |
 | `mixing_location` | `settings.liquid_handling.mixing.location` |
-| `mixing_reps` | `settings.liquid_handling.mixing.repetitions` |
+| `mixing_reps`, `mixing_repetitions` | `settings.liquid_handling.mixing.repetitions` |
 | `source_remixing` | `settings.liquid_handling.mixing.source_remixing` |
 | `active_preset` | `settings.liquid_handling.active_preset` |
 
 ## Resources
 
-Read-only data endpoints accessible via MCP resource URIs.
-
 | URI | Description |
 |-----|-------------|
-| `config://settings` | Current settings.toml content |
-| `config://labware` | Labware catalog (labware_dict.toml) |
-| `config://offsets` | Calibration offset database (offset_database.toml) |
-| `status://deck-layout` | Visual deck configuration summary |
-| `status://liquid-handling-config` | Active liquid handling parameters |
-| `files://csvs` | List of available CSV transfer files |
-| `logs://last-simulation` | Most recent simulation output |
+| `config://settings` | Current `settings.toml` content. |
+| `config://labware` | Current `labware_dict.toml` content. |
+| `config://offsets` | Current `offset_database.toml` content or a fallback message if absent. |
+| `status://deck-layout` | Deck layout summary. |
+| `status://liquid-handling-config` | Active liquid-handling summary. |
+| `status://project-directory` | Active project directory status. |
+| `files://csvs` | Available project CSV files. |
+| `files://archives` | Available project archive ZIP files. |
+| `logs://last-simulation` | Most recent simulation log. |
 
 ## Prompts
 
-Guided workflow templates for common tasks.
-
 | Prompt | Description |
 |--------|-------------|
-| `setup_new_experiment` | Step-by-step experiment configuration wizard |
-| `optimize_liquid_handling` | Problem-driven manual parameter tuning for liquid handling |
-| `switch_project` | Switch between project directories with context reset |
+| `setup_new_experiment` | Step-by-step setup for a new OT-2 cherry-pick experiment. |
+| `optimize_liquid_handling` | Problem-driven manual liquid-handling tuning. |
+| `recipe_dilution` | Standard reservoir-to-384 dilution recipe with fixed deck pattern and multi-channel fill plan. |
+| `switch_project` | Guided project-directory switch. |

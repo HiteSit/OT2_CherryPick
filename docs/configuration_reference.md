@@ -1,49 +1,55 @@
 # Configuration Reference
 
-Complete reference for all configuration files in the OT2 CherryPick system.
+Complete reference for the OT2 CherryPick configuration files and CSV transfer format.
+
+## Authoritative Files
+
+| File or directory | Purpose |
+|-------------------|---------|
+| `settings.toml` | Main protocol configuration: mode, liquid handling, modules, deck entries, tip racks |
+| `labware_dict.toml` | Pipette catalog and compatible tip rack mappings |
+| `offset_database.toml` | Optional per-labware, per-slot calibration offsets |
+| `CSVs/*.csv` | Transfer maps used to generate protocols |
+| `tests/e2e/configs/*/settings.toml` | Tested example configurations for specific modes and features |
+| GUI workspace | Docker GUI working copy, controlled by `OT2_GUI_WORKSPACE` and `OT2_PROJECT_DIR` |
+
+The root templates are the best source for current default values. The generated protocol embeds the TOML and CSV data into `CherryPick_OT2.py`, so the OT-2 does not need the original files at runtime.
 
 ## settings.toml
 
-The main protocol configuration file. Controls pipette mode, tip management, liquid handling parameters, and deck layout.
+The main protocol configuration file. It controls pipette mode, liquid handling parameters, deck layout, hardware modules, and tip rack assignment.
 
 ### General Settings
 
 ```toml
 [settings.general]
-protocol_name = "CherryPick_Protocol"
-mode = "single_X1"
-starting_tip_well = "A1"
-```
+protocol_name = ""
+mode = "multi"
+starting_tip_well = "H1"
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `protocol_name` | string | `"CherryPick_Protocol"` | Name embedded in the generated protocol |
-| `mode` | string | `"single_X1"` | Pipette mode (see [Pipette Modes](#pipette-modes)) |
-| `starting_tip_well` | string | `"A1"` | First tip position to use |
-
-#### Head Speed
-
-```toml
 [settings.general.head_speed]
 speed = 400
 ```
 
-| Field | Type | Default | Range | Description |
-|-------|------|---------|-------|-------------|
-| `speed` | integer | `400` | 100-600 | Gantry movement speed in mm/min |
-
-Reduce to 200-300 for volatile or slippery solvents (chloroform, hexane) that may drip during fast movement.
+| Field | Type | Template default | Description |
+|-------|------|------------------|-------------|
+| `protocol_name` | string | `""` | Optional protocol name embedded in generated metadata. Empty string preserves the protocol's built-in default name. |
+| `mode` | string | `"multi"` | Pipette mode. See [Pipette Modes](#pipette-modes). |
+| `starting_tip_well` | string | `"H1"` | Starting well for `multi_X1`, where the 8-channel pipette uses one nozzle. |
+| `head_speed.speed` | number | `400` | Gantry movement speed in mm/min. Lower values such as 200-300 are useful for volatile or drip-prone liquids. |
 
 ### Liquid Handling
 
 ```toml
 [settings.liquid_handling]
-active_preset = "standard"
+active_preset = ""
 ```
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `active_preset` | string | `"standard"` | Active liquid preset name |
+| Field | Type | Template default | Description |
+|-------|------|------------------|-------------|
+| `active_preset` | string | `""` | Preset name to apply at runtime. Empty string means use the individual settings exactly as written. |
+
+`active_preset` is not just a label. When set, the runtime copies values from `[settings.liquid_handling.presets.<name>]` over the individual liquid-handling sections before executing transfers.
 
 #### Pre-Aspirate Contact
 
@@ -51,31 +57,31 @@ active_preset = "standard"
 [settings.liquid_handling.pre_aspirate_contact]
 enabled = false
 position_offset_percent = 20
-aspirate_volume = 0
+aspirate_volume = 20
 ```
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `enabled` | boolean | `false` | Touch liquid surface before aspirating |
-| `position_offset_percent` | integer | `20` | Offset from well center (%) |
-| `aspirate_volume` | number | `0` | Pre-wet volume in uL (0 = contact only) |
+| Field | Type | Template default | Description |
+|-------|------|------------------|-------------|
+| `enabled` | boolean | `false` | Touch liquid surface before the main aspiration. |
+| `position_offset_percent` | number | `20` | Safety offset applied around the CSV aspiration position. |
+| `aspirate_volume` | number | `20` | Pre-wet volume in uL. Use `0` for contact-only behavior. |
 
 #### Post-Aspirate Wicking
 
 ```toml
 [settings.liquid_handling.post_aspirate_wick]
-enabled = true
+enabled = false
 radius = 1
 v_offset_mm = -1.5
 speed = 20
 ```
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `enabled` | boolean | `true` | Touch well wall after aspirating to remove droplets |
-| `radius` | number | `1` | Touch radius in mm (larger = closer to wall) |
-| `v_offset_mm` | number | `-1.5` | Height relative to well top (negative = below rim) |
-| `speed` | number | `20` | Touch speed in mm/s |
+| Field | Type | Template default | Description |
+|-------|------|------------------|-------------|
+| `enabled` | boolean | `false` | Touch the well wall after aspirating to remove droplets from the outside of the tip. |
+| `radius` | number | `1` | Touch radius. Larger values move closer to the wall. |
+| `v_offset_mm` | number | `-1.5` | Height relative to well top. Negative values move below the rim. |
+| `speed` | number | `20` | Touch-tip speed. |
 
 #### Delays
 
@@ -84,84 +90,87 @@ speed = 20
 post_aspirate = 0
 ```
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `post_aspirate` | number | `0` | Wait time after aspiration in seconds |
-
-Recommended: 0s for water/buffers, 2-3s for DMSO/glycerol, 3-5s for oils.
+| Field | Type | Template default | Description |
+|-------|------|------------------|-------------|
+| `post_aspirate` | number | `0` | Seconds to wait after aspiration before moving the tip. |
 
 #### Push-Out
 
 ```toml
 [settings.liquid_handling.push_out]
 enabled = true
-volume_ul = 5
+volume_ul = 20
 ```
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `enabled` | boolean | `true` | Push extra air to expel residual liquid |
-| `volume_ul` | number | `5` | Push-out volume in uL (recommended 3-10) |
+| Field | Type | Template default | Description |
+|-------|------|------------------|-------------|
+| `enabled` | boolean | `true` | Push extra air after dispensing to expel residual liquid. |
+| `volume_ul` | number | `20` | Push-out volume in uL. |
 
-Not applied when mixing follows dispense.
+Push-out is skipped when a transfer is followed by mixing, because the mix cycles already aspirate and dispense through the tip.
 
 #### Mixing
 
 ```toml
 [settings.liquid_handling.mixing]
-enabled = true
+enabled = false
 location = "destination"
-repetitions = 3
-source_remixing = false
+repetitions = 2
+source_remixing = "once"
 ```
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `enabled` | boolean | `true` | Enable post-dispense mixing |
-| `location` | string | `"destination"` | Where to mix: `"source"`, `"destination"`, or `"none"` |
-| `repetitions` | integer | `3` | Number of mix cycles |
-| `source_remixing` | string | `"once"` | Re-mix source: `"once"` (first aspiration only) or `"always"` (every aspiration) |
+| Field | Type | Template default | Description |
+|-------|------|------------------|-------------|
+| `enabled` | boolean | `false` | Enable CSV-driven mixing behavior. |
+| `location` | string | `"destination"` | `"destination"`, `"source"`, or `"none"`. |
+| `repetitions` | integer | `2` | Number of aspirate/dispense cycles. |
+| `source_remixing` | string | `"once"` | For source mixing: `"once"` per source well or `"always"` before every aspiration. |
+
+`Mix Volume` and `Mix Height` in the CSV are interpreted according to `location`.
 
 #### Presets
 
-Presets are defined inline in settings.toml under `[settings.liquid_handling.presets.*]`. See the [Liquid Handling Guide](liquid_handling_guide.md) for details on each preset.
+Built-in presets in the root template:
 
-### Deck Layout (Working Plate Array)
+| Preset | Intended use |
+|--------|--------------|
+| `standard` | Aqueous liquids: contact, wicking, destination mixing, no delay, no push-out |
+| `viscous` | DMSO/glycerol/oils: contact, wicking, post-aspirate delay, push-out, stronger destination mixing |
+
+Custom presets can be added by the GUI or by editing `settings.toml` under `[settings.liquid_handling.presets.<name>]`.
+
+There is no built-in volatile/slippery preset in the default template. For volatile solvents, use custom settings: lower head speed, optional pre-wetting, and slower CSV flow-rate multipliers.
+
+### Deck Layout
+
+Deck entries are stored as an array of `[[settings.working_plate]]` tables.
 
 ```toml
 [[settings.working_plate]]
-type = "source"
+type = "reservoir"
 labware_id = "tube_rack_96_1500ul"
 position_rack = "4"
-
-[[settings.working_plate]]
-type = "destination"
-labware_id = "384_ppv_55ul"
-position_rack = "2"
 
 [[settings.working_plate]]
 type = "tip"
 labware_id = "opentrons_96_tiprack_300ul"
 connection = "Pipette_8"
-position_rack = "5"
+mode = "multi"
+position_rack = "1"
 ```
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `type` | string | yes | `"source"`, `"reservoir"`, `"destination"`, `"tip"`, or `"module"` |
-| `labware_id` | string | yes | Labware identifier (must match Opentrons load name or labware catalog) |
-| `position_rack` | string | yes | Deck slot number (1-11, must be unique) |
-| `connection` | string | tip only | Pipette name this tip rack is assigned to |
-| `mode` | string | no | For dual mode: which pipette uses this labware |
-| `module_type` | string | module only | Module type (`"heaterShaker"`) |
-| `adapter_id` | string | module only | Adapter loaded on the module |
-| `target_temperature` | number | module only | Target temperature in °C (0 = disabled, min 30°C when enabled) |
-| `target_shake_speed` | number | module only | Target shake speed in RPM (0 = disabled, range 200-3000) |
-| `persist_after_protocol` | boolean | module only | Keep module running after protocol ends |
-| `offset_x/y/z` | number | no | Per-slot offset override (takes precedence over offset_database.toml) |
+| `type` | string | yes | `"source"`, `"reservoir"`, `"destination"`, `"tip"`, or `"module"`. |
+| `labware_id` | string | usually | Opentrons load name or custom labware ID. Empty is allowed for a module without loaded labware. |
+| `position_rack` | string | yes | OT-2 deck slot number. |
+| `connection` | string | tip only | Pipette name using this tip rack, for example `Pipette_8`. |
+| `mode` | string | tip in dual mode | Tip rack allocation for `multi`, `multi_X1`, or `single_X1`. |
+| `offset_x`, `offset_y`, `offset_z` | number | no | Per-entry calibration offset. Overrides `offset_database.toml` for the same labware and slot. |
 
-**Deck slot map:**
-```
+**Physical OT-2 deck map:**
+
+```text
 +-------+-------+-------+
 |  10   |  11   | Trash |
 +-------+-------+-------+
@@ -173,22 +182,45 @@ position_rack = "5"
 +-------+-------+-------+
 ```
 
+### Heater-Shaker Module Entries
+
+```toml
+[[settings.working_plate]]
+type = "module"
+module_type = "heaterShaker"
+position_rack = "10"
+adapter_id = "opentrons_universal_flat_adapter"
+labware_id = ""
+target_temperature = 0
+target_shake_speed = 0
+persist_after_protocol = true
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `module_type` | string | Currently `"heaterShaker"`. |
+| `adapter_id` | string | Adapter loaded on the module. |
+| `labware_id` | string | Labware mounted on the adapter, if any. |
+| `target_temperature` | number | `0` disables heating; non-zero values request heating. |
+| `target_shake_speed` | number | `0` disables shaking; non-zero values request shaking. |
+| `persist_after_protocol` | boolean | Keep module state active after the protocol ends. |
+
+Module labware is background-only in the current workflow. Do not reference module labware as a CSV source or destination.
+
 ## Pipette Modes
 
-| Mode | Pipette | Tips Active | CSV Row Behavior |
-|------|---------|-------------|------------------|
-| `single_X1` | Single-channel | 1 | 1 row = 1 individual transfer |
-| `multi_X1` | 8-channel (single nozzle via `SINGLE` layout, start `H1`) | 1 | 1 row = 1 individual transfer |
-| `multi` | 8-channel (all nozzles) | 8 | 1 row = full column transfer (A1 means A1-H1) |
-| `dual` | Both pipettes | Per-row | CSV `Mode` column selects which pipette per transfer |
+| Mode | Pipette behavior | CSV row behavior |
+|------|------------------|------------------|
+| `single_X1` | Single-channel pipette | One row is one individual transfer. |
+| `multi_X1` | 8-channel pipette in single-nozzle layout | One row is one individual transfer using one nozzle. |
+| `multi` | 8-channel pipette using all nozzles | One row is a full column-style transfer. |
+| `dual` | Both pipettes available | CSV `Mode` column selects `single_X1`, `multi_X1`, or `multi` per row. |
 
-**Note:** `multi` mode only works with 96-well and 384-well plates.
+In `multi` mode, use only compatible 96-well or 384-well geometries. For 96-well plates, row `A` represents the full column. For 384-well plates, `A` and `B` row starts map to the two interleaved 8-channel row groups.
 
 ## labware_dict.toml
 
-Defines available pipettes. Labware calibration offsets are now stored separately in `offset_database.toml`.
-
-### Pipette Definitions
+`labware_dict.toml` defines available pipettes. General labware definitions are no longer stored here; labware is referenced by Opentrons load names or discovered custom JSON definitions.
 
 ```toml
 [[pipettes]]
@@ -202,16 +234,16 @@ tip_connections = ["opentrons_96_tiprack_300ul"]
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | Internal reference name (used in `connection` field of tip racks) |
-| `opentrons_id` | string | Opentrons API pipette identifier |
-| `channels` | integer | Number of channels (1 or 8) |
-| `volume_range` | array | `[min, max]` volume in uL |
-| `preferred_mount` | string | `"left"` or `"right"` |
-| `tip_connections` | array | List of compatible tip rack labware IDs |
+| `name` | string | Internal reference name, used by tip rack `connection`. |
+| `opentrons_id` | string | Opentrons API pipette identifier. |
+| `channels` | integer | Number of channels. |
+| `volume_range` | array | `[min, max]` volume in uL. |
+| `preferred_mount` | string | `"left"` or `"right"`. |
+| `tip_connections` | array | Compatible tip rack labware IDs. |
 
 ## offset_database.toml
 
-Per-labware, per-slot calibration offsets. Managed via MCP tools or the GUI.
+`offset_database.toml` stores reusable calibration offsets by labware and slot. A direct `offset_x/y/z` on a `settings.working_plate` entry takes precedence over the database entry.
 
 ```toml
 [[offsets]]
@@ -226,55 +258,39 @@ notes = "Calibrated after replacement"
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `labware_id` | string | Labware identifier |
-| `position_rack` | string | Deck slot number |
-| `offset_x` | number | X adjustment in mm (negative = left, positive = right) |
-| `offset_y` | number | Y adjustment in mm (negative = front, positive = back) |
-| `offset_z` | number | Z adjustment in mm (negative = down, positive = up) |
-| `last_calibrated` | string | Date of last calibration (optional) |
-| `notes` | string | Free-text notes (optional) |
+| `labware_id` | string | Labware identifier. |
+| `position_rack` | string | Deck slot number. |
+| `offset_x` | number | X adjustment in mm. |
+| `offset_y` | number | Y adjustment in mm. |
+| `offset_z` | number | Z adjustment in mm. |
+| `last_calibrated` | string | Optional date. |
+| `notes` | string | Optional free-text note. |
 
 ## Environment Variables
 
 ### `OPENTRONS_DIR`
 
-The single root directory for Opentrons App data. The system auto-derives subdirectories from it:
+Root Opentrons App data directory. The system derives these paths from it:
 
 | Subdirectory | Purpose |
 |--------------|---------|
-| `{OPENTRONS_DIR}/labware/` | Custom labware JSON definitions (used by simulation and labware scanning) |
-| `{OPENTRONS_DIR}/protocols/` | Protocol deployment target (auto-UUID directories with name-based reuse) |
+| `{OPENTRONS_DIR}/labware/` | Custom labware JSON definitions used by scanning and simulation. |
+| `{OPENTRONS_DIR}/protocols/` | Protocol deployment target with UUID-style Opentrons App folders. |
 
-**Expected directory structure:**
-```
-{OPENTRONS_DIR}/
-├── labware/              ← Custom labware JSON files
-│   ├── my_custom_plate.json
-│   └── ...
-└── protocols/            ← Protocol directories (one per protocol name, reused on redeploy)
-    ├── {uuid-1}/
-    │   ├── src/
-    │   │   └── CherryPick_OT2.py
-    │   └── analysis/
-    │       └── {timestamp_ms}.json
-    └── {uuid-2}/
-        └── ...
-```
-
-**Configuration per workflow:**
+**Per workflow:**
 
 | Workflow | How to set |
-|----------|-----------|
-| Docker | `OPENTRONS_DIR_HOST` / `OPENTRONS_DIR_MOUNT` in `.env` |
-| MCP server | `OPENTRONS_DIR` env var in MCP config (`.mcp.json` or `claude_desktop_config.json`) |
-| GUI | Single `opentrons_dir_win` field in shell settings (Windows path, auto-converted to WSL) |
-| CLI script | Hardcoded paths in `simulate_protocol.sh` |
+|----------|------------|
+| Docker | `OPENTRONS_DIR_HOST` and `OPENTRONS_DIR_MOUNT` in `docker/.env`. |
+| MCP server | `OPENTRONS_DIR` in the MCP server environment. |
+| GUI | `opentrons_dir_win` in `shell_settings.json`, set through Deck Setup. |
+| CLI | Environment variable or explicit command arguments, depending on the command. |
 
-**Legacy fallback:** If `OPENTRONS_DIR` is not set, the simulation tool falls back to the `LABWARE_PATH` environment variable for custom labware location.
+If `OPENTRONS_DIR` is not set, some simulation paths can fall back to `LABWARE_PATH` for custom labware discovery.
 
 ### `OT2_PROJECT_DIR`
 
-Optional. Sets the persistent workspace directory for the MCP server. When not set, the server uses the current working directory.
+Optional persistent workspace directory for the MCP server and Docker backend. If unset, the active process working directory is used.
 
 ## CSV Transfer Format
 
@@ -282,72 +298,91 @@ Optional. Sets the persistent workspace directory for the MCP server. When not s
 
 | Column | Description | Example |
 |--------|-------------|---------|
-| `Source Labware` | Labware ID + slot | `tube_rack_96_1500ul_4` |
-| `Source Well` | Well position | `A1`, `H12` |
-| `Volume (ul)` | Transfer volume | `50`, `100.5` |
-| `Dest Labware` | Labware ID + slot | `384_ppv_55ul_2` |
-| `Dest Well` | Destination well | `B1`, `P24` |
+| `Source Labware` | Source labware reference in `{labware_id}_{slot}` format | `tube_rack_96_1500ul_4` |
+| `Source Well` | Source well | `A1` |
+| `Dest Labware` | Destination labware reference in `{labware_id}_{slot}` format | `384_ppv_55ul_2` |
+| `Dest Well` | Destination well or pipe-delimited destination list | `B1` |
+| `Tip Action` | Per-row tip behavior | `new` |
 
-Labware references use the format `{labware_id}_{slot_number}`.
+Each transfer row also needs one volume column:
+
+| Column | Description |
+|--------|-------------|
+| `Volume (ul)` | Ordinary one-source-to-one-destination transfer volume. |
+| `Distribution Volume (ul)` | Per-destination volume for distribution rows. |
+
+Use `Tip Action` consistently. The CSV upload MCP tool requires it, and it is the current mechanism for tip reuse.
 
 ### Positioning Columns
 
-Choose **one** per source and **one** per destination. Using both Height and Top for the same end causes an error.
+Choose one source positioning column and one destination positioning column.
 
 | Column | Description | Example |
 |--------|-------------|---------|
-| `Source Bottom` | Distance from well bottom (mm) | `2`, `5.5` |
-| `Source Top` | Distance from well top (mm, negative = below rim) | `-5`, `-2.0` |
-| `Dest Bottom` | Distance from well bottom (mm) | `1`, `2.5` |
-| `Dest Top` | Distance from well top (mm, negative = below rim) | `-3`, `-7.5` |
-| `Mix Height` | Mixing height from bottom (mm) | `1.5`, `3.0` |
+| `Source Bottom` | Distance from source well bottom in mm | `2` |
+| `Source Top` | Offset from source well top in mm; negative goes down | `-5` |
+| `Dest Bottom` | Distance from destination well bottom in mm | `1` |
+| `Dest Top` | Offset from destination well top in mm; negative goes down | `-3` |
+| `Mix Height` | Mixing height in mm, interpreted at source or destination depending on settings | `2` |
 
 ### Optional Columns
 
 | Column | Default | Description |
 |--------|---------|-------------|
-| `Mix Volume` | `0` | Volume to mix after dispense (uL). 0 = no mixing. |
-| `Flow Aspirate` | `1.0` | Aspiration speed multiplier (0.5 = half speed, 2.0 = double) |
-| `Flow Dispense` | `1.0` | Dispense speed multiplier |
-| `Air Gap` | `0` | Air gap volume after aspiration (uL), prevents dripping |
-| `Air Gap Rate` | `1.0` | Air gap aspiration speed multiplier |
+| `Mix Volume` | `0` | Mix volume in uL. |
+| `Flow Aspirate` | `1.0` | Aspiration speed multiplier. |
+| `Flow Dispense` | `1.0` | Dispense speed multiplier. |
+| `Air Gap` | `0` | Air gap volume in uL after aspiration. |
+| `Air Gap Rate` | `1.0` | Air gap aspiration multiplier for ordinary transfer rows. |
+| `Distribution` | `equal` | Distribution volume pattern. |
+| `Mode` | none | Required in `dual` mode to select the pipette behavior per row. |
 
-### Tip Management Column
+### Tip Action
 
-| Column | Default | Description |
-|--------|---------|-------------|
-| `Tip Action` | auto | Per-row override: `new` (pick up), `keep` (reuse), `drop` (return) |
+| Value | Behavior |
+|-------|----------|
+| `new` | Pick up a fresh tip before the transfer. |
+| `keep` | Keep using the current tip when possible. |
+| `drop` | Drop the tip after the transfer. |
 
-When omitted, each row uses a new tip. Use the `Tip Action` column to override per-row behavior (e.g. `keep` to reuse a tip across consecutive rows).
+`keep` is not appropriate immediately after a HOME row because homing drops the current tip.
 
-### Distribution Columns
+### Distribution Rows
 
-The system supports **distribution mode**: transferring from one source well to multiple destination wells in a single operation using the Opentrons `pipette.distribute()` API.
+Distribution mode transfers one source well to multiple destination wells in one operation.
 
-A row is treated as a distribution row if `|` appears in `Dest Well` or the `Distribution Volume (ul)` column has a value.
+A row is treated as distribution when `Dest Well` contains `|` or when `Distribution Volume (ul)` is populated.
 
 | Column | Description | Example |
 |--------|-------------|---------|
-| `Dest Well` | Pipe-delimited destinations | `A1\|B1\|C1\|D1` |
-| `Distribution Volume (ul)` | Volume per destination well (replaces `Volume (ul)`) | `10` |
-| `Distribution` | Volume pattern (optional) | `equal`, `geometric:2.0`, `geometric:2.0:desc` |
+| `Dest Well` | Pipe-delimited destination wells | `A1|B1|C1|D1` |
+| `Distribution Volume (ul)` | Volume per destination well | `10` |
+| `Distribution` | Pattern | `equal`, `geometric:2.0`, `geometric:2.0:desc` |
 
-**Volume patterns:**
-- `equal` (default) — Same volume to each destination
-- `geometric:factor` — Each well gets `factor` times the previous (ascending)
-- `geometric:factor:desc` — Descending geometric series
+**Important constraints:**
+- Use `Distribution Volume (ul)` for distribution rows.
+- Destination mixing is not supported for distribution rows because the Opentrons `distribute()` API ignores destination `mix_after`.
+- `Air Gap` can be used; `Air Gap Rate` is only meaningful for ordinary transfer rows.
+- In `multi` mode, pipe-delimited destination wells must be compatible with the 8-channel row group.
 
 ### HOME Control Rows
 
-Insert a row where **all non-empty columns contain `HOME`** (case-insensitive) to trigger a mid-protocol `protocol.home()` call. This re-homes all robot axes to correct positional drift during long runs.
+Insert a row where all non-empty columns contain `HOME` to trigger `protocol.home()` mid-protocol.
 
-**Rules:**
-- The robot drops any held tip before homing (firmware requirement)
-- The row **immediately after** a HOME row must have `Tip Action: new`
-- Use periodically in overnight protocols with hundreds of transfers
+Rules:
+- HOME is case-insensitive.
+- The robot drops any held tip before homing.
+- The transfer row immediately after HOME must use `Tip Action: new`.
+- The MCP tool `ot2_insert_home_rows` can insert HOME rows and force the following `Tip Action` values to `new`.
 
 ### Dual Mode Column
 
-| Column | Description |
-|--------|-------------|
-| `Mode` | Which pipette to use for this row: `single_x1`, `multi`, or `multi_x1` (required in `dual` mode) |
+When `settings.general.mode = "dual"`, the CSV needs a `Mode` column.
+
+| Value | Meaning |
+|-------|---------|
+| `single_X1` | Use the single-channel pipette. |
+| `multi_X1` | Use one nozzle of the 8-channel pipette. |
+| `multi` | Use all nozzles of the 8-channel pipette. |
+
+Each `Mode` value should have a matching tip rack entry in `settings.working_plate`.

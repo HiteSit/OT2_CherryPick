@@ -13,7 +13,7 @@ Existing tools for the OT-2 present researchers with a dichotomy: graphical inte
 
 ## Features
 
-- **Liquid handling presets** -- Pre-configured profiles for aqueous, viscous, and volatile liquids with full scientific parametrization
+- **Liquid handling presets** -- Built-in aqueous and viscous profiles, plus custom/manual tuning for volatile or difficult liquids
 - **Multi-pipette modes** -- Single-channel, 8-channel single-tip, full 8-channel, and dual-pipette
 - **Distribution mode** -- One source to multiple destinations with equal or geometric volume patterns
 - **Heater-shaker module support** -- Temperature and shaking control during protocols
