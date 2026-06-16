@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.7] - 2026-06-16
+
+### Added
+
+- Added MkDocs Material documentation publishing with optional PDF manual export.
+- Added structured manual landing and installation pages for generated documentation.
+
+### Changed
+
+- Documented the MkDocs HTML and PDF build commands in the root README.
+
 ## [1.6.6] - 2026-06-16
 
 ### Changed
@@ -230,7 +241,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.6...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.7...HEAD
+[1.6.7]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.6...v1.6.7
 [1.6.6]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.3...v1.6.6
 [1.6.3]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.2...v1.6.3
 [1.6.2]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.1...v1.6.2
