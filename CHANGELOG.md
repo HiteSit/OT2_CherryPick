@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.5] - 2026-06-16
+
+### Changed
+
+- Refreshed the user documentation for GUI workflows, TOML settings, liquid handling presets, and MCP tool coverage.
+- Added screenshot-oriented captions to the GUI guide for future documentation images.
+
 ## [1.6.4] - 2026-06-16
 
 ### Added
@@ -254,7 +261,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.4...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.5...HEAD
+[1.6.5]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.4...v1.6.5
 [1.6.4]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.1...v1.6.4
 [1.6.1]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.5...v1.6.0
