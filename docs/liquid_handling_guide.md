@@ -4,7 +4,18 @@ How to configure liquid handling parameters for accurate and reproducible transf
 
 ## Presets
 
-Presets apply a coordinated set of liquid handling parameters optimized for specific liquid types. Apply them via the GUI (Configuration step), MCP tool (`ot2_apply_liquid_preset`), or by editing `settings.toml` directly.
+Presets apply a coordinated set of liquid-handling parameters. Apply them in the GUI Configuration step, with the MCP tool `ot2_apply_liquid_preset`, or by editing `settings.toml`.
+
+The default template includes two built-in presets:
+
+| Preset | Use for |
+|--------|---------|
+| `standard` | Water, PBS, buffers, cell media, and other aqueous solutions |
+| `viscous` | DMSO, glycerol, oils, PEG solutions, and other high-viscosity liquids |
+
+The GUI can save custom presets under `[settings.liquid_handling.presets.<name>]`. When `active_preset` is set, the runtime uses that preset's values instead of the individual liquid-handling fields. When `active_preset = ""`, the individual fields are used as written.
+
+There is no built-in volatile/slippery preset in the default template. For chloroform, hexane, ethanol, acetone, or other volatile/drip-prone solvents, use custom settings: lower head speed, optional pre-wetting, and slower CSV flow-rate multipliers.
 
 ### Standard Preset
 
@@ -34,7 +45,7 @@ Aqueous liquids have low viscosity and moderate surface tension. They aspirate c
 | Push-out | enabled, 5 uL |
 | Mixing | enabled, 5 repetitions, destination |
 
-Viscous liquids flow slowly and cling to surfaces. The 2-second delay allows the liquid column to stabilize inside the tip after the plunger stops. Push-out expels residual liquid that surface tension holds inside the tip. Extra mixing repetitions ensure homogeneous dispensing.
+Viscous liquids flow slowly and cling to surfaces. The delay allows the liquid column to stabilize inside the tip after the plunger stops. Push-out expels residual liquid that surface tension holds inside the tip. Extra mixing repetitions improve homogeneity after dispensing.
 
 ## Parameter Reference
 
@@ -44,42 +55,37 @@ Viscous liquids flow slowly and cling to surfaces. The 2-second delay allows the
 [settings.liquid_handling.pre_aspirate_contact]
 enabled = false
 position_offset_percent = 20
-aspirate_volume = 0
+aspirate_volume = 20
 ```
 
-**What it does:** Before the main aspiration, the pipette descends to touch the liquid surface and optionally aspirates a small pre-wetting volume.
+**What it does:** Before the main aspiration, the pipette descends to touch the liquid surface and can optionally aspirate a small pre-wetting volume.
 
 **Why it matters:**
-- **Pre-wetting** (`aspirate_volume > 0`) coats the inner tip surface with liquid. The first aspiration into a dry tip is often inaccurate because liquid evaporates from the tip walls and adheres to dry plastic. Pre-wetting "primes" the tip for consistent volumes.
-- **Contact only** (`aspirate_volume = 0`) detects the liquid surface to confirm proper positioning.
+- **Pre-wetting** (`aspirate_volume > 0`) coats the inside of the tip. This helps with liquids that cling to dry plastic or evaporate quickly.
+- **Contact only** (`aspirate_volume = 0`) touches the liquid without pre-wetting.
 
 **When to use:**
-- Pre-wetting: High surface tension liquids, hydrophobic solutions, or when maximum accuracy is needed for small volumes
-- Contact only: General positioning verification
+- Pre-wetting: high surface tension liquids, hydrophobic solutions, volatile solvents, or small-volume precision work.
+- Contact only: aqueous transfers where the goal is clean positioning without extra aspirate/dispense steps.
 
 ### Post-Aspirate Wicking
 
 ```toml
 [settings.liquid_handling.post_aspirate_wick]
-enabled = true
+enabled = false
 radius = 1
 v_offset_mm = -1.5
 speed = 20
 ```
 
-**What it does:** After aspirating, the tip touches the inside wall of the well to wipe off external droplets.
+**What it does:** After aspirating, the tip touches the inside wall of the source well to wipe off external droplets.
 
-**Why it matters:** Droplets clinging to the outside of the tip cause:
-- Inaccurate volume delivery (liquid outside the tip does not dispense correctly)
-- Cross-contamination (droplets can fall off during gantry movement)
-- Dripping onto the deck or other wells
-
-This mimics the manual technique of touching a pipette tip to the side of a vessel after aspirating.
+**Why it matters:** Droplets clinging to the outside of the tip can cause inaccurate delivery, cross-contamination, or dripping during travel.
 
 **Parameters:**
-- `radius` -- How close to the wall (larger = closer). A value of 1 mm works for most well sizes.
-- `v_offset_mm` -- Height relative to the well top. Negative values position the touch below the rim to ensure contact with the wall, not the rim edge.
-- `speed` -- Slow speeds (10-20 mm/s) give better wicking contact.
+- `radius` -- How close to the wall the touch-tip motion goes.
+- `v_offset_mm` -- Height relative to the well top. Negative values position the touch below the rim.
+- `speed` -- Slow speeds, often 10-20 mm/s, give better wicking contact.
 
 ### Post-Aspirate Delay
 
@@ -88,16 +94,11 @@ This mimics the manual technique of touching a pipette tip to the side of a vess
 post_aspirate = 0
 ```
 
-**What it does:** Pauses for the specified number of seconds after the plunger finishes aspirating, before the tip moves.
+**What it does:** Pauses after aspiration before the tip moves.
 
-**Why it matters:** In viscous liquids, liquid continues flowing into the tip after the plunger stops due to:
-- Viscous flow lag (thick liquids respond slowly to pressure changes)
-- Surface tension pulling liquid upward into the tip
-- Air pressure equilibration between the liquid and the plunger
+**Why it matters:** In viscous liquids, liquid can continue moving into the tip after the plunger stops. A short delay lets the liquid column stabilize.
 
-Without a delay, moving the tip prematurely can leave behind liquid that was still in transit, reducing the aspirated volume.
-
-**Recommended values:**
+**Recommended starting values:**
 
 | Liquid Type | Delay |
 |-------------|-------|
@@ -110,52 +111,55 @@ Without a delay, moving the tip prematurely can leave behind liquid that was sti
 ```toml
 [settings.liquid_handling.push_out]
 enabled = true
-volume_ul = 5
+volume_ul = 20
 ```
 
-**What it does:** After dispensing the target volume, pushes an additional volume of air through the tip to expel residual liquid.
+**What it does:** After dispensing the target volume, pushes additional air through the tip to expel residual liquid.
 
-**Why it matters:** This mimics pressing a manual pipette to the "second stop." Viscous liquids and small volumes cling to the tip interior due to surface tension and adhesion. The extra air push ensures complete delivery.
+**Why it matters:** Viscous liquids and small volumes can remain inside the tip. Push-out is similar to pressing a manual pipette to the second stop.
 
 **Guidelines:**
-- 3-5 uL: Suitable for most applications
-- 8-10 uL: Very viscous liquids (glycerol, concentrated PEG)
-- Do not exceed 10 uL (can cause splashing in small wells)
+- 3-5 uL: gentle push-out for common viscous workflows.
+- 8-10 uL: stronger push-out for very viscous liquids.
+- Higher values should be tested carefully in small wells to avoid splashing.
 
-**Note:** Push-out is automatically skipped when mixing follows the dispense, since repeated aspiration/dispense cycles during mixing already clear residual liquid.
+**Note:** Push-out is skipped when mixing follows the dispense, since repeated aspiration/dispense cycles during mixing already clear residual liquid.
 
 ### Mixing
 
 ```toml
 [settings.liquid_handling.mixing]
-enabled = true
+enabled = false
 location = "destination"
-repetitions = 3
+repetitions = 2
 source_remixing = "once"
 ```
 
-**What it does:** After dispensing, repeatedly aspirates and dispenses at the specified location to homogenize the liquid.
+**What it does:** Repeatedly aspirates and dispenses at the selected location when the CSV row provides `Mix Volume`.
 
 **Parameters:**
-- `location` -- `"destination"` mixes in the destination well (most common). `"source"` mixes in the source well (useful for cell suspensions that settle). `"none"` disables mixing.
-- `repetitions` -- Number of aspirate/dispense cycles. 3 is adequate for aqueous solutions; use 5+ for viscous liquids.
-- `source_remixing` -- `"once"` re-mixes the source on the first aspiration only. `"always"` re-mixes before every aspiration. Essential for cell suspensions or solutions with particles that settle between transfers.
+- `enabled` -- Master switch for mixing.
+- `location` -- `"destination"` mixes after dispensing, `"source"` mixes before aspirating, and `"none"` ignores CSV mix columns.
+- `repetitions` -- Number of aspirate/dispense cycles.
+- `source_remixing` -- `"once"` mixes each source well only on first use; `"always"` mixes before every aspiration from that source.
 
 **When to use source mixing:**
-- Cell suspensions (cells settle within seconds)
-- Bead-based assays
-- Any heterogeneous solution where components separate over time
+- Cell suspensions.
+- Bead-based assays.
+- Any source that settles or separates faster than the run consumes it.
+
+**Distribution limitation:** Destination mixing is not supported for distribution rows because the Opentrons `distribute()` API does not honor destination `mix_after`. For distribution workflows, use source mixing, disable mixing, or use ordinary cherry-pick rows.
 
 ## Choosing Parameters by Liquid Type
 
-| Liquid | Preset | Key Adjustments |
-|--------|--------|-----------------|
-| Water, PBS | Standard | Defaults work well |
-| Cell media | Standard | Enable source remixing if cells present |
-| DMSO | Viscous | Defaults work well |
-| Glycerol (>50%) | Viscous | Increase delay to 3-5 s |
-| Mineral oil | Viscous | Increase delay to 3-5 s, push-out to 8 uL |
-| Chloroform, hexane | Custom | Reduce head speed to 200, use pre-wetting, slow flow rates |
-| Ethanol, acetone | Custom | Reduce head speed to 200-300, volatile liquids evaporate quickly |
+| Liquid | Starting point | Key adjustments |
+|--------|----------------|-----------------|
+| Water, PBS | `standard` preset | Defaults usually work well. |
+| Cell media | `standard` preset | Use source mixing if cells are suspended. |
+| DMSO | `viscous` preset | Defaults usually work well. |
+| Glycerol over 50% | `viscous` preset | Increase delay to 3-5 s; test push-out. |
+| Mineral oil | `viscous` preset | Increase delay and push-out cautiously. |
+| Chloroform, hexane | Custom | Lower head speed, use pre-wetting, slow flow rates. |
+| Ethanol, acetone | Custom | Lower head speed and minimize exposed time. |
 
-For volatile or slippery solvents, there is no built-in preset. Reduce `head_speed` to 200-300 mm/min to minimize dripping during movement, and use slow flow rate multipliers (0.3-0.5) in the CSV.
+CSV flow-rate multipliers (`Flow Aspirate`, `Flow Dispense`, and for ordinary rows `Air Gap Rate`) are useful when the same global settings need row-specific tuning.
