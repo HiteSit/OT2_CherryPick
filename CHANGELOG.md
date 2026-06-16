@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.4] - 2026-06-16
+
+### Added
+
+- Added the `recipe_dilution` MCP prompt for reservoir-to-384 dilution planning.
+- Restored standalone documentation guides for GUI usage, configuration, liquid handling, and MCP tools.
+- Linked the restored guides from the root README documentation section.
+
+### Changed
+
+- Added typed-argument routing and server hints for the `recipe_dilution` prompt.
+- Updated Docker Compose installation notes in the root and Docker READMEs.
+
 ## [1.6.1] - 2026-05-04
 
 ### Fixed
@@ -241,7 +254,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.1...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.4...HEAD
+[1.6.4]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.1...v1.6.4
 [1.6.1]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.5...v1.6.0
 [1.5.5]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.5.4...v1.5.5
