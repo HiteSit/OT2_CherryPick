@@ -100,6 +100,15 @@ settings.toml + labware_dict.toml + CSVs/*.csv
 
 The generated protocol embeds all configuration as JSON, requiring no external files at runtime on the OT-2.
 
+## Documentation
+
+| Guide | Description |
+|-------|-------------|
+| [GUI Guide](docs/gui_guide.md) | 4-step wizard walkthrough for the web interface |
+| [Configuration Reference](docs/configuration_reference.md) | Complete settings.toml, labware, CSV format reference |
+| [Liquid Handling Guide](docs/liquid_handling_guide.md) | Presets, parameters, and scientific rationale |
+| [MCP Tools Reference](docs/mcp_tools_reference.md) | Full MCP tool, resource, and prompt catalog |
+
 ## Citation
 
 If you use OT2-CherryPick in your research, please cite:
