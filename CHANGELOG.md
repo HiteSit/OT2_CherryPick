@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Runtime license validation for protocol generation with deterministic public fallback handling.
-- Docker activation support via `OT2_LICENSE_MACHINE_ID` and backend startup entrypoint handling.
+- Docker activation support via `COMPUTER_ID` and backend startup entrypoint handling.
 - Focused unit and end-to-end coverage for the public license-gated generation flow.
 - Tracked `docker/.env.example` as the Docker environment template while keeping local `.env` files ignored.
 

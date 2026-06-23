@@ -27,36 +27,21 @@ create_json_config = protocol_generator.create_json_config
 generate_protocol = protocol_generator.generate_protocol
 
 
-def test_resolve_machine_identity_requires_matching_file_and_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    marker = tmp_path / ".activation.needs"
-    marker.write_text("Ric-WorkStation\n", encoding="utf-8")
-    monkeypatch.setenv("OT2_LICENSE_MACHINE_ID", "Ric-WorkStation")
+def test_resolve_machine_identity_reads_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("COMPUTER_ID", "Ric-WorkStation")
 
-    assert resolve_machine_identity(marker) == "Ric-WorkStation"
+    assert resolve_machine_identity() == "Ric-WorkStation"
 
 
-def test_resolve_machine_identity_fails_on_mismatch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    marker = tmp_path / ".activation.needs"
-    marker.write_text("Ric-WorkStation\n", encoding="utf-8")
-    monkeypatch.setenv("OT2_LICENSE_MACHINE_ID", "other-machine")
+def test_resolve_machine_identity_requires_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("COMPUTER_ID", raising=False)
 
-    with pytest.raises(LicenseGateError, match="does not match"):
-        resolve_machine_identity(marker)
+    with pytest.raises(LicenseGateError, match="COMPUTER_ID"):
+        resolve_machine_identity()
 
 
-def test_resolve_machine_identity_requires_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    marker = tmp_path / ".activation.needs"
-    marker.write_text("Ric-WorkStation\n", encoding="utf-8")
-    monkeypatch.delenv("OT2_LICENSE_MACHINE_ID", raising=False)
-
-    with pytest.raises(LicenseGateError, match="OT2_LICENSE_MACHINE_ID"):
-        resolve_machine_identity(marker)
-
-
-def test_check_generation_license_denies_server_rejection(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    marker = tmp_path / ".activation.needs"
-    marker.write_text("Ric-WorkStation\n", encoding="utf-8")
-    monkeypatch.setenv("OT2_LICENSE_MACHINE_ID", "Ric-WorkStation")
+def test_check_generation_license_denies_server_rejection(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("COMPUTER_ID", "Ric-WorkStation")
     monkeypatch.setattr(
         "ot2_cherrypick_mcp.core.license_gate.resolve_machine_identity",
         lambda: "Ric-WorkStation",
@@ -110,36 +95,17 @@ def test_check_generation_license_fails_closed_when_server_unreachable(monkeypat
         check_generation_license()
 
 
-def test_check_generation_license_missing_local_identity_fails_before_post(
-    tmp_path: Path,
+def test_check_generation_license_missing_environment_fails_before_post(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("OT2_LICENSE_MACHINE_ID", "Ric-WorkStation")
-    monkeypatch.setattr("ot2_cherrypick_mcp.core.license_gate.get_repo_root", lambda: tmp_path)
+    monkeypatch.delenv("COMPUTER_ID", raising=False)
 
     def unexpected_post(_payload: dict[str, str]) -> dict[str, object]:
-        pytest.fail("_post_license_decision should not run without local identity")
+        pytest.fail("_post_license_decision should not run without machine identity")
 
     monkeypatch.setattr("ot2_cherrypick_mcp.core.license_gate._post_license_decision", unexpected_post)
 
-    with pytest.raises(LicenseGateError, match="missing"):
-        check_generation_license()
-
-
-def test_check_generation_license_mismatched_local_identity_fails_before_post(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    (tmp_path / ".activation.needs").write_text("Ric-WorkStation\n", encoding="utf-8")
-    monkeypatch.setenv("OT2_LICENSE_MACHINE_ID", "other-machine")
-    monkeypatch.setattr("ot2_cherrypick_mcp.core.license_gate.get_repo_root", lambda: tmp_path)
-
-    def unexpected_post(_payload: dict[str, str]) -> dict[str, object]:
-        pytest.fail("_post_license_decision should not run with mismatched local identity")
-
-    monkeypatch.setattr("ot2_cherrypick_mcp.core.license_gate._post_license_decision", unexpected_post)
-
-    with pytest.raises(LicenseGateError, match="does not match"):
+    with pytest.raises(LicenseGateError, match="COMPUTER_ID"):
         check_generation_license()
 
 

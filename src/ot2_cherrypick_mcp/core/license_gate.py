@@ -10,10 +10,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from importlib.metadata import PackageNotFoundError, version
-from pathlib import Path
 from typing import Any
-
-from ..utils.paths import get_repo_root
 
 
 LICENSE_SERVER_URL = "https://ot2-license-worker.riccardofusco99.workers.dev"
@@ -53,30 +50,13 @@ def get_license_server_url() -> str:
     return os.getenv(LICENSE_SERVER_URL_ENV, "").strip().rstrip("/") or LICENSE_SERVER_URL
 
 
-def read_activation_machine_id(marker_path: Path | None = None) -> str:
-    """Read the repo-local machine identity lock."""
+def resolve_machine_identity() -> str:
+    """Resolve the deployment-local machine identity."""
 
-    path = marker_path or get_repo_root() / ".activation.needs"
-    try:
-        value = path.read_text(encoding="utf-8").strip()
-    except FileNotFoundError as exc:
-        raise LicenseGateError("Local activation identity is missing.") from exc
-
-    if not value:
-        raise LicenseGateError("Local activation identity is empty.")
-    return value
-
-
-def resolve_machine_identity(marker_path: Path | None = None) -> str:
-    """Resolve and cross-check local file and environment machine identities."""
-
-    file_identity = read_activation_machine_id(marker_path)
-    env_identity = os.getenv("OT2_LICENSE_MACHINE_ID", "").strip()
+    env_identity = os.getenv("COMPUTER_ID", "").strip()
     if not env_identity:
-        raise LicenseGateError("OT2_LICENSE_MACHINE_ID is missing.")
-    if file_identity != env_identity:
-        raise LicenseGateError("Local activation identity does not match OT2_LICENSE_MACHINE_ID.")
-    return file_identity
+        raise LicenseGateError("COMPUTER_ID is missing.")
+    return env_identity
 
 
 def check_generation_license() -> LicenseDecision:
@@ -182,6 +162,5 @@ __all__ = [
     "LicenseGateError",
     "check_generation_license",
     "get_license_server_url",
-    "read_activation_machine_id",
     "resolve_machine_identity",
 ]

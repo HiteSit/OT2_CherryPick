@@ -13,7 +13,7 @@ services:
     environment:
       OT2_GUI_WORKSPACE: ${OT2_GUI_WORKSPACE}
       OT2_PROJECT_DIR: ${OT2_PROJECT_DIR}
-      OT2_LICENSE_MACHINE_ID: ${OT2_LICENSE_MACHINE_ID}
+      COMPUTER_ID: ${COMPUTER_ID}
       PYTHONUNBUFFERED: "1"
       # Opentrons App data directory (contains labware/ and protocols/ subdirs)
       # REQUIRED: Must be set in .env file

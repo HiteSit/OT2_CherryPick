@@ -17,7 +17,6 @@ guide/*.html
 docker/distribution/
 docker/.env
 gui_state
-/.activation.needs
 manuscript/
 notebooks/
 agent_docs/

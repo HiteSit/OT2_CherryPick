@@ -1,6 +1,5 @@
 """Tests verifying HEALTHCHECK directives exist in project Dockerfiles."""
 
-import os
 import re
 import subprocess
 from pathlib import Path
@@ -59,11 +58,11 @@ class TestFrontendDockerfileHealthcheck:
 
 
 class TestBackendDockerLicenseWiring:
-    """Verify Docker passes and materializes the backend license identity."""
+    """Verify Docker passes the backend license identity."""
 
     def test_compose_passes_machine_identity_to_backend(self) -> None:
         content = (DOCKER_DIR / "docker-compose.yml").read_text()
-        assert "OT2_LICENSE_MACHINE_ID: ${OT2_LICENSE_MACHINE_ID}" in content
+        assert "COMPUTER_ID: ${COMPUTER_ID}" in content
 
     def test_env_example_defines_machine_identity_and_env_stays_local(self) -> None:
         example = (DOCKER_DIR / ".env.example").read_text()
@@ -71,52 +70,19 @@ class TestBackendDockerLicenseWiring:
 
         assert "docker/.env\n" in gitignore
         assert "docker/.env.example" not in gitignore
-        assert "OT2_LICENSE_MACHINE_ID=YOUR_MACHINE_NAME" in example
+        assert "COMPUTER_ID=YOUR_MACHINE_NAME" in example
 
-    def test_entrypoint_writes_activation_marker_from_environment(self) -> None:
+    def test_entrypoint_does_not_materialize_activation_marker(self) -> None:
         content = ENTRYPOINT_SCRIPT.read_text()
-        assert (
-            'activation_file="${OT2_LICENSE_ACTIVATION_FILE:-/app/.activation.needs}"'
-            in content
-        )
-        assert 'printf \'%s\\n\' "$OT2_LICENSE_MACHINE_ID" > "$activation_file"' in content
+        assert ".activation.needs" not in content
         assert 'exec "$@"' in content
 
-    def test_entrypoint_smoke_writes_marker_from_environment(
-        self, tmp_path: Path
-    ) -> None:
-        marker = tmp_path / ".activation.needs"
-        env = os.environ.copy()
-        env["OT2_LICENSE_MACHINE_ID"] = "Test-Machine"
-        env["OT2_LICENSE_ACTIVATION_FILE"] = str(marker)
-
+    def test_entrypoint_smoke_execs_command(self) -> None:
         result = subprocess.run(
             ["sh", str(ENTRYPOINT_SCRIPT), "true"],
-            env=env,
             text=True,
             capture_output=True,
             check=False,
         )
 
         assert result.returncode == 0, result.stderr
-        assert marker.read_text() == "Test-Machine\n"
-
-    def test_entrypoint_smoke_removes_marker_when_identity_missing(
-        self, tmp_path: Path
-    ) -> None:
-        marker = tmp_path / ".activation.needs"
-        marker.write_text("stale\n")
-        env = os.environ.copy()
-        env.pop("OT2_LICENSE_MACHINE_ID", None)
-        env["OT2_LICENSE_ACTIVATION_FILE"] = str(marker)
-
-        result = subprocess.run(
-            ["sh", str(ENTRYPOINT_SCRIPT), "true"],
-            env=env,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-
-        assert result.returncode == 0, result.stderr
-        assert not marker.exists()
