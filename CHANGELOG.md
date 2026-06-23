@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.6] - 2026-06-23
+
+### Changed
+
+- Simplified public runtime setup.
+- Renamed the deployment-local identity setting.
+
 ## [1.6.5] - 2026-06-16
 
 ### Changed
@@ -261,7 +268,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration reference, GUI guide, and liquid handling guide.
   - MCP tools reference covering all 22 tools.
 
-[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.5...HEAD
+[Unreleased]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.6...HEAD
+[1.6.6]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.5...v1.6.6
 [1.6.5]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.4...v1.6.5
 [1.6.4]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.1...v1.6.4
 [1.6.1]: https://github.com/HiteSit/OT2_CherryPick/compare/v1.6.0...v1.6.1
